@@ -1,0 +1,411 @@
+"""tools/auto_detector.py
+
+Auto-Detector - Smart input detection for easiest UX.
+
+Purpose:
+- Auto-detect what the user wants to do from their input
+- Route to appropriate module without user memorizing commands
+- Smart file type detection
+- URL pattern matching
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Any, Dict
+from urllib.parse import urlparse
+
+
+class AutoDetector:
+    """
+    Smart detector that figures out what module to use based on input.
+    """
+
+    @staticmethod
+    def detect(target: str) -> Dict[str, Any]:
+        """
+        Detect what type of input and recommend action.
+        Returns: {"action": str, "module": str, "confidence": float, "explanation": str}
+        """
+        target = target.strip()
+
+        # Check if it's a file path
+        if Path(target).exists():
+            return AutoDetector._detect_file(target)
+
+        # Check if it's a URL
+        if target.startswith(("http://", "https://")):
+            return AutoDetector._detect_url(target)
+
+        # Check if it's a domain/IP
+        if AutoDetector._is_domain_or_ip(target):
+            return {
+                "action": "recon",
+                "module": "recon",
+                "confidence": 0.9,
+                "explanation": f"'{target}' looks like a domain or IP address. Running reconnaissance...",
+            }
+
+        # Check if it's hex data (for protocol analysis)
+        if re.match(r"^[0-9a-fA-F\s]+$", target) and len(target.replace(" ", "")) > 20:
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.85,
+                "explanation": "Input looks like hex data. Switching to AI mode for guided protocol analysis...",
+            }
+
+        # Default to AI mode
+        return {
+            "action": "ai",
+            "module": "ai",
+            "confidence": 0.5,
+            "explanation": f"Not sure what '{target}' is. Switching to AI assistant mode...",
+        }
+
+    @staticmethod
+    def _detect_file(path: str) -> Dict[str, Any]:
+        """Detect file type and recommend module."""
+        p = Path(path)
+        ext = p.suffix.lower()
+
+        # JSON files
+        if ext == ".json":
+            # Try to detect JSON content type
+            try:
+                content = p.read_text(encoding="utf-8", errors="ignore")[:5000]
+                data = json.loads(content)
+
+                # Check for findings/scans format
+                if isinstance(data, list) and len(data) > 0:
+                    if any(k in str(data[0]) for k in ["severity", "type", "finding"]):
+                        return {
+                            "action": "ai",
+                            "module": "ai",
+                            "confidence": 0.95,
+                            "explanation": f"JSON findings detected: {p.name}. Opening AI mode for analysis and prioritization...",
+                        }
+
+                # Check for Burp/mobile format
+                if isinstance(data, dict):
+                    if any(k in data for k in ["endpoints", "requests", "responses"]):
+                        return {
+                            "action": "ai",
+                            "module": "ai",
+                            "confidence": 0.9,
+                            "explanation": f"API export detected: {p.name}. Opening AI mode for focused API analysis...",
+                        }
+
+                return {
+                    "action": "json_analysis",
+                    "module": "ai",
+                    "confidence": 0.7,
+                    "explanation": f"JSON file detected: {p.name}. Analyzing content...",
+                }
+            except Exception:
+                pass
+
+        # Cloud/Terraform files
+        if ext in [".t", ".tfvars", ".yml", ".yaml"]:
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.9,
+                "explanation": f"Infrastructure-as-code file detected: {p.name}. Opening AI mode for cloud security review...",
+            }
+
+        # Source code
+        if ext in [".py", ".js", ".java", ".go", ".ts", ".php"]:
+            return {
+                "action": "sast",
+                "module": "sast",
+                "confidence": 0.95,
+                "explanation": f"Source code file detected: {p.name}. Running SAST...",
+            }
+
+        # Log files
+        if ext in [".log", ".txt"] or "log" in p.name.lower():
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.85,
+                "explanation": f"Log file detected: {p.name}. Opening AI mode for security log analysis...",
+            }
+
+        # Protocol/hex dump
+        if ext in [".pcap", ".cap", ".hex", ".bin"]:
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.9,
+                "explanation": f"Binary capture detected: {p.name}. Opening AI mode for protocol triage...",
+            }
+
+        # Targets list (for swarm)
+        if p.name.lower() in ["targets.txt", "urls.txt", "domains.txt"]:
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.95,
+                "explanation": f"Targets list detected: {p.name}. Opening AI mode for controlled multi-target planning...",
+            }
+
+        # OpenAPI schema
+        if any(k in p.name.lower() for k in ["openapi", "swagger", "api.json", "api.yaml"]):
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.95,
+                "explanation": f"OpenAPI schema detected: {p.name}. Opening AI mode for API surface review...",
+            }
+
+        # Default file
+        return {
+            "action": "file_analysis",
+            "module": "ai",
+            "confidence": 0.6,
+            "explanation": f"File detected: {p.name}. Analyzing with AI...",
+        }
+
+    @staticmethod
+    def _detect_url(url: str) -> Dict[str, Any]:
+        """Detect URL type and recommend module."""
+        parsed = urlparse(url)
+        path = parsed.path.lower()
+
+        # API endpoints
+        if "/api/" in path or path.endswith((".json", ".xml")):
+            return {
+                "action": "bola",
+                "module": "bola",
+                "confidence": 0.85,
+                "explanation": f"API endpoint detected: {url}. Testing for BOLA/IDOR...",
+            }
+
+        # Admin panels
+        if any(k in path for k in ["/admin", "/dashboard", "/panel", "/manage"]):
+            return {
+                "action": "admin_test",
+                "module": "ai",
+                "confidence": 0.8,
+                "explanation": f"Admin panel detected: {url}. Scanning for misconfigurations...",
+            }
+
+        # OpenAPI schema URL
+        if any(k in url.lower() for k in ["openapi", "swagger", "api-docs"]):
+            return {
+                "action": "ai",
+                "module": "ai",
+                "confidence": 0.95,
+                "explanation": f"OpenAPI docs detected: {url}. Opening AI mode for schema review...",
+            }
+
+        # Default web scan
+        return {
+            "action": "waf",
+            "module": "waf",
+            "confidence": 0.8,
+            "explanation": f"Web URL detected: {url}. Testing for WAF and vulnerabilities...",
+        }
+
+    @staticmethod
+    def _is_domain_or_ip(target: str) -> bool:
+        """Check if target is a domain or IP address."""
+        # IP pattern
+        ip_pattern = r"^(\d{1,3}\.){3}\d{1,3}$"
+        if re.match(ip_pattern, target):
+            return True
+
+        # Domain pattern (simple)
+        domain_pattern = r"^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?)*$"
+        if re.match(domain_pattern, target):
+            return True
+
+        return False
+
+
+class SmartWizard:
+    """
+    Interactive wizard that guides users step-by-step.
+    """
+
+    QUESTIONS = {
+        "start": {
+            "question": "What do you want to do? (Select one)",
+            "options": [
+                ("Scan a website/domain for vulnerabilities", "scan"),
+                ("Test for specific bug (BOLA, XSS, WAF bypass)", "specific"),
+                ("Analyze a file (logs, code, API export, findings)", "file"),
+                ("Chat with AI assistant", "ai"),
+                ("Generate professional PDF report", "report"),
+            ],
+        },
+        "scan_type": {
+            "question": "Choose scan type:",
+            "options": [
+                ("Reconnaissance - Discover subdomains, ports, technologies", "recon"),
+                ("Web vulnerabilities - XSS, WAF bypass, injection", "waf"),
+                ("Bug bounty - BOLA/IDOR, access control testing", "bola"),
+                ("Cloud security - Terraform, AWS, configuration files", "cloud"),
+                ("Source code - Python, JS, Java, Go vulnerabilities", "sast"),
+            ],
+        },
+        "file_type": {
+            "question": "What type of file are you analyzing?",
+            "options": [
+                ("Mobile API - Burp export, API collection", "mobile"),
+                ("Security logs - SIEM, firewall, alerts", "soc"),
+                ("Cloud config - Terraform, CloudFormation, AWS", "cloud"),
+                ("Source code - .py, .js, .java, .go files", "sast"),
+                ("Findings/results - JSON scan results", "predict"),
+                ("Network data - PCAP, hex dump, protocol capture", "proto"),
+                ("Not sure - Let SecurAgentX auto-detect", "auto"),
+            ],
+        },
+        "specific_type": {
+            "question": "Which vulnerability type to test?",
+            "options": [
+                ("BOLA/IDOR - Broken access control, ID enumeration", "bola"),
+                ("WAF/XSS - Web firewall bypass, cross-site scripting", "waf"),
+                ("Protocols - MQTT, Modbus, gRPC, IoT/ICS", "proto"),
+                ("Red Team - EDR evasion, AV bypass (authorized only)", "evasion"),
+            ],
+        },
+    }
+
+    @staticmethod
+    def get_wizard_step(step_id: str) -> Dict[str, Any]:
+        """Get wizard step configuration."""
+        return SmartWizard.QUESTIONS.get(step_id, {})
+
+
+class CommandSimplifier:
+    """
+    Simplifies command usage with smart shortcuts.
+    """
+
+    SHORTCUTS = {
+        # Unified scan shortcuts (all go to scan with --phase)
+        "bb": "scan --phase bola",  # Bug bounty BOLA testing
+        "check": "scan --phase recon",  # Quick recon check
+        "test": "scan --phase waf",  # WAF detection test
+        "recon": "scan --phase recon",  # Reconnaissance
+        "scan": "scan",  # Full scan (no change)
+        # Interactive mode shortcuts (advanced)
+        "bola": "scan --interactive bola",  # Interactive BOLA
+        "waf": "scan --interactive waf",  # Interactive WAF bypass
+        # Other shortcuts
+        "hack": "ai",  # AI mode
+        "learn": "ai",  # AI mode
+        "help": "menu",  # Show menu
+        "report": "report",
+        "pd": "report",
+        "red": "evasion",  # Red team
+        "team": "evasion",
+        "swarm": "swarm",
+        "batch": "swarm",
+    }
+
+    @staticmethod
+    def simplify(command: str) -> str:
+        """Simplify a command to its canonical form."""
+        return CommandSimplifier.SHORTCUTS.get(command.lower(), command)
+
+    @staticmethod
+    def apply_to_args(args) -> None:
+        """Apply shortcut resolution to parsed args.
+
+        This modifies args in place, setting command and flags
+        based on the shortcut mapping.
+        """
+        if not hasattr(args, "command") or not args.command:
+            return
+
+        shortcut = args.command.lower()
+        resolved = CommandSimplifier.SHORTCUTS.get(shortcut)
+        if not resolved:
+            return
+
+        # Parse the resolved command string
+        parts = resolved.split()
+        args.command = parts[0]
+
+        # Extract flags from resolved command
+        i = 1
+        while i < len(parts):
+            if parts[i] == "--phase" and i + 1 < len(parts):
+                args.phase = parts[i + 1]
+                i += 2
+            elif parts[i] == "--interactive" and i + 1 < len(parts):
+                args.interactive = parts[i + 1]
+                i += 2
+            else:
+                i += 1
+
+    @staticmethod
+    def get_help_text() -> str:
+        """Get organized help text by category."""
+        return """
+[bold cyan]╔══════════════════════════════════════════════════════════════════════╗[/bold cyan]
+[bold cyan]║[/bold cyan]                    [bold yellow]SECURAGENTX[/bold yellow]  —  [bold white]COMMAND REFERENCE[/bold white]                  [bold cyan]║[/bold cyan]
+[bold cyan]╚══════════════════════════════════════════════════════════════════════╝[/bold cyan]
+
+  [bold yellow]SMART MODE[/bold yellow] [dim](just type a target — SecurAgentX auto-routes):[/dim]
+  [dim]─────────────────────────────────────────────────────────[/dim]
+    [cyan]securagentx[/cyan] example.com            [dim]->[/dim]  [green]Reconnaissance[/green]
+    [cyan]securagentx[/cyan] https://api.x.com/     [dim]->[/dim]  [green]BOLA / WAF workflow[/green]
+    [cyan]securagentx[/cyan] findings.json          [dim]->[/dim]  [green]AI-assisted analysis[/green]
+    [cyan]securagentx[/cyan] myapp.py               [dim]->[/dim]  [green]SAST static scan[/green]
+    [cyan]securagentx[/cyan] terraform/             [dim]->[/dim]  [green]Cloud security review[/green]
+
+[dim]┌─────────────────────┬──────────────────────────────────────────────┐[/dim]
+│  [bold cyan]SCAN (UNIFIED)[/bold cyan]      │                                              │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [cyan]securagentx scan[/cyan] <target>           [white]Full scan pipeline (all phases)[/white]  │
+│  [cyan]securagentx scan[/cyan] <target> --phase X  [white]Run specific phase only[/white]         │
+│  [dim]  Phases: recon, waf, fuzz, bola, learn, coverage[/dim]             │
+│  [cyan]securagentx scan[/cyan] --interactive X   [white]Interactive mode (advanced)[/white]      │
+│  [dim]  Modes: bola, waf, recon[/dim]                                   │
+│  [dim]  Shortcuts: bb=bola, check=recon, test=waf[/dim]                 │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [bold cyan]INTERACTIVE[/bold cyan]       │                                              │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [cyan]securagentx tui[/cyan]       [dim](default)[/dim]  [white]Textual TUI — full-featured[/white]     │
+│  [cyan]securagentx cli[/cyan]                    [white]Gemini-style CLI session[/white]          │
+│  [cyan]securagentx universal[/cyan]              [white]Autonomous agent mode[/white]              │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [bold cyan]ANALYSIS[/bold cyan]           │                                              │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [cyan]securagentx sast[/cyan] <file|dir>         [white]Source code static analysis[/white]     │
+│  [cyan]securagentx cloud[/cyan] <file|dir>        [white]Terraform / IaC / cloud review[/white]  │
+│  [cyan]securagentx mobile[/cyan] <target>         [white]Mobile API analysis & fuzzing[/white]   │
+│  [cyan]securagentx soc[/cyan] [logfile]           [white]Security log & SIEM analysis[/white]    │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [bold cyan]RESEARCH[/bold cyan]          │                                              │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [cyan]securagentx research[/cyan] <CVE|type>     [white]CVE research + PoC generator[/white]    │
+│  [cyan]securagentx poc[/cyan] <vuln-type>         [white]Generate custom exploit PoC[/white]     │
+│  [cyan]securagentx evasion[/cyan]                 [white]EDR / AV evasion framework[/white]      │
+│  [cyan]securagentx bounty[/cyan] [program]        [white]Bug bounty intel & predictor[/white]    │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [bold cyan]SYSTEM[/bold cyan]            │                                              │
+[dim]├─────────────────────┼──────────────────────────────────────────────┤[/dim]
+│  [cyan]securagentx doctor[/cyan]                  [white]System health check[/white]              │
+│  [cyan]securagentx configure[/cyan]               [white]Setup wizard[/white]                     │
+│  [cyan]securagentx report[/cyan]                  [white]Generate HTML/PDF report[/white]         │
+│  [cyan]securagentx memory[/cyan]                  [white]View AI memory[/white]                   │
+│  [cyan]securagentx history[/cyan]                 [white]Browse past sessions[/white]             │
+│  [cyan]securagentx menu[/cyan]                    [white]Interactive menu[/white]                 │
+└─────────────────────┴──────────────────────────────────────────────┘
+
+  [bold yellow]SHORTCUTS[/bold yellow]
+  [dim]─────────────────────────────────────────────────────────[/dim]
+    [cyan]bb[/cyan] <target>     ->  [green]scan --phase bola[/green]     (BOLA testing)
+    [cyan]check[/cyan] <target>  ->  [green]scan --phase recon[/green]   (Quick recon)
+    [cyan]test[/cyan] <target>   ->  [green]scan --phase waf[/green]     (WAF detection)
+    [cyan]recon[/cyan] <target>  ->  [green]scan --phase recon[/green]   (Reconnaissance)
+    [cyan]hack[/cyan] <target>   ->  [green]ai[/green]                   (AI chat mode)
+    [cyan]red[/cyan]             ->  [green]evasion[/green]              (Red team)
+"""

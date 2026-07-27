@@ -1,0 +1,11 @@
+"""securagentx/__main__.py — Allow `python -m securagentx` to launch the CLI."""
+
+import sys
+import os
+
+# Ensure project root is on path (for editable install / dev)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from main import main
+
+main()

@@ -1,0 +1,133 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "securagentx"
+version = "1.0.1"
+description = "Autonomous AI Agent Framework for Security Research"
+readme = "README.md"
+license = {text = "GPL-3.0-only"}
+requires-python = ">=3.10"
+authors = [
+    {name = "SecurAgentX Project"},
+]
+keywords = [
+    "security", "pentesting", "bug-bounty", "vulnerability",
+    "ai-agent", "automation", "oscp", "reconnaissance", "cvss",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+]
+
+dependencies = [
+    # Core
+    "pyyaml>=6.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    # AI / LLM SDKs
+    "openai>=1.0.0",
+    "anthropic>=0.20.0",
+    "google-generativeai>=0.3.0",
+    "cohere>=4.0.0",
+    "huggingface-hub>=0.14.0",
+    "replicate>=0.15.0",
+    # Telegram
+    "python-telegram-bot>=20.0",
+    # CLI UI
+    "rich>=13.0.0",
+    "questionary>=2.0.0",
+    "prompt_toolkit>=3.0.0",
+    "textual>=0.41.0",
+    # Async
+    "nest-asyncio>=1.6.0",
+    "tenacity>=8.0.0",
+    "aiosqlite>=0.19.0",
+    # Knowledge graph (local Graphiti replacement)
+    "networkx>=3.0",
+    # Token counting
+    "tiktoken>=0.5.0",
+    # Vector memory
+    "chromadb>=0.4.0",
+    "sentence-transformers>=2.2.0",
+    # Web intelligence
+    "trafilatura>=1.6.0",
+    "googlesearch-python>=1.2.0",
+    "duckduckgo-search>=4.0.0",
+    # Auth — signed-cookie session primitive (securagentx.auth.sessions)
+    "itsdangerous>=2.1.0",
+    # GraphQL API — strawberry.fastapi.GraphQLRouter (securagentx.graphql)
+    "strawberry-graphql>=0.220.0",
+    # MCP (Model Context Protocol) - requires npm/node
+    # Sequential Thinking: npx -y mcp-sequential-thinking
+    # Memory: npx -y @modelcontextprotocol/server-memory
+    # Filesystem: npx -y @modelcontextprotocol/server-filesystem
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-timeout>=2.1.0",
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+    "ruff",
+]
+
+[project.scripts]
+securagentx = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/moussa12345678/SecurAgentX"
+Repository = "https://github.com/moussa12345678/SecurAgentX"
+Issues = "https://github.com/moussa12345678/SecurAgentX/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "venv*", "scripts*", "data*", "reports*", "examples*", "htmlcov*", "docs*", ".config*", ".cache*", "build*", "dist*", ".mimocode*", ".remember*"]
+
+[tool.setuptools]
+py-modules = ["main"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.yaml", "*.md", "*.json"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: opt-in integration tests that hit real network/services (deselect with '-m \"not integration\"')",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["tools", "agents", "tui", "commands"]
+
+[tool.flake8]
+max-line-length = 100
+ignore = ["E501", "W503", "E203"]
+exclude = ["venv", "__pycache__", ".git"]
+
+[tool.pyrefly]
+disable-search-path-heuristics = true
+search-path = ["."]

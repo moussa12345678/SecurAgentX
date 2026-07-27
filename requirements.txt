@@ -1,0 +1,58 @@
+# ═══════════════════════════════════════════════════════
+# SecurAgentX - Professional Security Stack
+# - Security Hardening (CVE Fixes for PyYAML & Requests)
+# - Latest AI Provider SDKs for improved stability
+# - Production-grade Async & resilience libraries
+# ═══════════════════════════════════════════════════════
+
+# ── Core Framework & Security ───────────────────────────
+pyyaml>=6.0             # SECURITY: CVE-2020-14343 fix
+requests>=2.31.0        # SECURITY: CVE-2023-32681 & CVE-2024-35195 fixes
+python-dotenv>=1.0.0    # Secure environment variable management
+
+# ── AI / LLM SDKs (High Performance) ───────────────────
+openai                  # Native Async support & latest features
+anthropic               # Native Claude 3.5 support
+google-generativeai     # Latest Gemini stability updates
+cohere                  # Native Cohere support
+huggingface-hub         # HuggingFace integration
+replicate               # Replicate AI models
+
+# ── Telegram Gateway ────────────────────────────────────
+python-telegram-bot     # Modern async handler for bot control
+
+# ── CLI UI & UX ─────────────────────────────────────────
+rich>=13.0.0            # Technical UI rendering
+questionary>=2.0.0      # Interactive CLI menus
+prompt_toolkit>=3.0.0   # Modern Gemini-style CLI sessions
+textual>=0.41.0         # TUI framework with native mouse/scroll support
+
+# ── Resilience & Async Bridge ──────────────────────────
+nest-asyncio>=1.6.0     # Critical for nested event loops (Bot support)
+tenacity>=8.0.0         # Advanced retry & backoff strategies
+
+# ── Token Counting ─────────────────────────────────────
+tiktoken                # Accurate token counting (auto-detected, lightweight)
+
+# ── Vector Memory & Semantic Search ────────────────────
+chromadb                # Persistent vector memory backend
+sentence-transformers   # Embeddings for semantic recall/search
+
+# ── Async HTTP (OPTIONAL) ──────────────────────────────
+# httpx provides async HTTP for AI client.
+# Falls back to requests (sync) automatically.
+# httpx
+
+# ── Recon & Web Intelligence ───────────────────────────
+trafilatura             # High-precision web content extraction
+googlesearch-python     # Basic search discovery (Keep for now)
+ddgs                    # DuckDuckGo search for real-time web results
+
+
+# -- Recommended Security Tools (Optional) ---
+# safety                  # For continuous dependency auditing
+# pip-audit               # For advanced vulnerability scanning
+
+# -- Testing and Development --
+pytest>=7.0.0             # Unit and integration testing
+pytest-asyncio            # Async test support

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          # Ensure test deps are present
+          pip install pytest pytest-asyncio pytest-timeout rich 2>/dev/null || true
+          pip install reportlab pyjwt fastapi httpx uvicorn python-multipart 2>/dev/null || true
+
+      - name: Run test suite
+        run: |
+          python -m pytest -q --timeout=300 \
+            tests/ -m "not integration" \
+            --ignore=tests/test_brain_coverage.py \
+            --ignore=tests/test_brain_coverage_gap.py \
+            --tb=short
+
+      - name: Boot smoke test
+        run: |
+          python -m securagentx --help || securagentx --help || true

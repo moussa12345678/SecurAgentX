@@ -1,0 +1,142 @@
+# ═══════════════════════════════════════════════════════
+# SecurAgentX Git Ignore Configuration
+# ═══════════════════════════════════════════════════════
+
+# User-specific config (NEVER COMMIT)
+config.yaml
+.env
+.env.*
+MEMORY.md
+mcp.json
+
+# But track the examples
+!config.yaml.example
+!.env.example
+!MEMORY.md.example
+!mcp.json.example
+
+# Reports and discovered data
+/reports/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.log
+data/scans/
+data/wordlists/
+data/vector_memory/
+securagentx.db
+*.db-wal
+*.db-shm
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Session files
+data/sessions/
+data/governance_audit.db
+
+# Runtime agent data
+data/cot_logs/
+data/scan_state/
+data/missions/
+
+# Sandbox-generated scripts (overwritten by test_ai_tool_sandbox)
+data/scripts/
+
+# Runtime data files (generated, not source)
+data/ml_profiles.json
+data/watchman_state.json
+data/.ai_consent_accepted
+
+# Scan artifacts (output files at repo root only)
+/*.txt
+/*.json
+
+# Generated runtime data
+logs/
+response.html
+
+# OpenCode agent state (work logs, todos, context — local only)
+.opencode/
+
+# Crush agent artifacts (database + logs)
+.crush/
+
+# Python test cache
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Python build artifacts
+*.egg-info/
+build/
+dist/
+*.spec
+
+# Tool/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Scan outputs at root (output of various tools)
+live_hosts.txt
+subdomains.txt
+*.har
+*.har.json
+
+# Backup/temp files
+*.bak
+*.swp
+*.tmp
+.env.save
+.env.bak
+.aider*
+
+# MCP Configuration
+!.mcp.json
+
+# User config directory (runtime data, not source)
+.config/
+
+# AI development session logs (MiMoCode/Claude/Codex work logs)
+docs/*session*.md
+docs/*development*.md
+docs/*bugfix*.md
+docs/*final*.md
+docs/*tui-improvements*.md
+dist/
+build/
+*.egg-info/
+
+# MiMoCode agent state
+.mimocode/
+
+# Agent/AI tool files (not project code)
+AGENTS.md
+MEMORY.md
+opencode.json
+.mcp.json
+_missing_requirements.txt
+
+# Cache directories
+.cache/
+
+# ChromaDB vector memory (generated runtime data)
+data/memory/
+data/chroma_learning/
+
+# pytest coverage annotated-source artifacts (never commit)
+*,cover
