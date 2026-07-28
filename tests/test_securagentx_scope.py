@@ -13,10 +13,18 @@ from securagentx.scope import ScopeManager, is_in_scope, is_valid_target, normal
 
 class TestScopeManager:
     def test_default_scope_allows_all(self):
-        """No scope configured = all targets allowed."""
-        sm = ScopeManager()
-        assert sm.is_in_scope("example.com") is True
-        assert sm.is_in_scope("10.0.0.1") is True
+        """No scope configured = all targets allowed.
+
+        Wrapped in a clean-env context because other tests import modules
+        (e.g. tools.universal_ai_client) that call ``load_dotenv`` on
+        ``~/.securagentx/.env`` and leak ``SECURAGENTX_SCOPE`` into the
+        process. Without this isolation the test fails under full-suite
+        runs while passing in isolation.
+        """
+        with patch.dict(os.environ, {}, clear=True):
+            sm = ScopeManager()
+            assert sm.is_in_scope("example.com") is True
+            assert sm.is_in_scope("10.0.0.1") is True
 
     def test_in_scope_direct_match(self):
         with patch.object(
