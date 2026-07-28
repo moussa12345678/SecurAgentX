@@ -27,8 +27,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
           # Ensure test deps are present
-          pip install pytest pytest-asyncio pytest-timeout rich 2>/dev/null || true
-          pip install reportlab pyjwt fastapi httpx uvicorn python-multipart 2>/dev/null || true
+          pip install pytest pytest-asyncio pytest-timeout rich
+          pip install reportlab pyjwt fastapi httpx uvicorn python-multipart
 
       - name: Run test suite
         run: |
@@ -40,4 +40,4 @@ jobs:
 
       - name: Boot smoke test
         run: |
-          python -m securagentx --help || securagentx --help || true
+          python -m securagentx --help || securagentx --help

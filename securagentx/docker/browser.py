@@ -25,6 +25,11 @@ from urllib.parse import urlencode, urlparse, urlunparse, ParseResult
 
 logger = logging.getLogger("securagentx.docker.browser")
 
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for the scraper
+# sidecar (which self-signs its TLS cert — see note in module docstring).
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+
 # ── Minimum content-size thresholds (port of browser.go §24-28) ─────────
 MIN_MD_CONTENT_SIZE = 50
 MIN_HTML_CONTENT_SIZE = 300
@@ -234,7 +239,7 @@ class DockerBrowser:
                             extra_query: dict[str, str]) -> bytes:
         """Issue a single GET to ``{scraper_url}{path}?{query}`` and return bytes.
 
-        Uses ``httpx.AsyncClient(verify=False, timeout=65.0)`` (the scraper
+        Uses ``httpx.AsyncClient(verify=not INSECURE, timeout=65.0)`` (the scraper
         self-signs its TLS cert). Only GET is supported (matches Go).
         """
         try:
@@ -251,7 +256,7 @@ class DockerBrowser:
             urlencode(query), "",
         ))
 
-        async with httpx.AsyncClient(verify=False, timeout=SCRAPER_HTTP_TIMEOUT) as client:
+        async with httpx.AsyncClient(verify=not INSECURE, timeout=SCRAPER_HTTP_TIMEOUT) as client:
             try:
                 resp = await client.get(full)
             except Exception as exc:

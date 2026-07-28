@@ -1,4 +1,15 @@
-"""
+"""DEPRECATED: This module is kept for backward compatibility.
+
+New code should use ``securagentx.api.app`` instead — the canonical
+FastAPI application factory (``create_app()``) lives in the package at
+``securagentx/api/app.py`` and supersedes this standalone module.
+
+This file will be removed in a future release once ``main.py`` and
+``commands/system.py`` have been migrated off the ``run_server`` shim
+(see issue #43 / P11-B).
+
+--- legacy docstring below (for historical context) -----------------------
+
 tools/api_server.py — SecurAgentX Enterprise REST API
 ====================================================
 Professional-grade FastAPI REST API for CI/CD integration, web dashboards,
@@ -24,9 +35,23 @@ Built for integration with GitHub Actions, GitLab CI, Jenkins.
 
 from __future__ import annotations
 
+import warnings
+
+# Issue #43 / P11-B: This module is deprecated. New code should import
+# ``create_app`` from ``securagentx.api.app`` instead. The warning is
+# emitted at the very top of the module (before any heavy imports) so
+# downstream callers (main.py, commands/system.py) surface the
+# deprecation in their logs even if an optional dependency is missing.
+warnings.warn(
+    "tools.api_server is deprecated; use securagentx.api.app instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
 from datetime import datetime, timezone
@@ -36,11 +61,25 @@ from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger("securagentx.api_server")
 
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+# Used by any outbound HTTP clients spawned by API route handlers.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+
 # ---------------------------------------------------------------------------
 # Safe FastAPI import (optional dependency)
 # ---------------------------------------------------------------------------
 try:
-    from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+    from fastapi import (
+        BackgroundTasks,
+        Depends,
+        FastAPI,
+        Header,
+        HTTPException,
+        WebSocket,
+        WebSocketDisconnect,
+    )
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse, HTMLResponse
     from pydantic import BaseModel, Field
@@ -171,8 +210,8 @@ if _HAS_FASTAPI:
     )
     _app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Explicit origins only
+        allow_credentials=False,  # Cannot use True with specific origins safely
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -251,10 +290,26 @@ if _HAS_FASTAPI:
         finally:
             record.completed_at = datetime.now(timezone.utc)
 
+    # ── Auth ──────────────────────────────────────────────────────────────
+
+    async def auth_token_required(x_api_token: str = Header(...)):
+        """Validate the ``X-API-Token`` header against ``SECURAGENTX_API_TOKEN``.
+
+        If the env var is unset, all requests are rejected (fail-closed).
+        WebSocket endpoints are exempt (use query-param auth at the gateway
+        instead — out of scope for this hardening pass).
+        """
+        expected = os.environ.get("SECURAGENTX_API_TOKEN")
+        if not expected or x_api_token != expected:
+            raise HTTPException(
+                status_code=401, detail="Invalid or missing API token"
+            )
+        return x_api_token
+
     # ── Endpoints ─────────────────────────────────────────────────────────
 
     @_app.get("/health", tags=["System"])
-    async def health_check():
+    async def health_check(_: str = Depends(auth_token_required)):
         """System health check endpoint."""
         uptime_seconds = time.time() - _server_start_time
         return {
@@ -266,7 +321,11 @@ if _HAS_FASTAPI:
         }
 
     @_app.post("/scan", response_model=ScanStatus, tags=["Scan"])
-    async def start_scan(req: ScanRequest, background_tasks: BackgroundTasks):
+    async def start_scan(
+        req: ScanRequest,
+        background_tasks: BackgroundTasks,
+        _: str = Depends(auth_token_required),
+    ):
         """Start a new security scan."""
         try:
             from main import normalize_target, validate_target
@@ -288,7 +347,7 @@ if _HAS_FASTAPI:
         return ScanStatus(**record.to_dict())
 
     @_app.get("/scan/{scan_id}", response_model=ScanStatus, tags=["Scan"])
-    async def get_scan(scan_id: str):
+    async def get_scan(scan_id: str, _: str = Depends(auth_token_required)):
         """Get scan status and metadata."""
         record = _scan_store.get(scan_id)
         if not record:
@@ -296,7 +355,7 @@ if _HAS_FASTAPI:
         return ScanStatus(**record.to_dict())
 
     @_app.post("/scan/{scan_id}/stop", tags=["Scan"])
-    async def stop_scan(scan_id: str):
+    async def stop_scan(scan_id: str, _: str = Depends(auth_token_required)):
         """Stop a running scan."""
         record = _scan_store.get(scan_id)
         if not record:
@@ -318,6 +377,7 @@ if _HAS_FASTAPI:
         vuln_type: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
+        _: str = Depends(auth_token_required),
     ):
         """Get findings for a scan with optional filters."""
         record = _scan_store.get(scan_id)
@@ -345,6 +405,7 @@ if _HAS_FASTAPI:
         target: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
+        _: str = Depends(auth_token_required),
     ):
         """Search across all findings."""
         all_findings: List[Dict[str, Any]] = []
@@ -371,7 +432,11 @@ if _HAS_FASTAPI:
         return {"total": total, "limit": limit, "offset": offset, "findings": all_findings}
 
     @_app.post("/findings/{finding_id}/suppress", tags=["Findings"])
-    async def suppress_finding(finding_id: str, req: SuppressRequest):
+    async def suppress_finding(
+        finding_id: str,
+        req: SuppressRequest,
+        _: str = Depends(auth_token_required),
+    ):
         """Mark a finding as suppressed (false positive)."""
         for record in _scan_store.values():
             for f in record.findings:
@@ -382,7 +447,11 @@ if _HAS_FASTAPI:
         raise HTTPException(status_code=404, detail=f"Finding not found: {finding_id}")
 
     @_app.post("/report", tags=["Reports"])
-    async def generate_report(req: ReportRequest, background_tasks: BackgroundTasks):
+    async def generate_report(
+        req: ReportRequest,
+        background_tasks: BackgroundTasks,
+        _: str = Depends(auth_token_required),
+    ):
         """Generate a compliance report from scan data."""
         scans = []
         for sid in req.scan_ids:
@@ -452,7 +521,11 @@ if _HAS_FASTAPI:
         }
 
     @_app.get("/report/{report_id}", tags=["Reports"])
-    async def download_report(report_id: str, format: str = "html"):
+    async def download_report(
+        report_id: str,
+        format: str = "html",
+        _: str = Depends(auth_token_required),
+    ):
         """Download a generated report."""
         report_path = Path(f"reports/{report_id}.{format}")
         if not report_path.exists():
@@ -469,7 +542,10 @@ if _HAS_FASTAPI:
         )
 
     @_app.post("/webhook", tags=["Webhooks"])
-    async def register_webhook(req: WebhookRequest):
+    async def register_webhook(
+        req: WebhookRequest,
+        _: str = Depends(auth_token_required),
+    ):
         """Register a CI/CD webhook."""
         webhook_id = f"wh_{uuid.uuid4().hex[:8]}"
         # Store webhook config to disk
@@ -489,7 +565,7 @@ if _HAS_FASTAPI:
         return {"status": "registered", "webhook_id": webhook_id, "url": req.url}
 
     @_app.get("/webhooks", tags=["Webhooks"])
-    async def list_webhooks():
+    async def list_webhooks(_: str = Depends(auth_token_required)):
         """List all registered webhooks."""
         wh_dir = Path("data/webhooks")
         wh_dir.mkdir(parents=True, exist_ok=True)
@@ -503,7 +579,10 @@ if _HAS_FASTAPI:
         return {"webhooks": webhooks}
 
     @_app.delete("/webhook/{webhook_id}", tags=["Webhooks"])
-    async def delete_webhook(webhook_id: str):
+    async def delete_webhook(
+        webhook_id: str,
+        _: str = Depends(auth_token_required),
+    ):
         """Remove a registered webhook."""
         wh_path = Path(f"data/webhooks/{webhook_id}.json")
         if wh_path.exists():
@@ -669,12 +748,16 @@ setInterval(refreshScans, 5000); refreshScans(); connectWS();
 </html>"""
 
     @_app.get("/", tags=["Dashboard"])
-    async def web_dashboard():
+    async def web_dashboard(_: str = Depends(auth_token_required)):
         """Built-in web dashboard."""
         return HTMLResponse(_DASHBOARD_HTML)
 
     @_app.get("/scan/all", tags=["Scan"])
-    async def list_all_scans(limit: int = 50, offset: int = 0):
+    async def list_all_scans(
+        limit: int = 50,
+        offset: int = 0,
+        _: str = Depends(auth_token_required),
+    ):
         """List all scans."""
         scans = sorted(_scan_store.values(), key=lambda s: s.created_at, reverse=True)
         scans = scans[offset : offset + limit]
@@ -711,11 +794,13 @@ setInterval(refreshScans, 5000); refreshScans(); connectWS();
 # ---------------------------------------------------------------------------
 
 
-def run_server(host: str = "0.0.0.0", port: int = 8443, reload: bool = False) -> None:
+def run_server(host: str = "127.0.0.1", port: int = 8443, reload: bool = False) -> None:
     """Launch the SecurAgentX Enterprise API server.
 
     Args:
-        host: Bind address (default: 0.0.0.0)
+        host: Bind address (default: 127.0.0.1 — loopback only; do NOT bind
+            0.0.0.0 in production without an upstream reverse proxy that
+            terminates TLS and enforces auth/rate-limiting).
         port: Listen port (default: 8443)
         reload: Auto-reload on code changes (default: False)
     """

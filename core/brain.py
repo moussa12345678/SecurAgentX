@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import sqlite3
 import time
@@ -22,6 +23,11 @@ from tools.cvss_calculator import CVSSCalculator
 from tools.tool_registry import ToolCategory, ToolResult
 
 logger = logging.getLogger(__name__)
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set the env var
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 # ---------------------------------------------------------------------------
 # Module-level lazy import helpers
@@ -969,7 +975,7 @@ class SecurAgentXAgent:
 
         try:
             requests.packages.urllib3.disable_warnings()
-            resp = requests.get(http_target, timeout=10, verify=False)
+            resp = requests.get(http_target, timeout=10, verify=not INSECURE)
             from agents.agent_planner import TargetFingerprinter
             fp = TargetFingerprinter()
             result = fp.fingerprint(resp.text, resp.headers)

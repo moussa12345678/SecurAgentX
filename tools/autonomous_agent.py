@@ -27,12 +27,13 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from securagentx.paths import get_data_dir
-from typing import (
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 try:
@@ -42,6 +43,11 @@ except Exception:
     get_target_summary = None
 
 logger = logging.getLogger("securagentx.autonomous")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 from cli.live_display import display_in_chat_mode
 from cli.ui_components import console as _ui_console
@@ -214,7 +220,7 @@ def _exec_http_probe(action: AgentAction, state: AgentState) -> List[Dict]:
         url = f"https://{url}"
     try:
         r = requests.get(
-            url, timeout=15, allow_redirects=True, headers=_build_headers(state), verify=False
+            url, timeout=15, allow_redirects=True, headers=_build_headers(state), verify=not INSECURE
         )
         headers = dict(r.headers)
 
@@ -280,11 +286,11 @@ def _exec_waf_detect(action: AgentAction, state: AgentState) -> List[Dict]:
     try:
         from tools.waf_signatures import detect_waf_from_response
 
-        r_clean = requests.get(url, timeout=10, verify=False, headers=_build_headers(state))
+        r_clean = requests.get(url, timeout=10, verify=not INSECURE, headers=_build_headers(state))
         r_attack = requests.get(
             url + "?q=<script>alert(1)</script>&id=1 OR 1=1--",
             timeout=10,
-            verify=False,
+            verify=not INSECURE,
             headers=_build_headers(state, {"User-Agent": "sqlmap/1.0"}),
         )
 
@@ -365,7 +371,7 @@ def _exec_endpoint_fuzz(action: AgentAction, state: AgentState, ai_client=None) 
                 timeout=8,
                 allow_redirects=False,
                 headers=_build_headers(state),
-                verify=False,
+                verify=not INSECURE,
             )
             if r.status_code in (200, 201, 301, 302, 401, 403):
                 interesting.append((path, r.status_code, len(r.content)))
@@ -422,7 +428,7 @@ def _exec_bola_probe(action: AgentAction, state: AgentState) -> List[Dict]:
                 timeout=8,
                 allow_redirects=False,
                 headers=_build_headers(state),
-                verify=False,
+                verify=not INSECURE,
             )
             if r.status_code == 200 and len(r.content) > 20:
                 findings.append(
@@ -459,7 +465,7 @@ def _exec_header_audit(action: AgentAction, state: AgentState) -> List[Dict]:
         r = requests.options(
             url,
             timeout=10,
-            verify=False,
+            verify=not INSECURE,
             headers=_build_headers(
                 state,
                 {
@@ -1251,7 +1257,7 @@ def _exec_vuln_scan(action: AgentAction, state: AgentState) -> List[Dict]:
         for path, description in test_paths:
             try:
                 url = f"{target.rstrip('/')}{path}"
-                response = requests.get(url, timeout=5, verify=False)
+                response = requests.get(url, timeout=5, verify=not INSECURE)
 
                 if response.status_code == 200 and len(response.text) > 100:
                     findings.append(
@@ -1301,7 +1307,7 @@ def _exec_xss_hunt(action: AgentAction, state: AgentState) -> List[Dict]:
             for payload in xss_payloads:
                 try:
                     url = f"{target}?{param}={payload}"
-                    response = requests.get(url, timeout=5, verify=False)
+                    response = requests.get(url, timeout=5, verify=not INSECURE)
 
                     if payload in response.text:
                         findings.append(

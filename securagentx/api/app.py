@@ -13,8 +13,10 @@ Design constraints (per Task 6-a):
   without ``fastapi`` installed.
 * **OpenAPI at ``/api/v1/docs``** (replaces PentAGI's Swagger).
 * **CORS middleware** with configurable ``allowed_origins`` (default
-  ``["*"]``; auto-add ``https://accounts.google.com`` when Google OAuth
-  is enabled — Task 1-c recommendation §11).
+  ``["http://localhost:3000", "http://127.0.0.1:3000"]``; auto-add
+  ``https://accounts.google.com`` when Google OAuth is enabled — Task 1-c
+  recommendation §11). Credentials are always ``False`` (cannot safely be
+  ``True`` with a specific-origin allow-list — Issue 30).
 * **TrustedHostMiddleware** with configurable allowed hosts.
 * **GZipMiddleware** for response compression.
 * **Custom exception handlers** for 400, 401, 403, 404, 409, 422, 500 —
@@ -30,10 +32,17 @@ Design constraints (per Task 6-a):
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Optional
 
 logger = logging.getLogger("securagentx.api.app")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). Used by outbound HTTP clients
+# spawned by routers (e.g. /providers/test, /knowledge/documents URL fetch).
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 
 # ---------------------------------------------------------------------------
@@ -77,9 +86,11 @@ def create_app(
     Args:
         version: API version string. Surfaced in ``GET /info`` and the
             OpenAPI spec title.
-        allowed_origins: CORS allow-list. Defaults to ``["*"]``. If
-            Google OAuth is enabled, ``https://accounts.google.com``
-            is appended automatically (mirror of PentAGI's CORS wiring).
+        allowed_origins: CORS allow-list. Defaults to
+            ``["http://localhost:3000", "http://127.0.0.1:3000"]`` (explicit
+            origins only — never ``["*"]`` with credentials). If Google OAuth
+            is enabled, ``https://accounts.google.com`` is appended
+            automatically (mirror of PentAGI's CORS wiring).
         allowed_hosts: TrustedHostMiddleware allow-list. Defaults to
             ``["*"]`` (all hosts). In production, set this to the
             server's hostname(s).
@@ -150,7 +161,18 @@ def create_app(
     from .routes import all_routers  # noqa: WPS433
 
     # --- CORS allow-list construction ------------------------------------
-    cors_origins = list(allowed_origins) if allowed_origins is not None else ["*"]
+    # Issue 30 hardening: never default to ["*"] + allow_credentials=True —
+    # that combination is interpreted by browsers as "reflect any Origin and
+    # send cookies", which is effectively a full bypass. Default to an
+    # explicit local-dev allow-list; production callers MUST pass their own
+    # allowed_origins explicitly via create_app(allowed_origins=[...]).
+    _DEFAULT_CORS_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    cors_origins = (
+        list(allowed_origins) if allowed_origins is not None else list(_DEFAULT_CORS_ORIGINS)
+    )
     if oauth_google_enabled:
         # PentAGI auto-adds accounts.google.com when Google OAuth is on
         # (see Task 1-c recommendation §11).
@@ -264,7 +286,11 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
-        allow_credentials=True,
+        # Issue 30: cannot safely use allow_credentials=True with a specific
+        # origin list (browsers treat it as "reflect Origin + send cookies",
+        # which silently widens the allow-list). Keep False unless an explicit
+        # cookie-based cross-origin flow is wired up.
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=[

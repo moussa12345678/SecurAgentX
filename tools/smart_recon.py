@@ -15,6 +15,7 @@ Output: Enriched asset graph stored in MissionState for agent reasoning.
 from __future__ import annotations
 
 import logging
+import os
 import re
 import socket
 import subprocess
@@ -27,6 +28,11 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import requests
 
 logger = logging.getLogger("securagentx.smart_recon")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 
 @dataclass
@@ -261,7 +267,7 @@ class SmartReconEngine:
                     timeout=10,
                     allow_redirects=True,
                     headers={"User-Agent": "Mozilla/5.0 (compatible; SecurAgentX/2.0)"},
-                    verify=False,  # For recon, we accept invalid certs
+                    verify=not INSECURE,  # Issue 32: opt-in via SECURAGENTX_INSECURE
                 )
 
                 headers = dict(r.headers)

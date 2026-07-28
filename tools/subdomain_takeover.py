@@ -12,6 +12,7 @@ Technique:
 """
 
 import logging
+import os
 import re
 import socket
 from typing import Dict, List, Optional, Tuple
@@ -20,6 +21,11 @@ from urllib.parse import urlparse
 import requests
 
 logger = logging.getLogger("securagentx.subdomain_takeover")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 _TIMEOUT = 8
 
@@ -195,7 +201,7 @@ def check_http_fingerprint(domain: str, fingerprints: List[str]) -> Tuple[bool, 
                 f"{scheme}://{domain}",
                 timeout=_TIMEOUT,
                 headers={"User-Agent": "SecurAgentX-Security-Scanner/3.0"},
-                verify=False,
+                verify=not INSECURE,
                 allow_redirects=True,
             )
             body = resp.text[:5000]

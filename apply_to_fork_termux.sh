@@ -4,7 +4,7 @@
 # ============================================================
 set -e
 
-ARCHIVE="elengenix-pentagi-integration.tar.gz"
+ARCHIVE="securagentx-integration.tar.gz"
 BRANCH_NAME="feat/pentagi-integration"
 TMP_DIR="$HOME/.tmp-securagentx-integration"
 

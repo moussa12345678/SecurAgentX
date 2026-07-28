@@ -8,6 +8,7 @@ tools/param_miner.py — Hidden Parameter Discovery
 from __future__ import annotations
 
 import logging
+import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List
@@ -15,6 +16,11 @@ from typing import Dict, List
 import requests
 
 logger = logging.getLogger("securagentx.param_miner")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 COMMON_PARAMS: List[str] = [
     "id",
@@ -82,7 +88,7 @@ def mine_parameters(
 
     # Baseline
     try:
-        base = session.get(url, timeout=_TIMEOUT, verify=False)
+        base = session.get(url, timeout=_TIMEOUT, verify=not INSECURE)
         baseline_status = base.status_code
         baseline_len = len(base.content)
     except Exception as e:
@@ -94,7 +100,7 @@ def mine_parameters(
     def probe(param: str) -> Dict | None:
         test_url = f"{url}{'&' if '?' in url else '?'}{param}={canary}"
         try:
-            r = session.get(test_url, timeout=_TIMEOUT, verify=False)
+            r = session.get(test_url, timeout=_TIMEOUT, verify=not INSECURE)
             length_delta = abs(len(r.content) - baseline_len)
             reflected = canary in r.text
 

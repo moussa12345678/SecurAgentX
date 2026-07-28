@@ -8,12 +8,18 @@ tools/js_analyzer.py — JavaScript Secret & Endpoint Extractor
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Dict, List
 
 import requests
 
 logger = logging.getLogger("securagentx.js_analyzer")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 # Pattern → (description, severity)
 PATTERNS: Dict[str, tuple] = {
@@ -55,7 +61,7 @@ def analyze_js(url: str) -> Dict[str, List[Dict]]:
             url,
             timeout=_TIMEOUT,
             headers={"User-Agent": "SecurAgentX-Security-Scanner/2.0"},
-            verify=False,
+            verify=not INSECURE,
         )
         r.raise_for_status()
         content = r.text

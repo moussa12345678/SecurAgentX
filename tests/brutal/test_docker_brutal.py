@@ -2332,23 +2332,64 @@ class TestBrowserActions:
 
 
 class TestBrowserHttpxConfig:
-    """Verify httpx is constructed with verify=False and 65s timeout."""
+    """Verify httpx is constructed with verify=not INSECURE and 65s timeout.
+
+    Issue 32 (P8-C): TLS verification is now opt-out via the
+    SECURAGENTX_INSECURE env var. By default (env unset) verify=True
+    (secure); set SECURAGENTX_INSECURE=1 to opt into verify=False for
+    hostile targets with self-signed certs.
+    """
 
     @pytest.mark.asyncio
-    async def test_httpx_uses_verify_false(self):
-        """Self-signed cert tolerance: verify=False."""
+    async def test_httpx_uses_verify_not_insecure_default(self):
+        """Default (SECURAGENTX_INSECURE unset) → verify=True (secure)."""
         b = DockerBrowser(flow_id=1, data_dir="/tmp",
                           scraper_private_url="http://scraper:3000")
-        with patch("httpx.AsyncClient") as mock_client_cls:
-            mock_client = AsyncMock()
-            mock_resp = MagicMock(status_code=200, content=b"# x\n" + b"y " * 50)
-            mock_client.get = AsyncMock(return_value=mock_resp)
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=None)
-            mock_client_cls.return_value = mock_client
-            await b.markdown("http://example.com/")
-            call_kwargs = mock_client_cls.call_args.kwargs
-            assert call_kwargs.get("verify") is False
+        with patch.dict("os.environ", {}, clear=False):
+            import os as _os
+            _os.environ.pop("SECURAGENTX_INSECURE", None)
+            # Re-evaluate the module-level constant for this test.
+            import securagentx.docker.browser as _browser_mod
+            saved = _browser_mod.INSECURE
+            _browser_mod.INSECURE = _os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+            try:
+                with patch("httpx.AsyncClient") as mock_client_cls:
+                    mock_client = AsyncMock()
+                    mock_resp = MagicMock(status_code=200, content=b"# x\n" + b"y " * 50)
+                    mock_client.get = AsyncMock(return_value=mock_resp)
+                    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+                    mock_client.__aexit__ = AsyncMock(return_value=None)
+                    mock_client_cls.return_value = mock_client
+                    await b.markdown("http://example.com/")
+                    call_kwargs = mock_client_cls.call_args.kwargs
+                    # Default: verify=True (TLS verification on)
+                    assert call_kwargs.get("verify") is True
+            finally:
+                _browser_mod.INSECURE = saved
+
+    @pytest.mark.asyncio
+    async def test_httpx_uses_verify_false_when_insecure_env_set(self):
+        """Self-signed cert tolerance: verify=False when SECURAGENTX_INSECURE=1."""
+        b = DockerBrowser(flow_id=1, data_dir="/tmp",
+                          scraper_private_url="http://scraper:3000")
+        with patch.dict("os.environ", {"SECURAGENTX_INSECURE": "1"}, clear=False):
+            import securagentx.docker.browser as _browser_mod
+            saved = _browser_mod.INSECURE
+            _browser_mod.INSECURE = True  # env var is set to "1"
+            try:
+                with patch("httpx.AsyncClient") as mock_client_cls:
+                    mock_client = AsyncMock()
+                    mock_resp = MagicMock(status_code=200, content=b"# x\n" + b"y " * 50)
+                    mock_client.get = AsyncMock(return_value=mock_resp)
+                    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+                    mock_client.__aexit__ = AsyncMock(return_value=None)
+                    mock_client_cls.return_value = mock_client
+                    await b.markdown("http://example.com/")
+                    call_kwargs = mock_client_cls.call_args.kwargs
+                    # Opt-in insecure: verify=False
+                    assert call_kwargs.get("verify") is False
+            finally:
+                _browser_mod.INSECURE = saved
 
     @pytest.mark.asyncio
     async def test_httpx_uses_65s_timeout(self):

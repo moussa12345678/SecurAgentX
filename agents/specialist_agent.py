@@ -13,6 +13,7 @@ Sub-workers:
 from __future__ import annotations
 
 import logging
+import os
 import re
 import subprocess
 import time
@@ -25,6 +26,11 @@ if TYPE_CHECKING:
     from agents.agent_council import SharedInbox
 
 logger = logging.getLogger("securagentx.specialist")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 
 # ── Sub-Workers ────────────────────────────────────────────────────────────────
@@ -174,7 +180,7 @@ class FuzzerWorker(BaseWorker):
         for path in common_paths:
             try:
                 url = f"{target.rstrip('/')}{path}"
-                response = requests.get(url, timeout=5, verify=False)
+                response = requests.get(url, timeout=5, verify=not INSECURE)
 
                 if response.status_code in [200, 301, 302, 403]:
                     findings.append(
@@ -385,7 +391,6 @@ Respond ONLY with valid JSON. No extra text."""
         import asyncio
         from pathlib import Path
         from securagentx.paths import get_reports_path
-        from typing import (
         from tools.tool_registry import registry
 
         tool_name = decision.get("tool", "")

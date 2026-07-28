@@ -13,7 +13,7 @@
 set -e
 
 # --- Configuration ---
-ARCHIVE="elengenix-pentagi-integration.tar.gz"
+ARCHIVE="securagentx-integration.tar.gz"
 BRANCH_NAME="feat/pentagi-integration"
 COMMIT_MSG="feat: integrate PentAGI features into SecurAgentX
 

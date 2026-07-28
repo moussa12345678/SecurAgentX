@@ -29,6 +29,46 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("securagentx.ai_tool_creator")
 
+# ---------------------------------------------------------------------------
+# Issue 31 (P8-C): Package-name allowlist for ``pip install``.
+#
+# Without validation, an AI-generated ToolSpec could request installation of
+# arbitrary pip packages — including ones whose names contain shell
+# metacharacters (e.g. ``foo; rm -rf /``) which can be smuggled past
+# ``subprocess.run`` arg lists on some platforms, or which simply install
+# malicious packages (typosquats) from PyPI. The regex below mirrors
+# PEP 508's normalised-name grammar: letters, digits, ``._-`` only, must
+# start with an alphanumeric character. Version specifiers, extras, and
+# VCS URLs are rejected — AI tools must declare bare names only.
+# ---------------------------------------------------------------------------
+
+ALLOWED_PACKAGES = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+
+
+def validate_package_name(pkg: str) -> bool:
+    """Validate a pip package name against the allowlist regex.
+
+    Args:
+        pkg: Bare package name (e.g. ``"requests"``). Version specifiers
+            (``"requests>=2.0"``), extras (``"requests[socks]"``), and
+            VCS URLs (``"git+https://..."``) are rejected.
+
+    Returns:
+        True if the package name is safe to pass to ``pip install``.
+
+    Raises:
+        ValueError: If the package name does not match the allowlist.
+    """
+    if not isinstance(pkg, str) or not pkg:
+        raise ValueError(f"Invalid package name: {pkg!r}")
+    if not ALLOWED_PACKAGES.match(pkg):
+        raise ValueError(
+            f"Invalid package name: {pkg!r} — only letters, digits, '.', "
+            "'_', and '-' are allowed (must start alphanumeric; no version "
+            "specifiers, extras, or VCS URLs)"
+        )
+    return True
+
 
 @dataclass
 class ToolSpec:
@@ -189,9 +229,21 @@ class DependencyManager:
         self.installed = set()
 
     def install_pip_package(self, package: str) -> bool:
-        """Install pip package safely."""
+        """Install pip package safely.
+
+        Validates the package name against an allowlist regex (Issue 31)
+        before invoking pip — prevents shell-metacharacter injection and
+        blocks malicious/typosquat names from being installed by AI tools.
+        """
         if package in self.installed:
             return True
+
+        # Issue 31 (P8-C): Allowlist check BEFORE pip is invoked.
+        try:
+            validate_package_name(package)
+        except ValueError as exc:
+            logger.error("Refused to install disallowed package: %s", exc)
+            return False
 
         try:
             cmd = [sys.executable, "-m", "pip", "install", "--user", "--quiet", package]

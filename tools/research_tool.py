@@ -22,6 +22,13 @@ try:
 except ImportError:
     _HAS_TRAFILATURA = False
 
+logger = logging.getLogger("securagentx.research_tool")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+
 try:
     from googlesearch import search
 
@@ -224,7 +231,7 @@ def extract_and_summarize(url: str, max_chars: int = _MAX_TEXT) -> Dict:
         Dict with url, title, text, chars, error keys.
     """
     try:
-        r = requests.get(url, headers=_headers(), timeout=_TIMEOUT, verify=False)
+        r = requests.get(url, headers=_headers(), timeout=_TIMEOUT, verify=not INSECURE)
         r.raise_for_status()
 
         if not _HAS_TRAFILATURA:

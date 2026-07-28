@@ -42,6 +42,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
+import os
 import secrets
 import string
 import time
@@ -147,6 +148,25 @@ USER_CACHE_TTL = 300
 
 # Negative-cache sentinel.
 _NEG_CACHE_SENTINEL = "__not_found__"
+
+# Session-cookie signing secret + freshness window.
+#
+# ``SESSION_SECRET`` is the server-wide HMAC key used by
+# :func:`securagentx.auth.sessions.create_session_cookie` to sign the
+# ``securagentx_session`` cookie. The same secret MUST be used to verify
+# it. We resolve it lazily from ``SECURAGENTX_SESSION_SECRET`` so the
+# default is obviously insecure (``"change-me-in-production"``) and
+# production deployments set the env var (or wire
+# ``app.state.session_secret`` directly in ``create_app()``).
+#
+# ``SESSION_MAX_AGE`` is the upper-bound freshness check applied by
+# :func:`verify_session_cookie`. The session payload also carries an
+# authoritative ``exp`` claim which :func:`validate_session_cookie`
+# enforces independently.
+SESSION_SECRET: str = os.environ.get(
+    "SECURAGENTX_SESSION_SECRET", "change-me-in-production"
+)
+SESSION_MAX_AGE: int = 3600  # 1 hour — itsdangerous freshness window
 
 
 # ---------------------------------------------------------------------------
@@ -260,11 +280,28 @@ def verify_api_token(token: str, global_salt: str) -> dict[str, Any]:
 
     Raises:
         RuntimeError: if PyJWT is not installed.
+        ValueError: if ``global_salt`` is the default sentinel ``"salt"``,
+            empty, or shorter than 8 characters. This blocks the
+            authentication bypass where a misconfigured deployment
+            silently accepted any token because the signing key was
+            derived from a public default (issue 33).
         jwt.PyJWTError: on any verification failure (expired, bad sig,
             ``alg:none``, etc.).
     """
     if pyjwt is None:  # pragma: no cover
         raise RuntimeError("PyJWT is not installed: pip install 'pyjwt[crypto]'")
+    # SECURITY (issue 33): Reject default / weak salts before key derivation.
+    # The previous behaviour silently accepted any token when the salt was
+    # the public default ``"salt"`` — an authentication bypass. ``try_auth``
+    # wraps this call in ``except Exception:`` so callers see a clean 401.
+    if (
+        global_salt == DEFAULT_GLOBAL_SALT
+        or not global_salt
+        or len(global_salt) < 8
+    ):
+        raise ValueError(
+            "Insecure salt detected — use a strong, unique salt (min 8 chars)"
+        )
     key = derive_signing_key(global_salt)
     # algorithms=["HS256"] blocks alg:none and RS256 confusion attacks.
     return pyjwt.decode(token, key, algorithms=["HS256"])
@@ -440,22 +477,103 @@ def _extract_bearer(authorization: Optional[str]) -> Optional[str]:
     return parts[1].strip() or None
 
 
-def _extract_session_cookie(cookies: dict[str, str]) -> Optional[dict[str, Any]]:
-    """Extract session claims from the ``securagentx_session`` cookie.
+def verify_session_cookie(
+    cookie_value: str,
+    secret_key: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
+    """Verify a signed session cookie and return its payload.
 
-    PentAGI uses Gorilla cookie store; SecurAgentX uses signed cookies
-    via ``itsdangerous.URLSafeTimedSerializer`` (TODO: implement in
-    ``securagentx.api._sessions``). For now we return ``None`` if no
-    cookie is present; the actual session-decoding helper will be
-    added by Task 6-b.
+    Closes the session-cookie auth bypass (issue #39): previously
+    :func:`_extract_session_cookie` accepted any opaque cookie value
+    and yielded an :class:`Identity` with ``uid=0``. We now delegate to
+    :func:`securagentx.auth.sessions.validate_session_cookie`, which
+    enforces the ``itsdangerous`` HMAC signature, the ``exp`` claim,
+    and (when a ``user_hash_provider`` is wired) the installation-binding
+    hash check.
+
+    Args:
+        cookie_value: Raw cookie value from the ``Cookie`` header.
+        secret_key: Server-wide signing secret. When ``None``, falls
+            back to the module-level :data:`SESSION_SECRET` (env-var
+            driven). If both are unset/empty the function returns
+            ``None`` — we **fail closed** rather than trust an
+            unsigned cookie.
+
+    Returns:
+        Decoded session payload dict on success, ``None`` on any
+        verification failure (bad signature, expired, tampered, or
+        no secret configured).
+    """
+    if not cookie_value:
+        return None
+    secret = secret_key or SESSION_SECRET
+    if not secret:
+        logger.warning(
+            "verify_session_cookie: no session secret configured — "
+            "refusing to trust cookie; set SECURAGENTX_SESSION_SECRET "
+            "or app.state.session_secret"
+        )
+        return None
+    # Lazy import — keeps the module importable for AST inspection in
+    # CLI-only environments without itsdangerous installed.
+    try:
+        from itsdangerous import BadSignature, SignatureExpired  # type: ignore[import-not-found]
+        from securagentx.auth.sessions import validate_session_cookie
+    except ImportError:  # pragma: no cover — defensive
+        logger.exception(
+            "verify_session_cookie: itsdangerous / securagentx.auth.sessions "
+            "not importable — refusing to trust cookie"
+        )
+        return None
+    try:
+        return validate_session_cookie(
+            cookie_value,
+            secret,
+            max_age_seconds=SESSION_MAX_AGE,
+        )
+    except SignatureExpired:
+        logger.debug("verify_session_cookie: session cookie expired")
+        return None
+    except BadSignature:
+        logger.debug("verify_session_cookie: session cookie signature invalid")
+        return None
+    except Exception:  # pragma: no cover — defensive
+        logger.exception("verify_session_cookie: unexpected validation error")
+        return None
+
+
+def _extract_session_cookie(
+    cookies: dict[str, str],
+    secret_key: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
+    """Extract + verify session claims from the ``securagentx_session`` cookie.
+
+    Wraps :func:`verify_session_cookie` so the rest of the auth flow
+    (``try_auth``) gets a fully-validated session dict — or ``None``
+    when no cookie is present / verification fails. The previous
+    implementation returned ``{"raw": raw}`` for any cookie value,
+    which let any caller mint a fake ``securagentx_session=session-x-y``
+    cookie and obtain an :class:`Identity` (issue #39).
+
+    Args:
+        cookies: Cookie dict from ``request.cookies``.
+        secret_key: Server-wide session signing secret. When ``None``
+            the function falls back to :data:`SESSION_SECRET`.
+
+    Returns:
+        Validated session payload dict on success, ``None`` if no
+        cookie is present or verification fails.
     """
     raw = cookies.get("securagentx_session")
     if not raw:
         return None
-    # TODO (Task 6-b): implement cookie decoding + signature check.
-    # For now we treat the cookie as opaque and let the router layer
-    # populate Identity from a DB lookup.
-    return {"raw": raw}
+    payload = verify_session_cookie(raw, secret_key=secret_key)
+    if payload is None:
+        return None
+    # Normalise field aliases: ``sessions`` uses ``gtm`` for issued-at
+    # while ``try_auth`` reads ``iat`` for Identity.issued_at.
+    payload.setdefault("iat", payload.get("gtm"))
+    return payload
 
 
 # --- Dependency implementations ---------------------------------------------
@@ -498,8 +616,16 @@ async def try_auth(request: Request) -> Optional[Identity]:
         )
         token_cache.set(tid, identity)
         return identity
-    # Cookie session.
-    sess = _extract_session_cookie(request.cookies)
+    # Cookie session — pull the signing secret from ``app.state``
+    # (configured by ``create_app()``) with a fallback to the
+    # env-var-driven module-level ``SESSION_SECRET``. Failing closed
+    # when no secret is configured is intentional (issue #39).
+    session_secret = getattr(
+        request.app.state, "session_secret", SESSION_SECRET
+    )
+    sess = _extract_session_cookie(
+        request.cookies, secret_key=session_secret
+    )
     if sess:
         return Identity(
             user_id=int(sess.get("uid", 0)),
@@ -585,6 +711,8 @@ __all__ = [
     "PBKDF2_KEY_LENGTH",
     "PBKDF2_HASH",
     "DEFAULT_GLOBAL_SALT",
+    "SESSION_SECRET",
+    "SESSION_MAX_AGE",
     "TOKEN_ID_LENGTH",
     "TOKEN_ID_ALPHABET",
     "MIN_TOKEN_TTL",
@@ -598,6 +726,8 @@ __all__ = [
     # jwt
     "sign_api_token",
     "verify_api_token",
+    # session cookie
+    "verify_session_cookie",
     # user hash
     "make_user_hash",
     # identity

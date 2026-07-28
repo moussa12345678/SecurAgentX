@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import socket
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
@@ -31,6 +32,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 logger = logging.getLogger("securagentx.python_recon")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 
 @dataclass
@@ -508,7 +514,7 @@ class PythonRecon:
             "length": 0,
         }
         try:
-            r = self._session.get(url, timeout=self.timeout, allow_redirects=True, verify=False)
+            r = self._session.get(url, timeout=self.timeout, allow_redirects=True, verify=not INSECURE)
             result["status"] = r.status_code
             result["headers"] = dict(r.headers)
             result["final_url"] = r.url
@@ -552,7 +558,7 @@ class PythonRecon:
             test_url = f"{url}/{path}"
             try:
                 r = self._session.get(
-                    test_url, timeout=self.timeout, allow_redirects=False, verify=False
+                    test_url, timeout=self.timeout, allow_redirects=False, verify=not INSECURE
                 )
                 if r.status_code != 404:
                     results.append(
@@ -614,7 +620,7 @@ class PythonRecon:
 
         # Baseline (no params)
         try:
-            baseline = self._session.get(url, timeout=self.timeout, verify=False)
+            baseline = self._session.get(url, timeout=self.timeout, verify=not INSECURE)
             base_len = len(baseline.content)
         except requests.RequestException:
             return []
@@ -625,11 +631,11 @@ class PythonRecon:
                 try:
                     if method == "GET":
                         r = self._session.get(
-                            url, params={p: "test123"}, timeout=self.timeout, verify=False
+                            url, params={p: "test123"}, timeout=self.timeout, verify=not INSECURE
                         )
                     else:
                         r = self._session.post(
-                            url, data={p: "test123"}, timeout=self.timeout, verify=False
+                            url, data={p: "test123"}, timeout=self.timeout, verify=not INSECURE
                         )
                     test_len = len(r.content)
                     delta_pct = (abs(test_len - base_len) / max(base_len, 1)) * 100

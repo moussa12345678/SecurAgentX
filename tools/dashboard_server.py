@@ -21,22 +21,72 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import secrets
 import socket
 import threading
 import time
 import webbrowser
 from datetime import datetime, timezone
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from tools.mission_state import MissionState
 
 logger = logging.getLogger("securagentx.dashboard")
 
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+# Used by any outbound HTTP clients spawned by dashboard route handlers.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+
+# Issue 35 (P9-A): Dashboard auth.
+# The dashboard serves security findings + mission state — sensitive data
+# that must not be exposed to other local users / processes. Two layers:
+#   1. ``host="127.0.0.1"`` — bind to loopback only (no LAN exposure).
+#   2. Random bearer token — required on every request. Auto-generated
+#      at startup (logged once) or set explicitly via the
+#      ``SECURAGENTX_DASHBOARD_TOKEN`` env var.
+DASHBOARD_COOKIE_NAME: str = "securagentx_dashboard"
+DASHBOARD_TOKEN_ENV: str = "SECURAGENTX_DASHBOARD_TOKEN"
+_DASHBOARD_TOKEN_MIN_LEN: int = 16
+
+
+def _get_or_create_dashboard_token() -> str:
+    """Return the dashboard auth token.
+
+    Reads ``SECURAGENTX_DASHBOARD_TOKEN`` from the environment. If unset
+    or too short, generates a fresh ``secrets.token_urlsafe(32)`` token
+    (≈43 chars, 256 bits of entropy). The caller is expected to log the
+    token once so the operator can grab it from the terminal.
+    """
+    env_token = os.environ.get(DASHBOARD_TOKEN_ENV, "").strip()
+    if env_token and len(env_token) >= _DASHBOARD_TOKEN_MIN_LEN:
+        return env_token
+    return secrets.token_urlsafe(32)
+
+
+def _parse_cookie_header(header_value: str) -> Dict[str, str]:
+    """Parse a ``Cookie:`` header value into a ``{name: value}`` dict."""
+    if not header_value:
+        return {}
+    try:
+        cookie = SimpleCookie()
+        cookie.load(header_value)
+        return {name: morsel.value for name, morsel in cookie.items()}
+    except Exception:  # pragma: no cover — defensive, malformed cookies
+        return {}
+
 
 class DashboardHandler(BaseHTTPRequestHandler):
     """HTTP request handler for the dashboard."""
+
+    # Length-capped auth-cookie value (just the token, no quoting needed
+    # for token_urlsafe output). Used for the Set-Cookie header.
+    _COOKIE_FLAGS = "; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400"
 
     def log_message(self, format, *args):
         # Suppress default logging
@@ -47,6 +97,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         query = parse_qs(parsed_path.query)
+
+        # Issue 35 (P9-A): every route requires a valid dashboard token.
+        # ``_check_auth`` accepts Bearer header, ?token= query, or the
+        # cookie it set on a previous successful ?token= request.
+        if not self._check_auth(query):
+            self._send_401()
+            return
 
         if path == "/" or path == "/index.html":
             self._serve_dashboard()
@@ -64,6 +121,83 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self._serve_static_file(path[8:])
         else:
             self._send_404()
+
+    # ------------------------------------------------------------------
+    # Auth (issue 35)
+    # ------------------------------------------------------------------
+
+    def _check_auth(self, query: Dict[str, List[str]]) -> bool:
+        """Return True if the request carries valid dashboard auth.
+
+        Three accepted forms (any one is sufficient):
+
+        1. ``Authorization: Bearer <token>`` header (for API/curl use).
+        2. ``?token=<token>`` query param — used by the auto-opened
+           browser URL. On success, also sets a cookie so subsequent
+           requests (including ``window.open('/export/...')`` from JS)
+           authenticate transparently.
+        3. ``securagentx_dashboard=<token>`` cookie — set by case (2).
+
+        Uses ``secrets.compare_digest`` for constant-time comparison to
+        avoid timing oracles.
+        """
+        expected = getattr(self.server, "dashboard_token", "")
+        if not expected:
+            # Server didn't initialise a token — fail closed.
+            return False
+
+        # 1. Bearer header.
+        auth_header = self.headers.get("Authorization", "") or ""
+        if auth_header.startswith("Bearer "):
+            supplied = auth_header[7:].strip()
+            if supplied and secrets.compare_digest(supplied, expected):
+                return True
+
+        # 2. ?token=<token> query param → also set the auth cookie.
+        token_values = query.get("token") or []
+        for supplied in token_values:
+            if supplied and secrets.compare_digest(supplied, expected):
+                self._set_auth_cookie(expected)
+                return True
+
+        # 3. Cookie.
+        cookies = _parse_cookie_header(self.headers.get("Cookie", "") or "")
+        supplied = cookies.get(DASHBOARD_COOKIE_NAME, "")
+        if supplied and secrets.compare_digest(supplied, expected):
+            return True
+
+        return False
+
+    def _set_auth_cookie(self, token: str) -> None:
+        """Set the dashboard auth cookie on the outgoing response.
+
+        Note: this must be called BEFORE ``send_response``/``end_headers``
+        of the actual response body — we send a tiny 302-style redirect
+        is unnecessary because we accept the cookie on the same request
+        that set it (the handler proceeds to serve the body after the
+        ``_check_auth`` call returned True).
+        """
+        # We piggy-back on the upcoming response's headers. The handler
+        # will call ``send_response`` immediately after, so we MUST NOT
+        # finalise the headers here. Instead, stash the Set-Cookie on
+        # ``self._pending_set_cookie`` and let ``_send_response`` emit it.
+        self._pending_set_cookie = (
+            f"{DASHBOARD_COOKIE_NAME}={token}{self._COOKIE_FLAGS}"
+        )
+
+    def _send_401(self) -> None:
+        """Send a 401 Unauthorized response with a small HTML body."""
+        body = (
+            b"<!DOCTYPE html><html><head><title>401 Unauthorized</title></head>"
+            b"<body><h1>401 Unauthorized</h1>"
+            b"<p>SecurAgentX dashboard requires authentication.</p>"
+            b"<p>Open the URL printed in the server log (it includes the "
+            b"<code>?token=...</code> parameter), or set the "
+            b"<code>SECURAGENTX_DASHBOARD_TOKEN</code> environment variable "
+            b"and pass it as <code>Authorization: Bearer &lt;token&gt;</code>.</p>"
+            b"</body></html>"
+        )
+        self._send_response(401, "text/html; charset=utf-8", body)
 
     def _serve_dashboard(self):
         """Serve the main dashboard HTML."""
@@ -141,6 +275,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if headers:
             for key, value in headers.items():
                 self.send_header(key, value)
+        # Issue 35: emit a deferred Set-Cookie if ``_check_auth`` asked
+        # for one (happens when the request authenticated via ?token=).
+        pending_cookie = getattr(self, "_pending_set_cookie", None)
+        if pending_cookie:
+            self.send_header("Set-Cookie", pending_cookie)
+            # Clear so subsequent responses from the same handler don't
+            # re-send the cookie.
+            self._pending_set_cookie = None
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(content)
@@ -828,11 +970,21 @@ if (localStorage.getItem('theme') === 'light') {
 class DashboardServer(HTTPServer):
     """Dashboard HTTP server with access to findings data."""
 
-    def __init__(self, address, handler_class, mission_state: Optional[MissionState] = None):
+    def __init__(
+        self,
+        address,
+        handler_class,
+        mission_state: Optional[MissionState] = None,
+        dashboard_token: Optional[str] = None,
+    ):
         super().__init__(address, handler_class)
         self.mission_state = mission_state
         self.findings_cache: List[Dict[str, Any]] = []
         self.last_update = 0
+        # Issue 35: every request must present this token (Bearer header,
+        # ?token= query, or cookie). Caller (``start_dashboard``) generates
+        # it via ``_get_or_create_dashboard_token`` if not supplied.
+        self.dashboard_token: str = dashboard_token or ""
 
     def get_findings(
         self,
@@ -973,11 +1125,25 @@ def start_dashboard(
         port = sock.getsockname()[1]
         sock.close()
 
-    server = DashboardServer(("0.0.0.0", port), DashboardHandler, mission_state)
+    # Issue 35 (P9-A): bind to loopback only. The previous ``0.0.0.0``
+    # binding exposed the dashboard (and its sensitive findings data)
+    # to every host on the LAN. Loopback is sufficient for the local
+    # operator and closes the network-exposure hole.
+    host = "127.0.0.1"
+
+    # Issue 35: mint or load the dashboard auth token. Logged once so
+    # the operator can copy the URL (with ?token=…) from the terminal.
+    dashboard_token = _get_or_create_dashboard_token()
+    env_set = bool(os.environ.get(DASHBOARD_TOKEN_ENV, "").strip())
+
+    server = DashboardServer(
+        (host, port), DashboardHandler, mission_state,
+        dashboard_token=dashboard_token,
+    )
 
     def run_server():
         try:
-            logger.info(f"Dashboard server starting on port {port}")
+            logger.info(f"Dashboard server starting on {host}:{port} (loopback only)")
             server.serve_forever()
         except Exception as e:
             logger.error(f"Dashboard server error: {e}")
@@ -985,8 +1151,21 @@ def start_dashboard(
     thread = threading.Thread(target=run_server, daemon=True)
     thread.start()
 
-    url = f"http://localhost:{port}"
-    logger.info(f"Dashboard available at {url}")
+    # Build the URL with the token in the query string so the browser
+    # auto-authenticates on first load (the server then sets a cookie
+    # and subsequent requests don't need the query param).
+    token_qs = urlencode({"token": dashboard_token})
+    url = f"http://localhost:{port}/?{token_qs}"
+    if env_set:
+        logger.info(f"Dashboard available at: http://localhost:{port}/ (token from env)")
+    else:
+        # Log the full URL once so the operator can copy/paste it.
+        # This is the ONLY place the auto-generated token is printed.
+        logger.info(f"Dashboard available at: {url}")
+        logger.info(
+            "Dashboard auth token (auto-generated): set SECURAGENTX_DASHBOARD_TOKEN "
+            "to override. Pass it as 'Authorization: Bearer <token>' for API use."
+        )
 
     if open_browser:
         try:

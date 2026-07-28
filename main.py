@@ -191,7 +191,7 @@ def is_authorized_scan_target(target: str) -> bool:
     if not validate_target(target):
         return False
 
-    from core.orchestrator import is_in_scope
+    from securagentx.scope import is_in_scope
 
     return is_in_scope(target)
 
@@ -202,7 +202,7 @@ def require_authorized_scan_target(target: str) -> bool:
         print_error("[FAIL] SECURITY ERROR: Invalid target format")
         return False
 
-    from core.orchestrator import is_in_scope, normalize_target
+    from securagentx.scope import is_in_scope, normalize_target
 
     normalized = normalize_target(target)
     if not is_in_scope(normalized):
@@ -315,7 +315,7 @@ def main():
         "plugins",
     ]
 
-    parser = argparse.ArgumentParser(description="SecurAgentX CLI", add_help=False)
+    parser = argparse.ArgumentParser(description="SecurAgentX CLI", add_help=True)
     parser.add_argument("command", nargs="?", default="auto", help="Command to run")
     parser.add_argument("target", nargs="?", help="Target domain or IP")
     parser.add_argument("--rate-limit", type=int, default=5, help="Max requests per second")

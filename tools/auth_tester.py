@@ -20,8 +20,13 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import os
 
 logger = logging.getLogger("securagentx.auth")
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -183,7 +188,7 @@ def test_oauth_misconfig(
             "scope": "openid profile email",
         }
         r = requests.get(
-            authorize_url, params=params, timeout=10, allow_redirects=False, verify=False
+            authorize_url, params=params, timeout=10, allow_redirects=False, verify=not INSECURE
         )
 
         # If server accepts evil redirect_uri
@@ -207,7 +212,7 @@ def test_oauth_misconfig(
             "response_type": "code",
         }
         r2 = requests.get(
-            authorize_url, params=params_no_state, timeout=10, allow_redirects=False, verify=False
+            authorize_url, params=params_no_state, timeout=10, allow_redirects=False, verify=not INSECURE
         )
         if r2.status_code == 200 or r2.status_code in (301, 302):
             findings.append(
@@ -240,7 +245,7 @@ def test_session_management(
     findings = []
 
     try:
-        r = requests.get(base_url, headers=headers, cookies=cookies, timeout=10, verify=False)
+        r = requests.get(base_url, headers=headers, cookies=cookies, timeout=10, verify=not INSECURE)
 
         for cookie_name, cookie_value in (cookies or {}).items():
             # Check cookie from Set-Cookie headers in response

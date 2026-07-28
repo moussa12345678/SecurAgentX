@@ -379,21 +379,38 @@ def validate_token(
     Returns:
         ``APITokenClaims`` Pydantic instance if the token is valid and
         the token-status cache reports the token as ``active``.
-        ``None`` on any failure (invalid signature, expired, revoked,
-        unknown token ID, user blocked, hash mismatch).
+        ``None`` on any token-level failure (invalid signature, expired,
+        revoked, unknown token ID, user blocked, hash mismatch).
+
+    Raises:
+        ValueError: If ``global_salt`` is the default sentinel ``"salt"``,
+            empty, or shorter than 8 characters. Previously this was a
+            dev-mode bypass that silently returned ``None`` (no identity);
+            it now fails loud to prevent misconfigured deployments from
+            accidentally disabling token validation.
 
     .. note::
-       The dev-mode bypass (``global_salt == "salt"``) **skips** token
-       validation entirely, matching the Go middleware behaviour.
+       A weak/default ``global_salt`` is rejected with ``ValueError`` —
+       this is stricter than the Go middleware's dev bypass. Token
+       issuance (``issue_token``) enforces the same rule.
     """
     if not token:
         return None
 
-    if _is_default_salt(global_salt):
-        # Dev bypass — matches the Go middleware: validation disabled
-        # with the default salt. Return None to indicate "no identity".
-        logger.debug("token validation skipped (default global salt)")
-        return None
+    # SECURITY (issue 33): Previously a dev-mode bypass silently returned
+    # ``None`` (no identity) when the deployment was still using the
+    # default salt. That effectively disabled token validation for any
+    # misconfigured server — a serious authentication bypass. Fail loud
+    # instead: a weak/default salt must never be accepted at validation
+    # time. Mirrors the same rejection already enforced at issue time.
+    if (
+        global_salt == "salt"
+        or not global_salt
+        or len(global_salt) < 8
+    ):
+        raise ValueError(
+            "Insecure salt detected — use a strong, unique salt (min 8 chars)"
+        )
 
     try:
         import jwt  # type: ignore[import-untyped]

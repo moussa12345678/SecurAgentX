@@ -655,11 +655,21 @@ class TestValidateToken:
         """None token → None (not a TypeError)."""
         assert tk.validate_token(None, TEST_SALT) is None
 
-    def test_default_salt_skips_validation_returns_none(self):
-        """Default salt 'salt' triggers dev bypass → returns None (no identity)."""
+    def test_default_salt_rejected_at_validate_token(self):
+        """Default salt 'salt' is rejected at validate_token (issue 33).
+
+        Previously this was a dev-mode bypass that returned ``None`` (no
+        identity), which silently disabled token validation in any
+        misconfigured deployment. It now fails loud with ``ValueError``.
+        """
         jwt_str, _ = self._make()
-        # Even with a valid token, dev bypass returns None.
-        assert tk.validate_token(jwt_str, "salt") is None
+        # Default / empty / too-short salts all raise ValueError.
+        with pytest.raises(ValueError, match="Insecure salt"):
+            tk.validate_token(jwt_str, "salt")
+        with pytest.raises(ValueError, match="Insecure salt"):
+            tk.validate_token(jwt_str, "")
+        with pytest.raises(ValueError, match="Insecure salt"):
+            tk.validate_token(jwt_str, "short")
 
     def test_wrong_sub_claim_returns_none(self):
         """A token with sub != 'api_token' must be rejected."""
@@ -2576,24 +2586,32 @@ class TestSecurity:
             assert r.status_code == 201, f"payload={p!r} → {r.status_code}"
 
     def test_ssrf_protection_in_url_fetch_endpoints(self, client, auth_headers):
-        """URL fetches to private IPs are passed to the store (server-side
-        validation is the store's responsibility; the route accepts the URL)."""
-        # We can't fully test the store's SSRF protection without a real
-        # knowledge store. We verify the route accepts the URL and the
-        # store mock handles it (it would do real validation in production).
+        """URL fetches to private/internal IPs are blocked at the route
+        layer (issue 34: SSRF protection).
+
+        Previously the route accepted any URL and deferred validation to
+        the store — but the store mock had no validation, leaving the
+        production server vulnerable to SSRF (cloud-metadata exfil,
+        internal port scanning, loopback access). The route now runs
+        ``is_ssrf_target`` BEFORE handing the URL to the store and
+        rejects blocked targets with 422.
+        """
         private_urls = [
             "http://127.0.0.1:8080/admin",
             "http://169.254.169.254/latest/meta-data/",
             "http://10.0.0.1/internal",
             "http://localhost:6379/",
+            "http://192.168.1.1/",
+            "http://172.16.5.5/",
         ]
         for u in private_urls:
             r = client.post(
                 "/api/v1/knowledge/documents", headers=auth_headers,
                 data={"title": "x", "url": u},
             )
-            # The mock store accepts any URL; production stores must validate.
-            assert r.status_code == 201, f"url={u!r} → {r.status_code}"
+            assert r.status_code == 422, (
+                f"url={u!r} expected 422 (SSRF block), got {r.status_code}"
+            )
 
     def test_open_redirect_protection_in_oauth_return_uri(self):
         """OAuth return_uri is sanitised to a path-only value (no external hosts)."""

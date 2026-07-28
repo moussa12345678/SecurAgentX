@@ -10,6 +10,10 @@ If you discover a security vulnerability in SecurAgentX itself (not findings fro
 
 Email: **AAAAAACD@proton.me**
 
+**PGP Key Fingerprint:** `0000 0000 0000 0000 0000 0000 0000 0000 0000 0000` (replace with your actual fingerprint)
+
+Download the public key from: https://keys.openpgp.org/ (or your preferred keyserver)
+
 Include:
 - Description of the vulnerability
 - Steps to reproduce
@@ -43,8 +47,8 @@ The following are out of scope:
 SecurAgentX enforces defense-in-depth:
 
 1. **Governance Gate** — Classifies every command as SAFE / PRIVILEGED / DESTRUCTIVE before execution
-2. **No `shell=True`** — All subprocess calls use list-form arguments
-3. **Metacharacter blocking** — Pipe, semicolon, backtick, and substitution characters are rejected
+2. **Shell execution gated** — `shell=True` is used in `safe_exec.py` for native shell workflows; gated by Governance upstream
+3. **Shell pipeline support** — Native shell pipelines (pipes, redirects) are supported; Governance classifies commands instead of relying on static character filtering
 4. **Target validation** — All scan targets are validated before tool dispatch
 5. **Scope enforcement** — Operations are confined to declared scope boundaries
 
@@ -52,5 +56,5 @@ SecurAgentX enforces defense-in-depth:
 
 | Version | Supported |
 |---------|-----------|
-| Latest (main branch) | Yes |
+| SecurAgentX 1.0.x | Yes (2026) |
 | Older releases | No |

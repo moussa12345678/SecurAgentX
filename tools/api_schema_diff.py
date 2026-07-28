@@ -21,11 +21,17 @@ Public API:
 from __future__ import annotations
 
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("securagentx.api_schema_diff")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 
 @dataclass
@@ -221,7 +227,7 @@ class APISchemaDiffer:
                 url,
                 headers=default_headers,
                 timeout=10,
-                verify=False,
+                verify=not INSECURE,
             )
 
             if response.status_code == 200:

@@ -18,6 +18,8 @@ from typing import List, Optional, Tuple
 
 import yaml
 
+from securagentx.paths import SECURAGENTX_HOME
+
 logger = logging.getLogger("securagentx.doctor")
 
 # Python libraries that BUILD SecurAgentX itself: (import_name, pip_name, is_required)
@@ -171,7 +173,7 @@ def _check_library(import_name: str, python_executable: Path) -> Tuple[bool, str
 
 def _check_config() -> Tuple[bool, str]:
     """Validate configuration: checks config.yaml, .env file, and environment variables."""
-    config_path = Path("config.yaml")
+    config_path = SECURAGENTX_HOME / "config.yaml"
     if not config_path.exists():
         return False, "config.yaml not found"
     try:

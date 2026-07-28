@@ -6,25 +6,18 @@ Thank you for your interest in contributing to SecurAgentX.
 
 ```
 SecurAgentX/
-  main.py                  # CLI entry point and command router
-  securagentx_launcher.py    # Lightweight launcher (minimal imports)
-  agent_brain.py           # Core AI agent logic (SecurAgentXAgent)
-  orchestrator.py          # Security scan pipeline orchestrator
-  llm_client.py            # Multi-provider LLM client
-  ui_components.py         # Shared UI components (Rich library)
-  bot.py                   # Telegram bot gateway
-  bot_utils.py             # Telegram notification utilities
-  cli.py                   # Interactive CLI interface
-  wizard.py                # AI provider configuration wizard
-  dependency_manager.py    # Go tool installer
-  watchman.py              # 24/7 monitoring daemon
-  tools_menu.py            # Arsenal tool selection menu
-  tools/                   # Security tool modules
-  tests/                   # Unit and integration tests
-  prompts/                 # AI system prompts
-  knowledge/               # Methodology documentation
-  data/                    # Runtime data (logs, state, database)
-  reports/                 # Generated scan reports
+├── main.py              # CLI entry point
+├── securagentx/         # Core package (brain, agent, scanning, reports, etc.)
+├── tools/               # 140+ security tool modules
+├── agents/              # Legacy agent shims (deprecated)
+├── cli/                 # CLI UI components
+├── commands/            # CLI command handlers
+├── core/                # Legacy core shims (deprecated)
+├── tui/                 # Terminal UI
+├── mcp/                 # MCP integration
+├── tests/               # 3117+ tests (unit + brutal)
+├── docs/                # Documentation
+└── prompts/             # AI prompt templates
 ```
 
 ## Development Setup
@@ -34,9 +27,8 @@ SecurAgentX/
 git clone <repo-url>
 cd SecurAgentX
 
-# Run setup (installs Python deps + Go security tools)
-chmod +x setup.sh
-./setup.sh
+# Install Python deps (dev extras include pytest + tooling)
+pip install -e .[dev]
 
 # Configure your API key
 echo "GEMINI_API_KEY=your-key-here" >> .env
@@ -108,7 +100,7 @@ logger.warning("[WARN] Potential issue: %s", detail)
 
 ```bash
 # Install test dependencies
-pip install pytest pytest-asyncio
+pip install -e .[dev]
 
 # Run all tests
 python3 -m pytest tests/ -v

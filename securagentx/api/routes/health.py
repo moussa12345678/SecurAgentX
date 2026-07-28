@@ -36,6 +36,11 @@ from .._models import (
 
 logger = logging.getLogger("securagentx.api.routes.health")
 
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+
 router = APIRouter(tags=["health"])
 
 # Module-level start time — used for uptime reporting.

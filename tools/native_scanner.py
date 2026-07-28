@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import random
 import re
 import time
@@ -20,6 +21,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 logger = logging.getLogger("securagentx.native_scanner")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 # ── Async HTTP (try various backends) ────────────────────────────────────
 try:
@@ -254,7 +260,7 @@ class NativeScanner:
         async with httpx.AsyncClient(
             headers={"User-Agent": self.user_agent, **target.headers},
             timeout=target.timeout,
-            verify=False,
+            verify=not INSECURE,
             follow_redirects=self.follow_redirects,
         ) as client:
             resp = await client.request(target.method, target.url, content=target.body)

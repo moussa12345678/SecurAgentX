@@ -15,6 +15,11 @@ import requests
 
 logger = logging.getLogger("securagentx.base_scanner")
 
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+
 
 def run_vuln_scan(
     target_url: str,
@@ -50,7 +55,7 @@ def run_vuln_scan(
     for path, description, severity in checks:
         try:
             url = f"{target_url.rstrip('/')}{path}"
-            response = requests.get(url, timeout=5, verify=False, allow_redirects=False)
+            response = requests.get(url, timeout=5, verify=not INSECURE, allow_redirects=False)
 
             if response.status_code == 200 and len(response.text) > 50:
                 findings.append(

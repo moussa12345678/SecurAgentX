@@ -28,9 +28,13 @@ validation, response envelope formatting, and calling the store.
 
 from __future__ import annotations
 
+import ipaddress
 import logging
+import os
+import socket
 import time
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from fastapi import (
     APIRouter,
@@ -41,6 +45,11 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import JSONResponse
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 from .._auth import Identity, auth_token_required
 from .._models import (
@@ -59,6 +68,70 @@ router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 # Upload size cap — PentAGI uses 32 MB for multipart memory buffer.
 MAX_UPLOAD_BYTES = 32 * 1024 * 1024
+
+
+# ---------------------------------------------------------------------------
+# SSRF protection (issue 34)
+# ---------------------------------------------------------------------------
+# Networks that must NEVER be reachable via the ``url=`` payload of
+# ``POST /knowledge/documents``. Without this guard, an authenticated user
+# could abuse the server-side fetch to:
+#   * read AWS / GCP / Azure instance metadata (``169.254.169.254``)
+#   * port-scan and probe internal services (RFC1918 space)
+#   * reach loopback services (databases, admin panels, etc.)
+# The list is intentionally conservative — extend cautiously and NEVER
+# add a public-IP allowlist exception without an explicit business need.
+BLOCKED_RANGES: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = [
+    ipaddress.ip_network("169.254.169.254/32"),  # Cloud metadata (AWS/GCP/Azure)
+    ipaddress.ip_network("127.0.0.0/8"),          # IPv4 loopback
+    ipaddress.ip_network("10.0.0.0/8"),           # RFC1918 private
+    ipaddress.ip_network("172.16.0.0/12"),        # RFC1918 private
+    ipaddress.ip_network("192.168.0.0/16"),       # RFC1918 private
+    ipaddress.ip_network("0.0.0.0/8"),            # "This network"
+    ipaddress.ip_network("::1/128"),              # IPv6 loopback
+    ipaddress.ip_network("fc00::/7"),             # IPv6 unique-local
+    ipaddress.ip_network("fe80::/10"),            # IPv6 link-local
+]
+
+
+def is_ssrf_target(url: str) -> bool:
+    """Return True if ``url`` resolves to a blocked SSRF target.
+
+    Performs a DNS lookup on the URL's hostname and checks the resolved
+    IP against :data:`BLOCKED_RANGES`. A missing hostname, an
+    unresolvable hostname, or an IP in any blocked range all return
+    ``True`` (i.e. "treat as SSRF — block").
+
+    Note: this is a point-in-time check. DNS rebinding attacks (where
+    the resolver flips between a public and a private IP) require
+    additional defences (e.g. pinning the resolved IP for the actual
+    fetch). The current guard blocks the common cases: cloud-metadata
+    exfiltration and direct internal-address probes.
+    """
+    try:
+        parsed = urlparse(url)
+    except (ValueError, TypeError):
+        return True
+    hostname = parsed.hostname
+    if not hostname:
+        return True
+    try:
+        # Resolve to a list of IPs (handles round-robin DNS).
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        # Unresolvable → block (do not let the fetch layer surface the
+        # DNS error to the client, which would enable DNS enumeration).
+        return True
+    for info in infos:
+        ip_str = info[4][0]
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+        for network in BLOCKED_RANGES:
+            if ip_obj in network:
+                return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +250,23 @@ async def upload_document(
                 ),
             )
     elif url:
+        # SECURITY (issue 34): SSRF protection — block requests to internal
+        # networks (RFC1918, loopback, cloud metadata) before the store
+        # fetches the URL server-side. Without this, an attacker could
+        # exfiltrate cloud credentials by submitting
+        # ``url=http://169.254.169.254/latest/meta-data/...`` or probe
+        # internal services via ``url=http://10.0.0.1:8080/admin``.
+        if is_ssrf_target(url):
+            logger.warning("SSRF target rejected: %r", url)
+            return JSONResponse(
+                status_code=422,
+                content=error_response(
+                    "bad_request",
+                    "URL targets a blocked internal address "
+                    "(loopback, RFC1918, or cloud metadata)",
+                    develop=develop,
+                ),
+            )
         try:
             row = await store.create_document_from_url(
                 user_id=identity.user_id,

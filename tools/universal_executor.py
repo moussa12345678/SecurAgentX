@@ -476,14 +476,15 @@ class UniversalExecutor:
     def execute_shell(
         self, command: str, timeout: int = 300, cwd: str = None, agent_id: int = -1
     ) -> ExecutionResult:
-        """Execute shell command with native shell support (shell=True).
+        """Execute shell command with shell=False (CWE-78 hardening, issue 28).
 
-        Uses shell=True for full pipeline and scripting flexibility.
+        The command string is tokenised with ``shlex.split()`` and executed
+        as a list with ``shell=False`` to prevent command injection.
         When agent_id is provided, creates an isolated working directory
         to prevent multi-agent file conflicts.
 
         Args:
-            command: Shell command string (supports pipes, redirects, etc.)
+            command: Shell command string (tokenised via shlex.split())
             timeout: Maximum execution time in seconds
             cwd: Working directory override
             agent_id: Agent identifier for workspace isolation (-1 = no isolation)
@@ -514,8 +515,9 @@ class UniversalExecutor:
                 )
 
         try:
+            cmd_list = shlex.split(command) if isinstance(command, str) else command
             result = subprocess.run(
-                command, capture_output=True, text=True, timeout=timeout, shell=True, cwd=work_dir
+                cmd_list, capture_output=True, text=True, timeout=timeout, shell=False, cwd=work_dir
             )
 
             output = result.stdout
@@ -552,8 +554,9 @@ class UniversalExecutor:
         except Exception as e:
             return ExecutionResult(False, "", str(e), "shell", {"command": command})
 
-    # NOTE: _execute_pipeline is no longer needed — shell=True handles
-    # pipes, redirects, and command chaining natively.
+    # NOTE: _execute_pipeline is no longer needed — shlex.split() handles
+    # command tokenisation; callers requiring pipes must compose them at
+    # the application layer (e.g. via subprocess.PIPE chains).
 
     def execute_action(self, action: Dict[str, Any]) -> ExecutionResult:
         """

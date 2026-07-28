@@ -2220,13 +2220,22 @@ class TestSecurity:
                 ttl_seconds=3600, name="t", global_salt="salt",
             )
 
-    def test_jwt_default_salt_skips_validation(self) -> None:
-        """validate_token returns None when salt is the default (dev bypass)."""
+    def test_jwt_default_salt_rejected_at_validate_time(self) -> None:
+        """validate_token rejects the default salt with ValueError (issue 33).
+
+        Previously the default salt triggered a dev bypass that returned
+        ``None`` (no identity), silently disabling token validation in any
+        misconfigured deployment. It now fails loud.
+        """
         from securagentx.auth.tokens import validate_token
 
-        # Default salt → validation is skipped → returns None (no identity).
-        assert validate_token("any-token", "salt") is None
-        assert validate_token("any-token", "") is None
+        # Default / empty / too-short salts all raise ValueError.
+        with pytest.raises(ValueError, match="Insecure salt"):
+            validate_token("any-token", "salt")
+        with pytest.raises(ValueError, match="Insecure salt"):
+            validate_token("any-token", "")
+        with pytest.raises(ValueError, match="Insecure salt"):
+            validate_token("any-token", "short")
 
     # ── 4.13 Cookie hardening (4 tests) ────────────────────────────────────
 

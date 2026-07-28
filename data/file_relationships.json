@@ -1,0 +1,5291 @@
+{
+  "project_root": "/home/z/my-project/securagentx-fresh",
+  "files": [
+    {
+      "name": "agent_conversation",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_conversation.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 208
+    },
+    {
+      "name": "agent_council",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/agent_council.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 553
+    },
+    {
+      "name": "agent_dataclasses",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_dataclasses.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 61
+    },
+    {
+      "name": "agent_executor",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_executor.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 819
+    },
+    {
+      "name": "agent_helpers",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_helpers.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 303
+    },
+    {
+      "name": "agent_intent",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_intent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 163
+    },
+    {
+      "name": "agent_logger",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_logger.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 124
+    },
+    {
+      "name": "agent_modes",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_modes.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 204
+    },
+    {
+      "name": "agent_planner",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_planner.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1043
+    },
+    {
+      "name": "agent_universal",
+      "path": "/home/z/my-project/securagentx-fresh/agents/agent_universal.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 740
+    },
+    {
+      "name": "critic_agent",
+      "path": "/home/z/my-project/securagentx-fresh/agents/critic_agent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 449
+    },
+    {
+      "name": "decision_engine",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/decision_engine.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 748
+    },
+    {
+      "name": "hybrid_agent",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/hybrid_agent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1053
+    },
+    {
+      "name": "hybrid_prompts",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/hybrid_prompts.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 220
+    },
+    {
+      "name": "hypothesis_boost",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/hypothesis_boost.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 84
+    },
+    {
+      "name": "post_processor",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/post_processor.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 618
+    },
+    {
+      "name": "prompt_builder",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/prompt_builder.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 594
+    },
+    {
+      "name": "base",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/base.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 340
+    },
+    {
+      "name": "captain",
+      "path": "/home/z/my-project/securagentx-fresh/agents/redteam/captain.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 467
+    },
+    {
+      "name": "planner",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/planner.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1043
+    },
+    {
+      "name": "recon",
+      "path": "/home/z/my-project/securagentx-fresh/agents/redteam/recon.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 352
+    },
+    {
+      "name": "scanner",
+      "path": "/home/z/my-project/securagentx-fresh/agents/redteam/scanner.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 380
+    },
+    {
+      "name": "scan_context",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/scan_context.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 211
+    },
+    {
+      "name": "scan_loop",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/scan_loop.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 595
+    },
+    {
+      "name": "specialist_agent",
+      "path": "/home/z/my-project/securagentx-fresh/agents/specialist_agent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 610
+    },
+    {
+      "name": "strategist_agent",
+      "path": "/home/z/my-project/securagentx-fresh/agents/strategist_agent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 448
+    },
+    {
+      "name": "tui_game",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/tui_game.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 252
+    },
+    {
+      "name": "vuln_reasoning_phase",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/vuln_reasoning_phase.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 156
+    },
+    {
+      "name": "worker_base",
+      "path": "/home/z/my-project/securagentx-fresh/agents/worker_base.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 136
+    },
+    {
+      "name": "interactive",
+      "path": "/home/z/my-project/securagentx-fresh/cli/interactive.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1987
+    },
+    {
+      "name": "live_display",
+      "path": "/home/z/my-project/securagentx-fresh/cli/live_display.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 369
+    },
+    {
+      "name": "textual",
+      "path": "/home/z/my-project/securagentx-fresh/cli/textual.py",
+      "category": "core",
+      "imports": [
+        "textual",
+        "logging"
+      ],
+      "imported_by": [
+        "textual",
+        "tui_dashboard"
+      ],
+      "lines_of_code": 1898
+    },
+    {
+      "name": "tools_menu",
+      "path": "/home/z/my-project/securagentx-fresh/cli/tools_menu.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 198
+    },
+    {
+      "name": "tui_design",
+      "path": "/home/z/my-project/securagentx-fresh/cli/tui_design.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [
+        "tui_dashboard"
+      ],
+      "lines_of_code": 576
+    },
+    {
+      "name": "ui_components",
+      "path": "/home/z/my-project/securagentx-fresh/cli/ui_components.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [
+        "main"
+      ],
+      "lines_of_code": 1204
+    },
+    {
+      "name": "wizard",
+      "path": "/home/z/my-project/securagentx-fresh/cli/wizard.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [
+        "doctor"
+      ],
+      "lines_of_code": 185
+    },
+    {
+      "name": "mcp_runner",
+      "path": "/home/z/my-project/securagentx-fresh/commands/mcp_runner.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 38
+    },
+    {
+      "name": "registry",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/registry.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 260
+    },
+    {
+      "name": "scan",
+      "path": "/home/z/my-project/securagentx-fresh/commands/scan.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "main"
+      ],
+      "imported_by": [],
+      "lines_of_code": 149
+    },
+    {
+      "name": "system",
+      "path": "/home/z/my-project/securagentx-fresh/commands/system.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 170
+    },
+    {
+      "name": "worldclass",
+      "path": "/home/z/my-project/securagentx-fresh/commands/worldclass.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 188
+    },
+    {
+      "name": "agent",
+      "path": "/home/z/my-project/securagentx-fresh/core/agent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [
+        "overlay_menu"
+      ],
+      "lines_of_code": 29
+    },
+    {
+      "name": "brain",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/brain.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 765
+    },
+    {
+      "name": "orchestrator",
+      "path": "/home/z/my-project/securagentx-fresh/core/orchestrator.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 146
+    },
+    {
+      "name": "scan_engine",
+      "path": "/home/z/my-project/securagentx-fresh/core/scan_engine.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 23
+    },
+    {
+      "name": "bot",
+      "path": "/home/z/my-project/securagentx-fresh/integrations/bot.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 734
+    },
+    {
+      "name": "bot_utils",
+      "path": "/home/z/my-project/securagentx-fresh/integrations/bot_utils.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 161
+    },
+    {
+      "name": "main",
+      "path": "/home/z/my-project/securagentx-fresh/main.py",
+      "category": "entrypoint",
+      "imports": [
+        "ui_components",
+        "logging"
+      ],
+      "imported_by": [
+        "scan",
+        "tui_dashboard",
+        "api_server",
+        "__main__"
+      ],
+      "lines_of_code": 2819
+    },
+    {
+      "name": "client",
+      "path": "/home/z/my-project/securagentx-fresh/mcp/client.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 189
+    },
+    {
+      "name": "config",
+      "path": "/home/z/my-project/securagentx-fresh/mcp/config.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 239
+    },
+    {
+      "name": "manager",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/manager.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 463
+    },
+    {
+      "name": "protocol",
+      "path": "/home/z/my-project/securagentx-fresh/mcp/protocol.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 161
+    },
+    {
+      "name": "server",
+      "path": "/home/z/my-project/securagentx-fresh/mcp/server.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 218
+    },
+    {
+      "name": "scope",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scope.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 224
+    },
+    {
+      "name": "check8_scan",
+      "path": "/home/z/my-project/securagentx-fresh/scripts/check8_scan.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 483
+    },
+    {
+      "name": "gen_logo",
+      "path": "/home/z/my-project/securagentx-fresh/scripts/gen_logo.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 45
+    },
+    {
+      "name": "gen_logo_clean",
+      "path": "/home/z/my-project/securagentx-fresh/scripts/gen_logo_clean.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 40
+    },
+    {
+      "name": "gen_logo_png",
+      "path": "/home/z/my-project/securagentx-fresh/scripts/gen_logo_png.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 124
+    },
+    {
+      "name": "__main__",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/__main__.py",
+      "category": "core",
+      "imports": [
+        "main"
+      ],
+      "imported_by": [],
+      "lines_of_code": 12
+    },
+    {
+      "name": "agent_memory",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agent/agent_memory.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 133
+    },
+    {
+      "name": "agent_skills",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agent/agent_skills.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 112
+    },
+    {
+      "name": "memory",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/memory.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 324
+    },
+    {
+      "name": "vuln_agent",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agent/vuln_agent.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 2283
+    },
+    {
+      "name": "adviser",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/adviser.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1271
+    },
+    {
+      "name": "assistant",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/assistant.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 393
+    },
+    {
+      "name": "coder",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/coder.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 528
+    },
+    {
+      "name": "enricher",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/enricher.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 946
+    },
+    {
+      "name": "generator",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/generator.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 499
+    },
+    {
+      "name": "installer",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/installer.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 515
+    },
+    {
+      "name": "memorist",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/memorist.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1165
+    },
+    {
+      "name": "pentester",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/pentester.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 614
+    },
+    {
+      "name": "primary_agent",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/primary_agent.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 859
+    },
+    {
+      "name": "refiner",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/refiner.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 671
+    },
+    {
+      "name": "reflector",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/reflector.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 206
+    },
+    {
+      "name": "reporter",
+      "path": "/home/z/my-project/securagentx-fresh/tools/reporter.py",
+      "category": "tool",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 122
+    },
+    {
+      "name": "searcher",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/searcher.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 416
+    },
+    {
+      "name": "summarizer",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/summarizer.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1038
+    },
+    {
+      "name": "toolcall_fixer",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/agents/toolcall_fixer.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 384
+    },
+    {
+      "name": "_auth",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/_auth.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 748
+    },
+    {
+      "name": "_models",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/_models.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 544
+    },
+    {
+      "name": "app",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/app.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 460
+    },
+    {
+      "name": "auth",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/routes/auth.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 323
+    },
+    {
+      "name": "flows",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/routes/flows.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 926
+    },
+    {
+      "name": "health",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/routes/health.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 250
+    },
+    {
+      "name": "knowledge",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/routes/knowledge.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 467
+    },
+    {
+      "name": "providers",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/api/routes/providers.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 232
+    },
+    {
+      "name": "tokens",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/auth/tokens.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 504
+    },
+    {
+      "name": "middleware",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/auth/middleware.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 558
+    },
+    {
+      "name": "models",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/models.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 680
+    },
+    {
+      "name": "oauth",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/auth/oauth.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 935
+    },
+    {
+      "name": "sessions",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/auth/sessions.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 435
+    },
+    {
+      "name": "constants",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/constants.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 76
+    },
+    {
+      "name": "constitution",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/constitution.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 191
+    },
+    {
+      "name": "constitution_engine",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/constitution_engine.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 192
+    },
+    {
+      "name": "browser",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/browser.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 409
+    },
+    {
+      "name": "cleanup",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/cleanup.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 494
+    },
+    {
+      "name": "db",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/db.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1860
+    },
+    {
+      "name": "file_ops",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/file_ops.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 165
+    },
+    {
+      "name": "image_chooser",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/image_chooser.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 224
+    },
+    {
+      "name": "lifecycle",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/lifecycle.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 862
+    },
+    {
+      "name": "network",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/network.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 360
+    },
+    {
+      "name": "resource_limits",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/resource_limits.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 393
+    },
+    {
+      "name": "sandbox",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/sandbox.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1280
+    },
+    {
+      "name": "terminal",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/docker/terminal.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 538
+    },
+    {
+      "name": "flow_worker",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/flow_worker.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 803
+    },
+    {
+      "name": "state_machine",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/state_machine.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 591
+    },
+    {
+      "name": "subtask_worker",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/subtask_worker.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 528
+    },
+    {
+      "name": "task_worker",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/flows/task_worker.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 610
+    },
+    {
+      "name": "governance",
+      "path": "/home/z/my-project/securagentx-fresh/tools/governance.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 426
+    },
+    {
+      "name": "mutations",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/graphql/mutations.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 669
+    },
+    {
+      "name": "queries",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/graphql/queries.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 543
+    },
+    {
+      "name": "schema",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/graphql/schema.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 453
+    },
+    {
+      "name": "subscriptions",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/graphql/subscriptions.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 892
+    },
+    {
+      "name": "types",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/types.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 287
+    },
+    {
+      "name": "community",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/knowledge_graph/community.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 677
+    },
+    {
+      "name": "extractor",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/knowledge_graph/extractor.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 925
+    },
+    {
+      "name": "graph",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/knowledge_graph/graph.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 2063
+    },
+    {
+      "name": "integration",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/knowledge_graph/integration.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 842
+    },
+    {
+      "name": "loop",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/loop.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 415
+    },
+    {
+      "name": "chains",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/observability/chains.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 474
+    },
+    {
+      "name": "langfuse",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/observability/langfuse.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "langfuse"
+      ],
+      "imported_by": [
+        "langfuse"
+      ],
+      "lines_of_code": 495
+    },
+    {
+      "name": "logging",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/observability/logging.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [
+        "memorist",
+        "cvss_calculator",
+        "native_scanner",
+        "targeted_attacks",
+        "captain",
+        "cors_checker",
+        "modes",
+        "pdf_report_generator",
+        "wordlist_manager",
+        "agent",
+        "critic",
+        "tavily",
+        "vector_memory",
+        "injection_tester",
+        "logger",
+        "exploitation",
+        "autonomous_agent",
+        "reflector",
+        "keyboard_shortcuts",
+        "ai_config",
+        "universal",
+        "openai",
+        "db",
+        "file_ops",
+        "threat_intel",
+        "data_facility",
+        "doctor",
+        "api_server",
+        "llm_reasoning",
+        "agent_intent",
+        "skill_registry",
+        "auth_tester",
+        "bounty_reporter",
+        "ml_filter",
+        "main_menu",
+        "toolcall_fixer",
+        "primary_agent",
+        "base",
+        "finding_provenance",
+        "token_counter",
+        "logic_analyzer",
+        "universal_ai_client",
+        "vuln_finder",
+        "marketplace",
+        "hunt_engine",
+        "agent_conversation",
+        "mission_state",
+        "updater",
+        "analysis_pipeline",
+        "sessions",
+        "memory_manager",
+        "edr_evasion",
+        "agent_memory",
+        "safe_exec",
+        "vuln_researcher",
+        "dynamic_waf_mutator",
+        "task_worker",
+        "flows",
+        "agent_reflection",
+        "installer",
+        "registry",
+        "cloud_scanner",
+        "swarm_controller",
+        "tools_menu",
+        "exploit_chain_builder",
+        "wayback_tool",
+        "install_request",
+        "tool_registry",
+        "network",
+        "searxng",
+        "subtask_worker",
+        "vuln_reasoning",
+        "cleanup",
+        "oauth",
+        "terminal",
+        "user_memory",
+        "google",
+        "race_condition_tester",
+        "planner",
+        "duckduckgo",
+        "agent_executor",
+        "profile_manager",
+        "multi_agent",
+        "chaining_engine",
+        "supply_chain_analyzer",
+        "knowledge_graph",
+        "vulncheck_tool",
+        "loop",
+        "mobile_api_tester",
+        "specialist_agent",
+        "adaptive_planner",
+        "deepseek",
+        "conversation",
+        "bounty_predictor",
+        "assistant",
+        "endpoint_discovery",
+        "ollama",
+        "resource_limits",
+        "_models",
+        "context_compressor",
+        "deserialization_scanner",
+        "param_miner",
+        "prompt_builder",
+        "refiner",
+        "executor",
+        "coder",
+        "traversaal",
+        "base_scanner",
+        "coverage_analyzer",
+        "memory_persistence",
+        "enterprise_security",
+        "app",
+        "brain",
+        "_openai_compat",
+        "report_gen",
+        "generator",
+        "perplexity",
+        "anthropic",
+        "searcher",
+        "export",
+        "worker_base",
+        "overlay_menu",
+        "helpers",
+        "hypothesis_boost",
+        "tui_game",
+        "chains",
+        "subscriptions",
+        "js_analyzer",
+        "multimodal_agent",
+        "subdomain_takeover",
+        "adviser",
+        "agent_council",
+        "browser",
+        "health",
+        "client",
+        "agent_modes",
+        "agent_skills",
+        "queries",
+        "qwen",
+        "scan",
+        "api_finder",
+        "ssti_scanner",
+        "worker",
+        "scan_context",
+        "server",
+        "protocol_analyzer",
+        "object_id_permuter",
+        "tokens",
+        "vuln_reasoning_phase",
+        "memory",
+        "kimi",
+        "jwt_tester",
+        "xxe_scanner",
+        "constitution_engine",
+        "sast_engine",
+        "main",
+        "ssrf_scanner",
+        "schema",
+        "soc_analyzer",
+        "research_tool",
+        "interactive_dashboard",
+        "perf",
+        "bola_tester",
+        "config_wizard",
+        "recon",
+        "telegram_bridge",
+        "vuln_hunter_core",
+        "intent",
+        "protocol",
+        "tui_dashboard",
+        "session_manager",
+        "dependency_manager",
+        "bot",
+        "workflow_fuzzer",
+        "escalation_engine",
+        "auth",
+        "integration",
+        "strategist",
+        "scan_loop",
+        "vuln_agent",
+        "scope",
+        "hybrid_agent",
+        "mutations",
+        "logging",
+        "verification_engine",
+        "textual",
+        "memory_profile",
+        "custom",
+        "waf_evasion",
+        "decision_engine",
+        "tool_recommender",
+        "ai_sandbox",
+        "base_recon",
+        "api_schema_diff",
+        "_auth",
+        "metrics",
+        "orchestrator",
+        "image_chooser",
+        "sandbox",
+        "sploitus",
+        "glm",
+        "dashboard_server",
+        "dork_miner",
+        "logic_flaw_engine",
+        "knowledge",
+        "compliance_engine",
+        "zero_day_heuristics",
+        "token_manager",
+        "history_manager",
+        "paths",
+        "vuln_knowledge",
+        "state_machine",
+        "config",
+        "waf_detector",
+        "ecosystem",
+        "github_intel",
+        "learning_engine",
+        "wizard",
+        "access_control_matrix",
+        "auth_session",
+        "agent_universal",
+        "nvd_cve",
+        "omni_scan",
+        "bedrock",
+        "smart_scanner",
+        "summarizer",
+        "welcome",
+        "scanner",
+        "pentester",
+        "mcp_runner",
+        "cve_database",
+        "visualizations",
+        "gemini",
+        "agent_planner",
+        "active_fuzzer",
+        "command_suggest",
+        "python_recon",
+        "smart_recon",
+        "bot_utils",
+        "agent_helpers",
+        "graph",
+        "critic_agent",
+        "agent_logger",
+        "providers",
+        "otel",
+        "ai_tool_creator",
+        "post_processor",
+        "specialist",
+        "universal_executor",
+        "community",
+        "langfuse",
+        "strategist_agent",
+        "interactive",
+        "themes",
+        "extractor",
+        "bounty_intelligence",
+        "middleware",
+        "finding_dedup",
+        "graphql_scanner",
+        "dashboard",
+        "welcome_wizard",
+        "flow_worker",
+        "event_loop",
+        "vuln_engine",
+        "agent_bola_bridge",
+        "enricher",
+        "governance",
+        "bola_harness",
+        "lifecycle",
+        "exploit_template",
+        "manager"
+      ],
+      "lines_of_code": 262
+    },
+    {
+      "name": "metrics",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/observability/metrics.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 387
+    },
+    {
+      "name": "otel",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/observability/otel.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 412
+    },
+    {
+      "name": "paths",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/paths.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 101
+    },
+    {
+      "name": "_openai_compat",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/_openai_compat.py",
+      "category": "core",
+      "imports": [
+        "openai",
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 828
+    },
+    {
+      "name": "anthropic",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/anthropic.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "anthropic"
+      ],
+      "imported_by": [
+        "anthropic"
+      ],
+      "lines_of_code": 1012
+    },
+    {
+      "name": "bedrock",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/bedrock.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1292
+    },
+    {
+      "name": "custom",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/custom.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 347
+    },
+    {
+      "name": "deepseek",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/deepseek.py",
+      "category": "core",
+      "imports": [
+        "openai",
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 893
+    },
+    {
+      "name": "gemini",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/gemini.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 869
+    },
+    {
+      "name": "glm",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/glm.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 345
+    },
+    {
+      "name": "kimi",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/kimi.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 425
+    },
+    {
+      "name": "ollama",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/ollama.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "ollama"
+      ],
+      "imported_by": [
+        "ollama"
+      ],
+      "lines_of_code": 863
+    },
+    {
+      "name": "openai",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/openai.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [
+        "deepseek",
+        "_openai_compat"
+      ],
+      "lines_of_code": 367
+    },
+    {
+      "name": "qwen",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/providers/qwen.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 457
+    },
+    {
+      "name": "cvss",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/reports/cvss.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 598
+    },
+    {
+      "name": "export",
+      "path": "/home/z/my-project/securagentx-fresh/tui/export.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 463
+    },
+    {
+      "name": "markdown",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/reports/markdown.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 714
+    },
+    {
+      "name": "pdf",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/reports/pdf.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 835
+    },
+    {
+      "name": "templates",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/reports/templates.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 525
+    },
+    {
+      "name": "conversation",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/conversation.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 208
+    },
+    {
+      "name": "critic",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/critic.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 449
+    },
+    {
+      "name": "dataclasses",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/dataclasses.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [
+        "cvss_calculator",
+        "native_scanner",
+        "targeted_attacks",
+        "captain",
+        "cors_checker",
+        "pdf_report_generator",
+        "wordlist_manager",
+        "vector_memory",
+        "file_relationship_mapper",
+        "dataclasses",
+        "exploitation",
+        "autonomous_agent",
+        "keyboard_shortcuts",
+        "skill_registry",
+        "auth_tester",
+        "bounty_reporter",
+        "ml_filter",
+        "primary_agent",
+        "logic_analyzer",
+        "universal_ai_client",
+        "vuln_finder",
+        "marketplace",
+        "hunt_engine",
+        "mission_state",
+        "updater",
+        "edr_evasion",
+        "vuln_researcher",
+        "scan_progress",
+        "agent_reflection",
+        "tui_design",
+        "cloud_scanner",
+        "swarm_controller",
+        "exploit_chain_builder",
+        "install_request",
+        "vuln_reasoning",
+        "cleanup",
+        "terminal",
+        "race_condition_tester",
+        "profile_manager",
+        "multi_agent",
+        "chaining_engine",
+        "supply_chain_analyzer",
+        "knowledge_graph",
+        "loop",
+        "mobile_api_tester",
+        "adaptive_planner",
+        "constitution",
+        "findings_display",
+        "bounty_predictor",
+        "endpoint_discovery",
+        "resource_limits",
+        "context_compressor",
+        "deserialization_scanner",
+        "coverage_analyzer",
+        "enterprise_security",
+        "report_gen",
+        "brain",
+        "worker_base",
+        "live_display",
+        "hypothesis_boost",
+        "multimodal_agent",
+        "browser",
+        "agent_council",
+        "ssti_scanner",
+        "tool_registry",
+        "worker",
+        "scan_context",
+        "protocol_analyzer",
+        "memory",
+        "jwt_tester",
+        "xxe_scanner",
+        "cvss",
+        "constitution_engine",
+        "sast_engine",
+        "ssrf_scanner",
+        "types",
+        "soc_analyzer",
+        "interactive_dashboard",
+        "perf",
+        "bola_tester",
+        "config_wizard",
+        "recon",
+        "telegram_bridge",
+        "vuln_hunter_core",
+        "protocol",
+        "session_manager",
+        "workflow_fuzzer",
+        "escalation_engine",
+        "vuln_agent",
+        "scan_loop",
+        "verification_engine",
+        "waf_evasion",
+        "decision_engine",
+        "ai_sandbox",
+        "api_schema_diff",
+        "_auth",
+        "sandbox",
+        "logic_flaw_engine",
+        "compliance_engine",
+        "zero_day_heuristics",
+        "token_manager",
+        "history_manager",
+        "user_preferences",
+        "config",
+        "agent_dataclasses",
+        "waf_detector",
+        "ecosystem",
+        "learning_engine",
+        "nvd_cve",
+        "access_control_matrix",
+        "auth_session",
+        "smart_scanner",
+        "summarizer",
+        "scanner",
+        "cve_database",
+        "visualizations",
+        "pdf",
+        "active_fuzzer",
+        "python_recon",
+        "smart_recon",
+        "graph",
+        "ai_tool_creator",
+        "progress_display",
+        "payload_mutation",
+        "universal_executor",
+        "extractor",
+        "bounty_intelligence",
+        "dashboard",
+        "finding_dedup",
+        "graphql_scanner",
+        "welcome_wizard",
+        "flow_worker",
+        "vuln_engine",
+        "governance",
+        "bola_harness",
+        "lifecycle",
+        "object_id_permuter"
+      ],
+      "lines_of_code": 61
+    },
+    {
+      "name": "executor",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/executor.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 952
+    },
+    {
+      "name": "helpers",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/helpers.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 303
+    },
+    {
+      "name": "intent",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/intent.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 163
+    },
+    {
+      "name": "logger",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/logger.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 125
+    },
+    {
+      "name": "modes",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/modes.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 205
+    },
+    {
+      "name": "specialist",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/specialist.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 610
+    },
+    {
+      "name": "strategist",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/strategist.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 448
+    },
+    {
+      "name": "universal",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/universal.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1151
+    },
+    {
+      "name": "worker",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/scanning/worker.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 136
+    },
+    {
+      "name": "duckduckgo",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/duckduckgo.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 524
+    },
+    {
+      "name": "google",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/google.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 237
+    },
+    {
+      "name": "perplexity",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/perplexity.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 278
+    },
+    {
+      "name": "searxng",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/searxng.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 307
+    },
+    {
+      "name": "sploitus",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/sploitus.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 368
+    },
+    {
+      "name": "tavily",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/tavily.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 274
+    },
+    {
+      "name": "traversaal",
+      "path": "/home/z/my-project/securagentx-fresh/securagentx/search_providers/traversaal.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 228
+    },
+    {
+      "name": "access_control_matrix",
+      "path": "/home/z/my-project/securagentx-fresh/tools/access_control_matrix.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 175
+    },
+    {
+      "name": "active_fuzzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/active_fuzzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 606
+    },
+    {
+      "name": "adaptive_planner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/adaptive_planner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 199
+    },
+    {
+      "name": "agent_bola_bridge",
+      "path": "/home/z/my-project/securagentx-fresh/tools/agent_bola_bridge.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 173
+    },
+    {
+      "name": "agent_reflection",
+      "path": "/home/z/my-project/securagentx-fresh/tools/agent_reflection.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 425
+    },
+    {
+      "name": "ai_config",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ai_config.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 288
+    },
+    {
+      "name": "ai_sandbox",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ai_sandbox.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 636
+    },
+    {
+      "name": "ai_tool_creator",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ai_tool_creator.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 719
+    },
+    {
+      "name": "analysis_pipeline",
+      "path": "/home/z/my-project/securagentx-fresh/tools/analysis_pipeline.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 904
+    },
+    {
+      "name": "api_finder",
+      "path": "/home/z/my-project/securagentx-fresh/tools/api_finder.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 114
+    },
+    {
+      "name": "api_schema_diff",
+      "path": "/home/z/my-project/securagentx-fresh/tools/api_schema_diff.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 405
+    },
+    {
+      "name": "api_server",
+      "path": "/home/z/my-project/securagentx-fresh/tools/api_server.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "main"
+      ],
+      "imported_by": [],
+      "lines_of_code": 801
+    },
+    {
+      "name": "arjun_integration",
+      "path": "/home/z/my-project/securagentx-fresh/tools/arjun_integration.py",
+      "category": "tool",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 183
+    },
+    {
+      "name": "auth_session",
+      "path": "/home/z/my-project/securagentx-fresh/tools/auth_session.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 354
+    },
+    {
+      "name": "auth_tester",
+      "path": "/home/z/my-project/securagentx-fresh/tools/auth_tester.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 335
+    },
+    {
+      "name": "auto_detector",
+      "path": "/home/z/my-project/securagentx-fresh/tools/auto_detector.py",
+      "category": "tool",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 412
+    },
+    {
+      "name": "autonomous_agent",
+      "path": "/home/z/my-project/securagentx-fresh/tools/autonomous_agent.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 2298
+    },
+    {
+      "name": "base_recon",
+      "path": "/home/z/my-project/securagentx-fresh/tools/base_recon.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 109
+    },
+    {
+      "name": "base_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/base_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 104
+    },
+    {
+      "name": "bola_harness",
+      "path": "/home/z/my-project/securagentx-fresh/tools/bola_harness.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 382
+    },
+    {
+      "name": "bola_tester",
+      "path": "/home/z/my-project/securagentx-fresh/tools/bola_tester.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 319
+    },
+    {
+      "name": "bounty_intelligence",
+      "path": "/home/z/my-project/securagentx-fresh/tools/bounty_intelligence.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 717
+    },
+    {
+      "name": "bounty_predictor",
+      "path": "/home/z/my-project/securagentx-fresh/tools/bounty_predictor.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 641
+    },
+    {
+      "name": "bounty_reporter",
+      "path": "/home/z/my-project/securagentx-fresh/tools/bounty_reporter.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 199
+    },
+    {
+      "name": "chaining_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/chaining_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 184
+    },
+    {
+      "name": "cloud_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/cloud_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 522
+    },
+    {
+      "name": "command_suggest",
+      "path": "/home/z/my-project/securagentx-fresh/tools/command_suggest.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 561
+    },
+    {
+      "name": "compliance_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/compliance_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 792
+    },
+    {
+      "name": "config_wizard",
+      "path": "/home/z/my-project/securagentx-fresh/tools/config_wizard.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1405
+    },
+    {
+      "name": "context_compressor",
+      "path": "/home/z/my-project/securagentx-fresh/tools/context_compressor.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 336
+    },
+    {
+      "name": "cors_checker",
+      "path": "/home/z/my-project/securagentx-fresh/tools/cors_checker.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 351
+    },
+    {
+      "name": "coverage_analyzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/coverage_analyzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 561
+    },
+    {
+      "name": "cve_database",
+      "path": "/home/z/my-project/securagentx-fresh/tools/cve_database.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 640
+    },
+    {
+      "name": "cvss_calculator",
+      "path": "/home/z/my-project/securagentx-fresh/tools/cvss_calculator.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 386
+    },
+    {
+      "name": "dashboard_server",
+      "path": "/home/z/my-project/securagentx-fresh/tools/dashboard_server.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1011
+    },
+    {
+      "name": "data_facility",
+      "path": "/home/z/my-project/securagentx-fresh/tools/data_facility.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 307
+    },
+    {
+      "name": "dependency_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/dependency_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 152
+    },
+    {
+      "name": "deserialization_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/deserialization_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 349
+    },
+    {
+      "name": "doctor",
+      "path": "/home/z/my-project/securagentx-fresh/tools/doctor.py",
+      "category": "tool",
+      "imports": [
+        "wizard",
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 415
+    },
+    {
+      "name": "dork_miner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/dork_miner.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 76
+    },
+    {
+      "name": "dynamic_waf_mutator",
+      "path": "/home/z/my-project/securagentx-fresh/tools/dynamic_waf_mutator.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 354
+    },
+    {
+      "name": "ecosystem",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ecosystem.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 708
+    },
+    {
+      "name": "edr_evasion",
+      "path": "/home/z/my-project/securagentx-fresh/tools/edr_evasion.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 780
+    },
+    {
+      "name": "endpoint_discovery",
+      "path": "/home/z/my-project/securagentx-fresh/tools/endpoint_discovery.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 343
+    },
+    {
+      "name": "enterprise_security",
+      "path": "/home/z/my-project/securagentx-fresh/tools/enterprise_security.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 603
+    },
+    {
+      "name": "escalation_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/escalation_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 215
+    },
+    {
+      "name": "event_loop",
+      "path": "/home/z/my-project/securagentx-fresh/tools/event_loop.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 64
+    },
+    {
+      "name": "exploit_chain_builder",
+      "path": "/home/z/my-project/securagentx-fresh/tools/exploit_chain_builder.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 574
+    },
+    {
+      "name": "exploit_template",
+      "path": "/home/z/my-project/securagentx-fresh/tools/exploit_template.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 105
+    },
+    {
+      "name": "exploitation",
+      "path": "/home/z/my-project/securagentx-fresh/tools/exploitation.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 673
+    },
+    {
+      "name": "file_relationship_mapper",
+      "path": "/home/z/my-project/securagentx-fresh/tools/file_relationship_mapper.py",
+      "category": "tool",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 372
+    },
+    {
+      "name": "finding_dedup",
+      "path": "/home/z/my-project/securagentx-fresh/tools/finding_dedup.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 137
+    },
+    {
+      "name": "finding_provenance",
+      "path": "/home/z/my-project/securagentx-fresh/tools/finding_provenance.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 160
+    },
+    {
+      "name": "github_intel",
+      "path": "/home/z/my-project/securagentx-fresh/tools/github_intel.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 172
+    },
+    {
+      "name": "graphql_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/graphql_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 391
+    },
+    {
+      "name": "history_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/history_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 652
+    },
+    {
+      "name": "html_reporter",
+      "path": "/home/z/my-project/securagentx-fresh/tools/html_reporter.py",
+      "category": "tool",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 137
+    },
+    {
+      "name": "hunt_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/hunt_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 916
+    },
+    {
+      "name": "injection_tester",
+      "path": "/home/z/my-project/securagentx-fresh/tools/injection_tester.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 494
+    },
+    {
+      "name": "install_request",
+      "path": "/home/z/my-project/securagentx-fresh/tools/install_request.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 162
+    },
+    {
+      "name": "interactive_dashboard",
+      "path": "/home/z/my-project/securagentx-fresh/tools/interactive_dashboard.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 693
+    },
+    {
+      "name": "js_analyzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/js_analyzer.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 101
+    },
+    {
+      "name": "jwt_tester",
+      "path": "/home/z/my-project/securagentx-fresh/tools/jwt_tester.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 600
+    },
+    {
+      "name": "knowledge_graph",
+      "path": "/home/z/my-project/securagentx-fresh/tools/knowledge_graph.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 302
+    },
+    {
+      "name": "learning_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/learning_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 386
+    },
+    {
+      "name": "llm_reasoning",
+      "path": "/home/z/my-project/securagentx-fresh/tools/llm_reasoning.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 225
+    },
+    {
+      "name": "logic_analyzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/logic_analyzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 119
+    },
+    {
+      "name": "logic_flaw_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/logic_flaw_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1458
+    },
+    {
+      "name": "marketplace",
+      "path": "/home/z/my-project/securagentx-fresh/tools/marketplace.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 332
+    },
+    {
+      "name": "memory_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/memory_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 149
+    },
+    {
+      "name": "memory_persistence",
+      "path": "/home/z/my-project/securagentx-fresh/tools/memory_persistence.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 244
+    },
+    {
+      "name": "memory_profile",
+      "path": "/home/z/my-project/securagentx-fresh/tools/memory_profile.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 318
+    },
+    {
+      "name": "mission_state",
+      "path": "/home/z/my-project/securagentx-fresh/tools/mission_state.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 520
+    },
+    {
+      "name": "ml_filter",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ml_filter.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 410
+    },
+    {
+      "name": "mobile_api_tester",
+      "path": "/home/z/my-project/securagentx-fresh/tools/mobile_api_tester.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 399
+    },
+    {
+      "name": "multi_agent",
+      "path": "/home/z/my-project/securagentx-fresh/tools/multi_agent.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 996
+    },
+    {
+      "name": "multimodal_agent",
+      "path": "/home/z/my-project/securagentx-fresh/tools/multimodal_agent.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 530
+    },
+    {
+      "name": "native_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/native_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 676
+    },
+    {
+      "name": "nvd_cve",
+      "path": "/home/z/my-project/securagentx-fresh/tools/nvd_cve.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 438
+    },
+    {
+      "name": "object_id_permuter",
+      "path": "/home/z/my-project/securagentx-fresh/tools/object_id_permuter.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 263
+    },
+    {
+      "name": "omni_scan",
+      "path": "/home/z/my-project/securagentx-fresh/tools/omni_scan.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 406
+    },
+    {
+      "name": "overlay_menu",
+      "path": "/home/z/my-project/securagentx-fresh/tools/overlay_menu.py",
+      "category": "tool",
+      "imports": [
+        "agent",
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 884
+    },
+    {
+      "name": "param_miner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/param_miner.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 138
+    },
+    {
+      "name": "payload_mutation",
+      "path": "/home/z/my-project/securagentx-fresh/tools/payload_mutation.py",
+      "category": "tool",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 996
+    },
+    {
+      "name": "pdf_report_generator",
+      "path": "/home/z/my-project/securagentx-fresh/tools/pdf_report_generator.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 598
+    },
+    {
+      "name": "perf",
+      "path": "/home/z/my-project/securagentx-fresh/tools/perf.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 334
+    },
+    {
+      "name": "profile_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/profile_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 578
+    },
+    {
+      "name": "progress_display",
+      "path": "/home/z/my-project/securagentx-fresh/tools/progress_display.py",
+      "category": "tool",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 514
+    },
+    {
+      "name": "protocol_analyzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/protocol_analyzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1051
+    },
+    {
+      "name": "python_recon",
+      "path": "/home/z/my-project/securagentx-fresh/tools/python_recon.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 712
+    },
+    {
+      "name": "race_condition_tester",
+      "path": "/home/z/my-project/securagentx-fresh/tools/race_condition_tester.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 482
+    },
+    {
+      "name": "report_gen",
+      "path": "/home/z/my-project/securagentx-fresh/tools/report_gen.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 503
+    },
+    {
+      "name": "research_tool",
+      "path": "/home/z/my-project/securagentx-fresh/tools/research_tool.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 316
+    },
+    {
+      "name": "safe_exec",
+      "path": "/home/z/my-project/securagentx-fresh/tools/safe_exec.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 308
+    },
+    {
+      "name": "sast_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/sast_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 414
+    },
+    {
+      "name": "session_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/session_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 340
+    },
+    {
+      "name": "skill_registry",
+      "path": "/home/z/my-project/securagentx-fresh/tools/skill_registry.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 425
+    },
+    {
+      "name": "smart_recon",
+      "path": "/home/z/my-project/securagentx-fresh/tools/smart_recon.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 640
+    },
+    {
+      "name": "smart_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/smart_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 624
+    },
+    {
+      "name": "soc_analyzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/soc_analyzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 569
+    },
+    {
+      "name": "ssrf_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ssrf_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 249
+    },
+    {
+      "name": "ssti_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/ssti_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 311
+    },
+    {
+      "name": "subdomain_takeover",
+      "path": "/home/z/my-project/securagentx-fresh/tools/subdomain_takeover.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 297
+    },
+    {
+      "name": "supply_chain_analyzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/supply_chain_analyzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1287
+    },
+    {
+      "name": "swarm_controller",
+      "path": "/home/z/my-project/securagentx-fresh/tools/swarm_controller.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 464
+    },
+    {
+      "name": "targeted_attacks",
+      "path": "/home/z/my-project/securagentx-fresh/tools/targeted_attacks.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 769
+    },
+    {
+      "name": "telegram_bridge",
+      "path": "/home/z/my-project/securagentx-fresh/tools/telegram_bridge.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 334
+    },
+    {
+      "name": "threat_intel",
+      "path": "/home/z/my-project/securagentx-fresh/tools/threat_intel.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 346
+    },
+    {
+      "name": "token_counter",
+      "path": "/home/z/my-project/securagentx-fresh/tools/token_counter.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 42
+    },
+    {
+      "name": "token_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/token_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 644
+    },
+    {
+      "name": "tool_recommender",
+      "path": "/home/z/my-project/securagentx-fresh/tools/tool_recommender.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 247
+    },
+    {
+      "name": "tool_registry",
+      "path": "/home/z/my-project/securagentx-fresh/tools/tool_registry.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1344
+    },
+    {
+      "name": "truffle_integration",
+      "path": "/home/z/my-project/securagentx-fresh/tools/truffle_integration.py",
+      "category": "tool",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 229
+    },
+    {
+      "name": "tui_dashboard",
+      "path": "/home/z/my-project/securagentx-fresh/tools/tui_dashboard.py",
+      "category": "tool",
+      "imports": [
+        "textual",
+        "logging",
+        "main",
+        "tui_design"
+      ],
+      "imported_by": [],
+      "lines_of_code": 517
+    },
+    {
+      "name": "universal_ai_client",
+      "path": "/home/z/my-project/securagentx-fresh/tools/universal_ai_client.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1095
+    },
+    {
+      "name": "universal_executor",
+      "path": "/home/z/my-project/securagentx-fresh/tools/universal_executor.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1012
+    },
+    {
+      "name": "updater",
+      "path": "/home/z/my-project/securagentx-fresh/tools/updater.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 299
+    },
+    {
+      "name": "user_memory",
+      "path": "/home/z/my-project/securagentx-fresh/tools/user_memory.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 304
+    },
+    {
+      "name": "user_preferences",
+      "path": "/home/z/my-project/securagentx-fresh/tools/user_preferences.py",
+      "category": "tool",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 169
+    },
+    {
+      "name": "vector_memory",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vector_memory.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 792
+    },
+    {
+      "name": "verification_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/verification_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 336
+    },
+    {
+      "name": "vuln_engine",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vuln_engine.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 640
+    },
+    {
+      "name": "vuln_finder",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vuln_finder.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 613
+    },
+    {
+      "name": "vuln_hunter_core",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vuln_hunter_core.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 1168
+    },
+    {
+      "name": "vuln_knowledge",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vuln_knowledge.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 221
+    },
+    {
+      "name": "vuln_reasoning",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vuln_reasoning.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 862
+    },
+    {
+      "name": "vuln_researcher",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vuln_researcher.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 961
+    },
+    {
+      "name": "vulncheck_tool",
+      "path": "/home/z/my-project/securagentx-fresh/tools/vulncheck_tool.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 77
+    },
+    {
+      "name": "waf_detector",
+      "path": "/home/z/my-project/securagentx-fresh/tools/waf_detector.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 373
+    },
+    {
+      "name": "waf_evasion",
+      "path": "/home/z/my-project/securagentx-fresh/tools/waf_evasion.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 326
+    },
+    {
+      "name": "waf_signatures",
+      "path": "/home/z/my-project/securagentx-fresh/tools/waf_signatures.py",
+      "category": "tool",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 121
+    },
+    {
+      "name": "wayback_tool",
+      "path": "/home/z/my-project/securagentx-fresh/tools/wayback_tool.py",
+      "category": "tool",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 231
+    },
+    {
+      "name": "welcome_wizard",
+      "path": "/home/z/my-project/securagentx-fresh/tools/welcome_wizard.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 484
+    },
+    {
+      "name": "wordlist_manager",
+      "path": "/home/z/my-project/securagentx-fresh/tools/wordlist_manager.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 860
+    },
+    {
+      "name": "workflow_fuzzer",
+      "path": "/home/z/my-project/securagentx-fresh/tools/workflow_fuzzer.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 235
+    },
+    {
+      "name": "xxe_scanner",
+      "path": "/home/z/my-project/securagentx-fresh/tools/xxe_scanner.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 327
+    },
+    {
+      "name": "zero_day_heuristics",
+      "path": "/home/z/my-project/securagentx-fresh/tools/zero_day_heuristics.py",
+      "category": "tool",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 3092
+    },
+    {
+      "name": "dashboard",
+      "path": "/home/z/my-project/securagentx-fresh/tui/dashboard.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 805
+    },
+    {
+      "name": "findings_display",
+      "path": "/home/z/my-project/securagentx-fresh/tui/findings_display.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 451
+    },
+    {
+      "name": "hunt_view",
+      "path": "/home/z/my-project/securagentx-fresh/tui/hunt_view.py",
+      "category": "core",
+      "imports": [],
+      "imported_by": [],
+      "lines_of_code": 463
+    },
+    {
+      "name": "keyboard_shortcuts",
+      "path": "/home/z/my-project/securagentx-fresh/tui/keyboard_shortcuts.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 332
+    },
+    {
+      "name": "main_menu",
+      "path": "/home/z/my-project/securagentx-fresh/tui/main_menu.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 649
+    },
+    {
+      "name": "scan_progress",
+      "path": "/home/z/my-project/securagentx-fresh/tui/scan_progress.py",
+      "category": "core",
+      "imports": [
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 381
+    },
+    {
+      "name": "themes",
+      "path": "/home/z/my-project/securagentx-fresh/tui/themes.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 788
+    },
+    {
+      "name": "visualizations",
+      "path": "/home/z/my-project/securagentx-fresh/tui/visualizations.py",
+      "category": "core",
+      "imports": [
+        "logging",
+        "dataclasses"
+      ],
+      "imported_by": [],
+      "lines_of_code": 641
+    },
+    {
+      "name": "welcome",
+      "path": "/home/z/my-project/securagentx-fresh/tui/welcome.py",
+      "category": "core",
+      "imports": [
+        "logging"
+      ],
+      "imported_by": [],
+      "lines_of_code": 679
+    }
+  ],
+  "edges": [
+    [
+      "agent_conversation",
+      "logging"
+    ],
+    [
+      "agent_council",
+      "logging"
+    ],
+    [
+      "agent_council",
+      "dataclasses"
+    ],
+    [
+      "agent_dataclasses",
+      "dataclasses"
+    ],
+    [
+      "agent_executor",
+      "logging"
+    ],
+    [
+      "agent_helpers",
+      "logging"
+    ],
+    [
+      "agent_intent",
+      "logging"
+    ],
+    [
+      "agent_logger",
+      "logging"
+    ],
+    [
+      "agent_modes",
+      "logging"
+    ],
+    [
+      "agent_planner",
+      "logging"
+    ],
+    [
+      "agent_universal",
+      "logging"
+    ],
+    [
+      "critic_agent",
+      "logging"
+    ],
+    [
+      "decision_engine",
+      "logging"
+    ],
+    [
+      "decision_engine",
+      "dataclasses"
+    ],
+    [
+      "hybrid_agent",
+      "logging"
+    ],
+    [
+      "hypothesis_boost",
+      "logging"
+    ],
+    [
+      "hypothesis_boost",
+      "dataclasses"
+    ],
+    [
+      "post_processor",
+      "logging"
+    ],
+    [
+      "prompt_builder",
+      "logging"
+    ],
+    [
+      "base",
+      "logging"
+    ],
+    [
+      "captain",
+      "logging"
+    ],
+    [
+      "captain",
+      "dataclasses"
+    ],
+    [
+      "planner",
+      "logging"
+    ],
+    [
+      "recon",
+      "logging"
+    ],
+    [
+      "recon",
+      "dataclasses"
+    ],
+    [
+      "scanner",
+      "logging"
+    ],
+    [
+      "scanner",
+      "dataclasses"
+    ],
+    [
+      "scan_context",
+      "logging"
+    ],
+    [
+      "scan_context",
+      "dataclasses"
+    ],
+    [
+      "scan_loop",
+      "logging"
+    ],
+    [
+      "scan_loop",
+      "dataclasses"
+    ],
+    [
+      "specialist_agent",
+      "logging"
+    ],
+    [
+      "strategist_agent",
+      "logging"
+    ],
+    [
+      "tui_game",
+      "logging"
+    ],
+    [
+      "vuln_reasoning_phase",
+      "logging"
+    ],
+    [
+      "worker_base",
+      "logging"
+    ],
+    [
+      "worker_base",
+      "dataclasses"
+    ],
+    [
+      "interactive",
+      "logging"
+    ],
+    [
+      "live_display",
+      "dataclasses"
+    ],
+    [
+      "textual",
+      "logging"
+    ],
+    [
+      "textual",
+      "textual"
+    ],
+    [
+      "tools_menu",
+      "logging"
+    ],
+    [
+      "tui_design",
+      "dataclasses"
+    ],
+    [
+      "wizard",
+      "logging"
+    ],
+    [
+      "mcp_runner",
+      "logging"
+    ],
+    [
+      "registry",
+      "logging"
+    ],
+    [
+      "scan",
+      "logging"
+    ],
+    [
+      "scan",
+      "main"
+    ],
+    [
+      "agent",
+      "logging"
+    ],
+    [
+      "brain",
+      "logging"
+    ],
+    [
+      "brain",
+      "dataclasses"
+    ],
+    [
+      "orchestrator",
+      "logging"
+    ],
+    [
+      "bot",
+      "logging"
+    ],
+    [
+      "bot_utils",
+      "logging"
+    ],
+    [
+      "main",
+      "logging"
+    ],
+    [
+      "main",
+      "ui_components"
+    ],
+    [
+      "client",
+      "logging"
+    ],
+    [
+      "config",
+      "logging"
+    ],
+    [
+      "config",
+      "dataclasses"
+    ],
+    [
+      "manager",
+      "logging"
+    ],
+    [
+      "protocol",
+      "logging"
+    ],
+    [
+      "protocol",
+      "dataclasses"
+    ],
+    [
+      "server",
+      "logging"
+    ],
+    [
+      "scope",
+      "logging"
+    ],
+    [
+      "__main__",
+      "main"
+    ],
+    [
+      "agent_memory",
+      "logging"
+    ],
+    [
+      "agent_skills",
+      "logging"
+    ],
+    [
+      "memory",
+      "logging"
+    ],
+    [
+      "memory",
+      "dataclasses"
+    ],
+    [
+      "vuln_agent",
+      "dataclasses"
+    ],
+    [
+      "vuln_agent",
+      "logging"
+    ],
+    [
+      "adviser",
+      "logging"
+    ],
+    [
+      "assistant",
+      "logging"
+    ],
+    [
+      "coder",
+      "logging"
+    ],
+    [
+      "enricher",
+      "logging"
+    ],
+    [
+      "generator",
+      "logging"
+    ],
+    [
+      "installer",
+      "logging"
+    ],
+    [
+      "memorist",
+      "logging"
+    ],
+    [
+      "pentester",
+      "logging"
+    ],
+    [
+      "primary_agent",
+      "logging"
+    ],
+    [
+      "primary_agent",
+      "dataclasses"
+    ],
+    [
+      "refiner",
+      "logging"
+    ],
+    [
+      "reflector",
+      "logging"
+    ],
+    [
+      "searcher",
+      "logging"
+    ],
+    [
+      "summarizer",
+      "logging"
+    ],
+    [
+      "summarizer",
+      "dataclasses"
+    ],
+    [
+      "toolcall_fixer",
+      "logging"
+    ],
+    [
+      "_auth",
+      "logging"
+    ],
+    [
+      "_auth",
+      "dataclasses"
+    ],
+    [
+      "_models",
+      "logging"
+    ],
+    [
+      "app",
+      "logging"
+    ],
+    [
+      "auth",
+      "logging"
+    ],
+    [
+      "flows",
+      "logging"
+    ],
+    [
+      "health",
+      "logging"
+    ],
+    [
+      "knowledge",
+      "logging"
+    ],
+    [
+      "providers",
+      "logging"
+    ],
+    [
+      "tokens",
+      "logging"
+    ],
+    [
+      "middleware",
+      "logging"
+    ],
+    [
+      "oauth",
+      "logging"
+    ],
+    [
+      "sessions",
+      "logging"
+    ],
+    [
+      "constitution",
+      "dataclasses"
+    ],
+    [
+      "constitution_engine",
+      "logging"
+    ],
+    [
+      "constitution_engine",
+      "dataclasses"
+    ],
+    [
+      "browser",
+      "logging"
+    ],
+    [
+      "browser",
+      "dataclasses"
+    ],
+    [
+      "cleanup",
+      "logging"
+    ],
+    [
+      "cleanup",
+      "dataclasses"
+    ],
+    [
+      "db",
+      "logging"
+    ],
+    [
+      "file_ops",
+      "logging"
+    ],
+    [
+      "image_chooser",
+      "logging"
+    ],
+    [
+      "lifecycle",
+      "logging"
+    ],
+    [
+      "lifecycle",
+      "dataclasses"
+    ],
+    [
+      "network",
+      "logging"
+    ],
+    [
+      "resource_limits",
+      "logging"
+    ],
+    [
+      "resource_limits",
+      "dataclasses"
+    ],
+    [
+      "sandbox",
+      "logging"
+    ],
+    [
+      "sandbox",
+      "dataclasses"
+    ],
+    [
+      "terminal",
+      "logging"
+    ],
+    [
+      "terminal",
+      "dataclasses"
+    ],
+    [
+      "flow_worker",
+      "logging"
+    ],
+    [
+      "flow_worker",
+      "dataclasses"
+    ],
+    [
+      "state_machine",
+      "logging"
+    ],
+    [
+      "subtask_worker",
+      "logging"
+    ],
+    [
+      "task_worker",
+      "logging"
+    ],
+    [
+      "governance",
+      "logging"
+    ],
+    [
+      "governance",
+      "dataclasses"
+    ],
+    [
+      "mutations",
+      "logging"
+    ],
+    [
+      "queries",
+      "logging"
+    ],
+    [
+      "schema",
+      "logging"
+    ],
+    [
+      "subscriptions",
+      "logging"
+    ],
+    [
+      "types",
+      "dataclasses"
+    ],
+    [
+      "community",
+      "logging"
+    ],
+    [
+      "extractor",
+      "logging"
+    ],
+    [
+      "extractor",
+      "dataclasses"
+    ],
+    [
+      "graph",
+      "logging"
+    ],
+    [
+      "graph",
+      "dataclasses"
+    ],
+    [
+      "integration",
+      "logging"
+    ],
+    [
+      "loop",
+      "logging"
+    ],
+    [
+      "loop",
+      "dataclasses"
+    ],
+    [
+      "chains",
+      "logging"
+    ],
+    [
+      "langfuse",
+      "logging"
+    ],
+    [
+      "langfuse",
+      "langfuse"
+    ],
+    [
+      "logging",
+      "logging"
+    ],
+    [
+      "metrics",
+      "logging"
+    ],
+    [
+      "otel",
+      "logging"
+    ],
+    [
+      "paths",
+      "logging"
+    ],
+    [
+      "_openai_compat",
+      "logging"
+    ],
+    [
+      "_openai_compat",
+      "openai"
+    ],
+    [
+      "anthropic",
+      "logging"
+    ],
+    [
+      "anthropic",
+      "anthropic"
+    ],
+    [
+      "bedrock",
+      "logging"
+    ],
+    [
+      "custom",
+      "logging"
+    ],
+    [
+      "deepseek",
+      "logging"
+    ],
+    [
+      "deepseek",
+      "openai"
+    ],
+    [
+      "gemini",
+      "logging"
+    ],
+    [
+      "glm",
+      "logging"
+    ],
+    [
+      "kimi",
+      "logging"
+    ],
+    [
+      "ollama",
+      "logging"
+    ],
+    [
+      "ollama",
+      "ollama"
+    ],
+    [
+      "openai",
+      "logging"
+    ],
+    [
+      "qwen",
+      "logging"
+    ],
+    [
+      "cvss",
+      "dataclasses"
+    ],
+    [
+      "export",
+      "logging"
+    ],
+    [
+      "pdf",
+      "dataclasses"
+    ],
+    [
+      "conversation",
+      "logging"
+    ],
+    [
+      "critic",
+      "logging"
+    ],
+    [
+      "dataclasses",
+      "dataclasses"
+    ],
+    [
+      "executor",
+      "logging"
+    ],
+    [
+      "helpers",
+      "logging"
+    ],
+    [
+      "intent",
+      "logging"
+    ],
+    [
+      "logger",
+      "logging"
+    ],
+    [
+      "modes",
+      "logging"
+    ],
+    [
+      "specialist",
+      "logging"
+    ],
+    [
+      "strategist",
+      "logging"
+    ],
+    [
+      "universal",
+      "logging"
+    ],
+    [
+      "worker",
+      "logging"
+    ],
+    [
+      "worker",
+      "dataclasses"
+    ],
+    [
+      "duckduckgo",
+      "logging"
+    ],
+    [
+      "google",
+      "logging"
+    ],
+    [
+      "perplexity",
+      "logging"
+    ],
+    [
+      "searxng",
+      "logging"
+    ],
+    [
+      "sploitus",
+      "logging"
+    ],
+    [
+      "tavily",
+      "logging"
+    ],
+    [
+      "traversaal",
+      "logging"
+    ],
+    [
+      "access_control_matrix",
+      "logging"
+    ],
+    [
+      "access_control_matrix",
+      "dataclasses"
+    ],
+    [
+      "active_fuzzer",
+      "logging"
+    ],
+    [
+      "active_fuzzer",
+      "dataclasses"
+    ],
+    [
+      "adaptive_planner",
+      "logging"
+    ],
+    [
+      "adaptive_planner",
+      "dataclasses"
+    ],
+    [
+      "agent_bola_bridge",
+      "logging"
+    ],
+    [
+      "agent_reflection",
+      "logging"
+    ],
+    [
+      "agent_reflection",
+      "dataclasses"
+    ],
+    [
+      "ai_config",
+      "logging"
+    ],
+    [
+      "ai_sandbox",
+      "logging"
+    ],
+    [
+      "ai_sandbox",
+      "dataclasses"
+    ],
+    [
+      "ai_tool_creator",
+      "logging"
+    ],
+    [
+      "ai_tool_creator",
+      "dataclasses"
+    ],
+    [
+      "analysis_pipeline",
+      "logging"
+    ],
+    [
+      "api_finder",
+      "logging"
+    ],
+    [
+      "api_schema_diff",
+      "logging"
+    ],
+    [
+      "api_schema_diff",
+      "dataclasses"
+    ],
+    [
+      "api_server",
+      "main"
+    ],
+    [
+      "api_server",
+      "logging"
+    ],
+    [
+      "auth_session",
+      "logging"
+    ],
+    [
+      "auth_session",
+      "dataclasses"
+    ],
+    [
+      "auth_tester",
+      "logging"
+    ],
+    [
+      "auth_tester",
+      "dataclasses"
+    ],
+    [
+      "autonomous_agent",
+      "dataclasses"
+    ],
+    [
+      "autonomous_agent",
+      "logging"
+    ],
+    [
+      "base_recon",
+      "logging"
+    ],
+    [
+      "base_scanner",
+      "logging"
+    ],
+    [
+      "bola_harness",
+      "logging"
+    ],
+    [
+      "bola_harness",
+      "dataclasses"
+    ],
+    [
+      "bola_tester",
+      "logging"
+    ],
+    [
+      "bola_tester",
+      "dataclasses"
+    ],
+    [
+      "bounty_intelligence",
+      "logging"
+    ],
+    [
+      "bounty_intelligence",
+      "dataclasses"
+    ],
+    [
+      "bounty_predictor",
+      "logging"
+    ],
+    [
+      "bounty_predictor",
+      "dataclasses"
+    ],
+    [
+      "bounty_reporter",
+      "logging"
+    ],
+    [
+      "bounty_reporter",
+      "dataclasses"
+    ],
+    [
+      "chaining_engine",
+      "logging"
+    ],
+    [
+      "chaining_engine",
+      "dataclasses"
+    ],
+    [
+      "cloud_scanner",
+      "logging"
+    ],
+    [
+      "cloud_scanner",
+      "dataclasses"
+    ],
+    [
+      "command_suggest",
+      "logging"
+    ],
+    [
+      "compliance_engine",
+      "logging"
+    ],
+    [
+      "compliance_engine",
+      "dataclasses"
+    ],
+    [
+      "config_wizard",
+      "logging"
+    ],
+    [
+      "config_wizard",
+      "dataclasses"
+    ],
+    [
+      "context_compressor",
+      "logging"
+    ],
+    [
+      "context_compressor",
+      "dataclasses"
+    ],
+    [
+      "cors_checker",
+      "logging"
+    ],
+    [
+      "cors_checker",
+      "dataclasses"
+    ],
+    [
+      "coverage_analyzer",
+      "logging"
+    ],
+    [
+      "coverage_analyzer",
+      "dataclasses"
+    ],
+    [
+      "cve_database",
+      "logging"
+    ],
+    [
+      "cve_database",
+      "dataclasses"
+    ],
+    [
+      "cvss_calculator",
+      "logging"
+    ],
+    [
+      "cvss_calculator",
+      "dataclasses"
+    ],
+    [
+      "dashboard_server",
+      "logging"
+    ],
+    [
+      "data_facility",
+      "logging"
+    ],
+    [
+      "dependency_manager",
+      "logging"
+    ],
+    [
+      "deserialization_scanner",
+      "logging"
+    ],
+    [
+      "deserialization_scanner",
+      "dataclasses"
+    ],
+    [
+      "doctor",
+      "wizard"
+    ],
+    [
+      "doctor",
+      "logging"
+    ],
+    [
+      "dork_miner",
+      "logging"
+    ],
+    [
+      "dynamic_waf_mutator",
+      "logging"
+    ],
+    [
+      "ecosystem",
+      "logging"
+    ],
+    [
+      "ecosystem",
+      "dataclasses"
+    ],
+    [
+      "edr_evasion",
+      "logging"
+    ],
+    [
+      "edr_evasion",
+      "dataclasses"
+    ],
+    [
+      "endpoint_discovery",
+      "logging"
+    ],
+    [
+      "endpoint_discovery",
+      "dataclasses"
+    ],
+    [
+      "enterprise_security",
+      "logging"
+    ],
+    [
+      "enterprise_security",
+      "dataclasses"
+    ],
+    [
+      "escalation_engine",
+      "logging"
+    ],
+    [
+      "escalation_engine",
+      "dataclasses"
+    ],
+    [
+      "event_loop",
+      "logging"
+    ],
+    [
+      "exploit_chain_builder",
+      "logging"
+    ],
+    [
+      "exploit_chain_builder",
+      "dataclasses"
+    ],
+    [
+      "exploit_template",
+      "logging"
+    ],
+    [
+      "exploitation",
+      "logging"
+    ],
+    [
+      "exploitation",
+      "dataclasses"
+    ],
+    [
+      "file_relationship_mapper",
+      "dataclasses"
+    ],
+    [
+      "finding_dedup",
+      "logging"
+    ],
+    [
+      "finding_dedup",
+      "dataclasses"
+    ],
+    [
+      "finding_provenance",
+      "logging"
+    ],
+    [
+      "github_intel",
+      "logging"
+    ],
+    [
+      "graphql_scanner",
+      "logging"
+    ],
+    [
+      "graphql_scanner",
+      "dataclasses"
+    ],
+    [
+      "history_manager",
+      "logging"
+    ],
+    [
+      "history_manager",
+      "dataclasses"
+    ],
+    [
+      "hunt_engine",
+      "dataclasses"
+    ],
+    [
+      "hunt_engine",
+      "logging"
+    ],
+    [
+      "injection_tester",
+      "logging"
+    ],
+    [
+      "install_request",
+      "logging"
+    ],
+    [
+      "install_request",
+      "dataclasses"
+    ],
+    [
+      "interactive_dashboard",
+      "logging"
+    ],
+    [
+      "interactive_dashboard",
+      "dataclasses"
+    ],
+    [
+      "js_analyzer",
+      "logging"
+    ],
+    [
+      "jwt_tester",
+      "logging"
+    ],
+    [
+      "jwt_tester",
+      "dataclasses"
+    ],
+    [
+      "knowledge_graph",
+      "logging"
+    ],
+    [
+      "knowledge_graph",
+      "dataclasses"
+    ],
+    [
+      "learning_engine",
+      "logging"
+    ],
+    [
+      "learning_engine",
+      "dataclasses"
+    ],
+    [
+      "llm_reasoning",
+      "logging"
+    ],
+    [
+      "logic_analyzer",
+      "logging"
+    ],
+    [
+      "logic_analyzer",
+      "dataclasses"
+    ],
+    [
+      "logic_flaw_engine",
+      "logging"
+    ],
+    [
+      "logic_flaw_engine",
+      "dataclasses"
+    ],
+    [
+      "marketplace",
+      "logging"
+    ],
+    [
+      "marketplace",
+      "dataclasses"
+    ],
+    [
+      "memory_manager",
+      "logging"
+    ],
+    [
+      "memory_persistence",
+      "logging"
+    ],
+    [
+      "memory_profile",
+      "logging"
+    ],
+    [
+      "mission_state",
+      "logging"
+    ],
+    [
+      "mission_state",
+      "dataclasses"
+    ],
+    [
+      "ml_filter",
+      "logging"
+    ],
+    [
+      "ml_filter",
+      "dataclasses"
+    ],
+    [
+      "mobile_api_tester",
+      "logging"
+    ],
+    [
+      "mobile_api_tester",
+      "dataclasses"
+    ],
+    [
+      "multi_agent",
+      "logging"
+    ],
+    [
+      "multi_agent",
+      "dataclasses"
+    ],
+    [
+      "multimodal_agent",
+      "logging"
+    ],
+    [
+      "multimodal_agent",
+      "dataclasses"
+    ],
+    [
+      "native_scanner",
+      "logging"
+    ],
+    [
+      "native_scanner",
+      "dataclasses"
+    ],
+    [
+      "nvd_cve",
+      "logging"
+    ],
+    [
+      "nvd_cve",
+      "dataclasses"
+    ],
+    [
+      "object_id_permuter",
+      "logging"
+    ],
+    [
+      "object_id_permuter",
+      "dataclasses"
+    ],
+    [
+      "omni_scan",
+      "logging"
+    ],
+    [
+      "overlay_menu",
+      "agent"
+    ],
+    [
+      "overlay_menu",
+      "logging"
+    ],
+    [
+      "param_miner",
+      "logging"
+    ],
+    [
+      "payload_mutation",
+      "dataclasses"
+    ],
+    [
+      "pdf_report_generator",
+      "logging"
+    ],
+    [
+      "pdf_report_generator",
+      "dataclasses"
+    ],
+    [
+      "perf",
+      "logging"
+    ],
+    [
+      "perf",
+      "dataclasses"
+    ],
+    [
+      "profile_manager",
+      "logging"
+    ],
+    [
+      "profile_manager",
+      "dataclasses"
+    ],
+    [
+      "progress_display",
+      "dataclasses"
+    ],
+    [
+      "protocol_analyzer",
+      "logging"
+    ],
+    [
+      "protocol_analyzer",
+      "dataclasses"
+    ],
+    [
+      "python_recon",
+      "logging"
+    ],
+    [
+      "python_recon",
+      "dataclasses"
+    ],
+    [
+      "race_condition_tester",
+      "logging"
+    ],
+    [
+      "race_condition_tester",
+      "dataclasses"
+    ],
+    [
+      "report_gen",
+      "logging"
+    ],
+    [
+      "report_gen",
+      "dataclasses"
+    ],
+    [
+      "research_tool",
+      "logging"
+    ],
+    [
+      "safe_exec",
+      "logging"
+    ],
+    [
+      "sast_engine",
+      "logging"
+    ],
+    [
+      "sast_engine",
+      "dataclasses"
+    ],
+    [
+      "session_manager",
+      "logging"
+    ],
+    [
+      "session_manager",
+      "dataclasses"
+    ],
+    [
+      "skill_registry",
+      "logging"
+    ],
+    [
+      "skill_registry",
+      "dataclasses"
+    ],
+    [
+      "smart_recon",
+      "logging"
+    ],
+    [
+      "smart_recon",
+      "dataclasses"
+    ],
+    [
+      "smart_scanner",
+      "dataclasses"
+    ],
+    [
+      "smart_scanner",
+      "logging"
+    ],
+    [
+      "soc_analyzer",
+      "logging"
+    ],
+    [
+      "soc_analyzer",
+      "dataclasses"
+    ],
+    [
+      "ssrf_scanner",
+      "logging"
+    ],
+    [
+      "ssrf_scanner",
+      "dataclasses"
+    ],
+    [
+      "ssti_scanner",
+      "logging"
+    ],
+    [
+      "ssti_scanner",
+      "dataclasses"
+    ],
+    [
+      "subdomain_takeover",
+      "logging"
+    ],
+    [
+      "supply_chain_analyzer",
+      "logging"
+    ],
+    [
+      "supply_chain_analyzer",
+      "dataclasses"
+    ],
+    [
+      "swarm_controller",
+      "logging"
+    ],
+    [
+      "swarm_controller",
+      "dataclasses"
+    ],
+    [
+      "targeted_attacks",
+      "logging"
+    ],
+    [
+      "targeted_attacks",
+      "dataclasses"
+    ],
+    [
+      "telegram_bridge",
+      "logging"
+    ],
+    [
+      "telegram_bridge",
+      "dataclasses"
+    ],
+    [
+      "threat_intel",
+      "logging"
+    ],
+    [
+      "token_counter",
+      "logging"
+    ],
+    [
+      "token_manager",
+      "logging"
+    ],
+    [
+      "token_manager",
+      "dataclasses"
+    ],
+    [
+      "tool_recommender",
+      "logging"
+    ],
+    [
+      "tool_registry",
+      "dataclasses"
+    ],
+    [
+      "tool_registry",
+      "logging"
+    ],
+    [
+      "tui_dashboard",
+      "main"
+    ],
+    [
+      "tui_dashboard",
+      "logging"
+    ],
+    [
+      "tui_dashboard",
+      "textual"
+    ],
+    [
+      "tui_dashboard",
+      "tui_design"
+    ],
+    [
+      "universal_ai_client",
+      "logging"
+    ],
+    [
+      "universal_ai_client",
+      "dataclasses"
+    ],
+    [
+      "universal_executor",
+      "dataclasses"
+    ],
+    [
+      "universal_executor",
+      "logging"
+    ],
+    [
+      "updater",
+      "logging"
+    ],
+    [
+      "updater",
+      "dataclasses"
+    ],
+    [
+      "user_memory",
+      "logging"
+    ],
+    [
+      "user_preferences",
+      "dataclasses"
+    ],
+    [
+      "vector_memory",
+      "logging"
+    ],
+    [
+      "vector_memory",
+      "dataclasses"
+    ],
+    [
+      "verification_engine",
+      "logging"
+    ],
+    [
+      "verification_engine",
+      "dataclasses"
+    ],
+    [
+      "vuln_engine",
+      "logging"
+    ],
+    [
+      "vuln_engine",
+      "dataclasses"
+    ],
+    [
+      "vuln_finder",
+      "dataclasses"
+    ],
+    [
+      "vuln_finder",
+      "logging"
+    ],
+    [
+      "vuln_hunter_core",
+      "logging"
+    ],
+    [
+      "vuln_hunter_core",
+      "dataclasses"
+    ],
+    [
+      "vuln_knowledge",
+      "logging"
+    ],
+    [
+      "vuln_reasoning",
+      "logging"
+    ],
+    [
+      "vuln_reasoning",
+      "dataclasses"
+    ],
+    [
+      "vuln_researcher",
+      "logging"
+    ],
+    [
+      "vuln_researcher",
+      "dataclasses"
+    ],
+    [
+      "vulncheck_tool",
+      "logging"
+    ],
+    [
+      "waf_detector",
+      "logging"
+    ],
+    [
+      "waf_detector",
+      "dataclasses"
+    ],
+    [
+      "waf_evasion",
+      "logging"
+    ],
+    [
+      "waf_evasion",
+      "dataclasses"
+    ],
+    [
+      "wayback_tool",
+      "logging"
+    ],
+    [
+      "welcome_wizard",
+      "logging"
+    ],
+    [
+      "welcome_wizard",
+      "dataclasses"
+    ],
+    [
+      "wordlist_manager",
+      "logging"
+    ],
+    [
+      "wordlist_manager",
+      "dataclasses"
+    ],
+    [
+      "workflow_fuzzer",
+      "logging"
+    ],
+    [
+      "workflow_fuzzer",
+      "dataclasses"
+    ],
+    [
+      "xxe_scanner",
+      "logging"
+    ],
+    [
+      "xxe_scanner",
+      "dataclasses"
+    ],
+    [
+      "zero_day_heuristics",
+      "dataclasses"
+    ],
+    [
+      "zero_day_heuristics",
+      "logging"
+    ],
+    [
+      "dashboard",
+      "logging"
+    ],
+    [
+      "dashboard",
+      "dataclasses"
+    ],
+    [
+      "findings_display",
+      "dataclasses"
+    ],
+    [
+      "keyboard_shortcuts",
+      "logging"
+    ],
+    [
+      "keyboard_shortcuts",
+      "dataclasses"
+    ],
+    [
+      "main_menu",
+      "logging"
+    ],
+    [
+      "scan_progress",
+      "dataclasses"
+    ],
+    [
+      "themes",
+      "logging"
+    ],
+    [
+      "visualizations",
+      "logging"
+    ],
+    [
+      "visualizations",
+      "dataclasses"
+    ],
+    [
+      "welcome",
+      "logging"
+    ]
+  ]
+}

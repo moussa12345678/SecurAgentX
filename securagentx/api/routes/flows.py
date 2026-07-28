@@ -40,6 +40,7 @@ by future tasks).
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any, Optional
 
@@ -59,6 +60,11 @@ from .._models import (
 )
 
 logger = logging.getLogger("securagentx.api.routes.flows")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 router = APIRouter(prefix="/flows", tags=["flows"])
 

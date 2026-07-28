@@ -1,6 +1,7 @@
 """
-tools/safe_exec.py -- Native Shell Executor
-- shell=True enabled for full pipeline / redirect / chaining support
+tools/safe_exec.py -- Safe Shell Executor
+- Commands run with shell=False using shlex.split() list args
+  (CWE-78 command-injection hardening; see issue 28)
 - Security handled by Governance (tools/governance.py) upstream
 - Timeout & output size limits enforced
 - Structured return with stdout/stderr/exit_code
@@ -10,15 +11,16 @@ tools/safe_exec.py -- Native Shell Executor
 from __future__ import annotations
 
 import logging
+import shlex
 import subprocess
 from typing import Callable, Dict, Generator, Optional, Union
 
 logger = logging.getLogger("securagentx.safe_exec")
 
-# Metacharacter blocking has been removed to preserve native shell workflows.
-# This module is intentionally low-level: callers must run tools.governance
-# first so DESTRUCTIVE commands are denied and PRIVILEGED commands are approved
-# before reaching shell=True.
+# Commands are tokenised with shlex.split() and executed with shell=False
+# to prevent CWE-78 command injection (issue 28). Callers must run
+# tools.governance first so DESTRUCTIVE commands are denied and PRIVILEGED
+# commands are approved before execution.
 
 MAX_OUTPUT = 100_000  # chars (increased for LLM to see full output)
 
@@ -31,9 +33,10 @@ def execute_safely(
     """
     Execute a shell command with full pipeline support.
 
-    The command is run via ``shell=True`` so that pipes, redirects, and
-    command chaining work natively. Security classification must happen
-    upstream in ``tools/governance.py`` before calling this function.
+    The command is tokenised with ``shlex.split()`` and executed with
+    ``shell=False`` to prevent command injection (CWE-78, issue 28).
+    Security classification must happen upstream in ``tools/governance.py``
+    before calling this function.
 
     Args:
         command_str: Raw shell command string (may contain |, >, &, etc.).
@@ -72,9 +75,10 @@ def execute_safely(
                 "[RUN]     Privileged action (sudo) requested. Please provide your password if prompted:\n"
             )
     try:
+        cmd_list = shlex.split(command_str) if isinstance(command_str, str) else command_str
         result = subprocess.run(
-            command_str,
-            shell=True,
+            cmd_list,
+            shell=False,
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -139,8 +143,8 @@ def execute_with_retry(
     ("command not found", "permission denied") are returned immediately —
     a retry would just waste budget.
 
-    Pipes / redirects / command composition (nmap | grep, etc.) are
-    already supported via shell=True — this wrapper just adds resilience.
+    Commands are executed via shlex.split() + shell=False (issue 28);
+    this wrapper just adds resilience on top of execute_safely.
 
     Args:
         command_str: Shell command (may use |, >, &&, etc.).
@@ -208,9 +212,10 @@ def execute_safely_streaming(
     logger.info(f"Executing (streaming): {command_str}")
 
     try:
+        cmd_list = shlex.split(command_str) if isinstance(command_str, str) else command_str
         process = subprocess.Popen(
-            command_str,
-            shell=True,
+            cmd_list,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,  # Merge stderr into stdout
             text=True,

@@ -345,10 +345,25 @@ def get_scan_recommendations(graph: FileRelationshipGraph, changed_files: List[s
 
 
 if __name__ == "__main__":
+    import os
     import time as t
 
+    # Resolve the project root dynamically:
+    #   1. ``SECURAGENTX_PROJECT_ROOT`` env var (explicit override), else
+    #   2. the repo root (parent of this file's ``tools/`` dir), else
+    #   3. the current working directory.
+    # Replaces the previous hardcoded ``/home/aponith/SecurAgentX`` path
+    # (issue #40) so the script is portable across developer machines.
+    _env_root = os.environ.get("SECURAGENTX_PROJECT_ROOT")
+    if _env_root:
+        _project_root = Path(_env_root)
+    else:
+        # ``Path(__file__)`` = ``<repo>/tools/file_relationship_mapper.py``;
+        # ``.parent.parent`` walks up to the repo root.
+        _project_root = Path(__file__).resolve().parent.parent
+
     start = t.time()
-    graph = FileRelationshipGraph(Path("/home/aponith/SecurAgentX")).build()
+    graph = FileRelationshipGraph(_project_root).build()
 
     graph.print_table()
     graph.save()

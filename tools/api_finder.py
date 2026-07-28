@@ -8,6 +8,7 @@ tools/api_finder.py — API Documentation & Endpoint Discovery
 from __future__ import annotations
 
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List
 from urllib.parse import urljoin
@@ -17,6 +18,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 logger = logging.getLogger("securagentx.api_finder")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 API_ENDPOINTS: List[str] = [
     "/swagger.json",
@@ -60,7 +66,7 @@ def _make_session() -> requests.Session:
 def _probe(session: requests.Session, base_url: str, endpoint: str) -> Dict | None:
     url = urljoin(base_url.rstrip("/") + "/", endpoint.lstrip("/"))
     try:
-        r = session.get(url, timeout=_TIMEOUT, allow_redirects=False, verify=False)
+        r = session.get(url, timeout=_TIMEOUT, allow_redirects=False, verify=not INSECURE)
         if r.status_code in (200, 201, 204):
             content_type = r.headers.get("Content-Type", "")
             return {

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shlex
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -386,9 +387,12 @@ def _tool_run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
 
     try:
 
+        # CWE-78 hardening (issue 28): tokenise with shlex.split() and
+        # execute with shell=False so metacharacters cannot inject commands.
+        cmd_list = shlex.split(command) if isinstance(command, str) else command
         result = _sp.run(
-            command,
-            shell=True,
+            cmd_list,
+            shell=False,
             capture_output=True,
             text=True,
             timeout=timeout,

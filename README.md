@@ -153,7 +153,7 @@ Every command passes through a **Governance Layer** before execution:
 |:----------:|--------|---------|
 | **SAFE** | Execute immediately | `nmap`, `curl`, `python3` |
 | **PRIVILEGED** | Ask user approval | `sudo apt install`, `pip install` |
-| **DESTRUCTIVE** | Show popup (Allow/Allow Always/Deny) | `rm -rf /`, `dd`, `mkfs` |
+| **DESTRUCTIVE** | Auto-deny (blocked unconditionally) | `rm -rf /`, `dd`, `mkfs` |
 
 ### MCP Integration
 
@@ -232,9 +232,11 @@ securagentx hunt "example.com, api.example.com"
 │  (True AI Agent)     │          │  (Background daemon)     │
 │                      │          │                          │
 │   AVAILABLE_TOOLS    │          │  stdio transport         │
-│   ├─ 17 builtin     │          │  HTTP transport          │
-│   ├─ 4 memory/skill │          │  25 dynamic tools        │
-│   ├─ create_tool    │          └──────────────────────────┘
+│   ├─ 15 builtin     │          │  HTTP transport          │
+│   ├─ 4 memory       │          │  25 dynamic tools        │
+│   ├─ 4 skill        │          └──────────────────────────┘
+│   ├─ 2 meta         │
+│   ├─ create_tool    │
 │   └─ edit_own_tool  │
 └──────────┬───────────┘
            │
@@ -246,7 +248,7 @@ securagentx hunt "example.com, api.example.com"
 └─────────────────────┘
 ```
 
-The old script-driven pipeline (`pipeline/phase_registry`, `pipeline/unified`, `core/brain.py`) has been **fully removed**. SecurAgentX now runs on a pure AI agent architecture.
+The old script-driven pipeline (`pipeline/phase_registry`, `pipeline/unified`) has been removed. The legacy `core/brain.py` shim remains for backward compatibility — new code should use `securagentx/brain.py` instead.
 
 <img src="assets/red-divider.svg" width="100%">
 
@@ -281,12 +283,10 @@ securagentx configure  # Interactive setup wizard
 
 ### Environment Variables
 
-SecurAgentX reads runtime behaviour from `SECURAGENTX_*` environment variables (set them in `.env`; see `.env.example` for the full template):
+SecurAgentX reads runtime behaviour from `SECURAGENTX_*` environment variables (set them in `.env`):
 
 | Variable | Purpose | Default |
 |:---------|:--------|:--------|
-| `SECURAGENTX_HOME` | Base data directory (typically `~/.securagentx`) | `~/.securagentx` |
-| `SECURAGENTX_DIRS` | Ordered list of search dirs for tools/plugins | built-in default |
 | `SECURAGENTX_SCOPE` | Comma-separated allowed target domains | (none — scope.txt is used instead) |
 | `SECURAGENTX_PLUGIN_PATH` | Extra plugin discovery path | (none) |
 | `SECURAGENTX_DEFAULT_TARGET` | Default target used when none is given on CLI | (none) |
@@ -309,9 +309,6 @@ SecurAgentX loads YAML config from `~/.securagentx/config.yaml` (auto-created fr
 python3 -m pytest tests/ -v
 
 # Stable suite (no network required)
-python3 -m pytest tests/test_tui.py tests/test_security.py tests/test_core_modules.py -v
-
-# SecurAgentX-specific paths / scope / governance tests
 python3 -m pytest tests/test_securagentx_paths.py tests/test_securagentx_scope.py tests/test_securagentx_governance.py -v
 ```
 
@@ -333,8 +330,7 @@ SecurAgentX/
 │   │   ├── vuln_agent.py   # Main agent + 25 tools
 │   │   ├── agent_memory.py # JSON-backed memory store
 │   │   ├── agent_skills.py # JSON-backed skill store
-│   │   ├── memory.py       # ChromaDB + FTS5 memory
-│   │   └── report.py       # Report generation
+│   │   └── memory.py       # ChromaDB + FTS5 memory
 │   ├── scope.py            # Target validation & scope
 │   ├── paths.py            # Path resolution (SECURAGENTX_HOME / SECURAGENTX_DIRS)
 │   ├── governance.py       # Governance layer
@@ -351,7 +347,6 @@ SecurAgentX/
 ├── core/                   # Legacy (deprecated stubs)
 ├── pipeline/               # LEGACY: only scope.py remains
 ├── tests/                  # 3000+ tests
-└── dist/                   # Built wheel (securagentx-*.whl)
 ```
 
 <img src="assets/red-divider.svg" width="100%">
@@ -371,7 +366,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 1. Fork `moussa12345678/SecurAgentX` and create a feature branch.
 2. Run `securagentx doctor` to confirm your dev environment.
 3. Add or update tests under `tests/` — SecurAgentX requires new behaviour to be covered.
-4. Run `python3 -m pytest tests/ -v` before pushing; all 3000+ tests must pass.
+4. Run `python3 -m pytest tests/ -v` before pushing; all collected tests must pass (3117).
 5. Open a pull request against `main`; CI runs the full SecurAgentX test matrix.
 
 See [SECURITY.md](SECURITY.md) for responsible-disclosure and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
@@ -385,6 +380,7 @@ SecurAgentX builds on ideas and tooling from the broader security-research commu
 - The **Model Context Protocol** spec — `securagentx` ships an auto-starting MCP server on every run.
 - **ChromaDB** for the cross-session vector memory that powers `securagentx` recall.
 - **Textual** for the `securagentx tui` chat interface.
+- **PentAGI / vxcontrol** — original autonomous security agent framework that inspired SecurAgentX
 - Every contributor who has filed an issue or PR against `moussa12345678/SecurAgentX`.
 
 Want to be listed here? Send a PR — see [Contributing](#contributing) above.

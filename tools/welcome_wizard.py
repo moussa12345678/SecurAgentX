@@ -41,6 +41,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from securagentx.paths import SECURAGENTX_HOME
+
 logger = logging.getLogger("securagentx.welcome")
 
 
@@ -70,7 +72,7 @@ class WelcomeWizard:
     - Context-aware suggestions
     """
 
-    CONFIG_FILE = Path(".config/securagentx/setup.json")
+    CONFIG_FILE = SECURAGENTX_HOME / "setup.json"
     BANNER_WIDTH = 60
 
     AI_PREFERENCES = [
