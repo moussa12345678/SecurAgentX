@@ -22,7 +22,7 @@ async def cmd_api(args):
     from cli.ui_components import print_error, print_info, print_success, show_section
 
     show_section("SecurAgentX Enterprise API Server")
-    host = getattr(args, "host", "0.0.0.0")
+    host = getattr(args, "host", "127.0.0.1")
     port = getattr(args, "port", 8443)
     try:
         from tools.api_server import run_server
