@@ -140,3 +140,6 @@ data/chroma_learning/
 
 # pytest coverage annotated-source artifacts (never commit)
 *,cover
+
+# Internal audit reports (not for public repo)
+audit/

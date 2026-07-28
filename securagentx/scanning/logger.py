@@ -9,6 +9,9 @@ import time
 from pathlib import Path
 from securagentx.paths import get_data_dir
 from typing import (
+    List,
+    Optional,
+)
 
 from securagentx.scanning.dataclasses import AgentThought
 
