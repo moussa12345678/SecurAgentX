@@ -137,7 +137,7 @@ _EMBEDDED_CVES = [
     # HTTP clients
     (
         "CVE-2024-35195",
-        "requests Session.verify=False persistence",
+        "requests Session TLS-verify-disabled persistence on redirect",
         5.6,
         ["requests"],
         "<2.32.0",

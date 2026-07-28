@@ -6,8 +6,9 @@ scraper is a self-hosted headless-Chrome sidecar (image
 ``/html``, ``/links`` (JSON), and ``/screenshot`` (PNG). URL routing
 chooses between a private scraper URL (for LAN/loopback targets) and a
 public scraper URL based on host IP classification + a local-zones
-suffix list. ``httpx.AsyncClient(verify=False, timeout=65.0)`` replaces
-Go's ``http.Client{Timeout: 65s, TLSClientConfig: InsecureSkipVerify}``.
+suffix list. ``httpx.AsyncClient(timeout=65.0)`` (TLS verify opt-in via
+``SECURAGENTX_INSECURE``) replaces Go's ``http.Client{Timeout: 65s,
+TLSClientConfig: InsecureSkipVerify}``.
 """
 
 from __future__ import annotations
