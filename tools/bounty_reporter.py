@@ -24,6 +24,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from securagentx.paths import get_reports_path
 from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
 logger = logging.getLogger("securagentx.bounty_reporter")
 

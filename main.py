@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from securagentx.paths import get_data_dir
+from securagentx.paths import get_data_dir, get_reports_path
 
 
 def _ensure_config_files():
@@ -416,7 +416,13 @@ def main():
 
     # Auto-run welcome if first time (unless running specific commands)
     skip_welcome_commands = ["doctor", "configure", "update", "welcome", "cli", "cli-textual"]
-    if args.command not in skip_welcome_commands:
+    # Skip welcome wizard in non-interactive environments (CI/CD, pipes)
+    # or when explicitly disabled via SECURAGENTX_NO_WELCOME env var.
+    if (
+        args.command not in skip_welcome_commands
+        and sys.stdin.isatty()
+        and not os.environ.get("SECURAGENTX_NO_WELCOME")
+    ):
         from tools.welcome_wizard import WelcomeWizard
 
         wizard = WelcomeWizard()
@@ -560,6 +566,7 @@ def main():
         "cli",
         "tui",
         "hunt",
+        "vuln-hunt",
         "recon",
         "sast",
         "cloud",
@@ -885,20 +892,16 @@ def main():
 
             show_section("SECURAGENTX HUNT — Autonomous AI Vulnerability Hunter")
 
-            target = args.target or console.input("[red]Enter target[/red]: ").strip()
+            target = args.target or os.getenv("SECURAGENTX_DEFAULT_TARGET")
             if not target:
+                print_error("Target is required")
+                return
+            targets = [t.strip() for t in target.split(",")] if target else []
+            if not targets:
+                print_error("Target is required")
                 return
 
-            # Safety: block shell metacharacters
-            forbidden = ["|", "&", ";", "`", "$(", "${", ">", "<", "\\", "'", '"', "!", "\n", "\r"]
-            if any(c in target for c in forbidden):
-                print_error("Invalid target: contains shell metacharacters")
-                return
-
-            if not require_authorized_scan_target(target):
-                return
-
-            # Auto-start MCP
+            # Auto-start MCP (once for all targets)
             try:
                 from commands.mcp_runner import start_mcp_if_enabled
                 start_mcp_if_enabled()
@@ -909,29 +912,40 @@ def main():
             from securagentx.agent.memory import AgentMemory
             from tools.universal_ai_client import create_default_client
 
-            memory = AgentMemory()
-            client = create_default_client()
-            agent = VulnAgent(target=target, client=client, memory=memory)
+            for target in targets:
+                # Safety: block shell metacharacters
+                forbidden = ["|", "&", ";", "`", "$(", "${", ">", "<", "\\", "'", '"', "!", "\n", "\r"]
+                if any(c in target for c in forbidden):
+                    print_error(f"Invalid target {target!r}: contains shell metacharacters")
+                    continue
 
-            print_info("Starting autonomous AI hunt...")
-            print_info(f"Target: {target}")
-            console.print("")
+                if not require_authorized_scan_target(target):
+                    continue
 
-            try:
-                report = agent.hunt()
-                report_text = report.render()
-                print_success("Hunt complete!")
-                console.print(report_text)
+                memory = AgentMemory()
+                client = create_default_client()
+                agent = VulnAgent(target=target, client=client, memory=memory)
 
-                safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
-                report_path = get_reports_path(f"hunt_{safe_name}.md")
-                report_path.parent.mkdir(parents=True, exist_ok=True)
-                report_path.write_text(report_text)
-                print_info(f"Full report: {report_path}")
-            except KeyboardInterrupt:
-                print_info("Hunt interrupted by user")
-            except Exception as e:
-                print_error(f"Hunt error: {e}")
+                print_info("Starting autonomous AI hunt...")
+                print_info(f"Target: {target}")
+                console.print("")
+
+                try:
+                    report = agent.hunt()
+                    report_text = report.render()
+                    print_success("Hunt complete!")
+                    console.print(report_text)
+
+                    safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
+                    report_path = get_reports_path(f"hunt_{safe_name}.md")
+                    report_path.parent.mkdir(parents=True, exist_ok=True)
+                    report_path.write_text(report_text)
+                    print_info(f"Full report: {report_path}")
+                except KeyboardInterrupt:
+                    print_info("Hunt interrupted by user")
+                    break
+                except Exception as e:
+                    print_error(f"Hunt error: {e}")
             return
 
         elif args.command == "vuln-hunt":
@@ -940,18 +954,16 @@ def main():
 
             show_section("SECURAGENTX VULN-HUNT — Autonomous Vulnerability Hunter")
 
-            target = args.target or console.input("[red]Enter target[/red]: ").strip()
+            target = args.target or os.getenv("SECURAGENTX_DEFAULT_TARGET")
             if not target:
                 print_error("Target is required")
                 return
-
-            # Safety: block shell metacharacters only (target is AI context, not a real URL/domain)
-            forbidden = ["|", "&", ";", "`", "$(", "${", ">", "<", "\\", "'", '"', "!", "\n", "\r"]
-            if any(c in target for c in forbidden):
-                print_error("Invalid target: contains shell metacharacters")
+            targets = [t.strip() for t in target.split(",")] if target else []
+            if not targets:
+                print_error("Target is required")
                 return
 
-            # Auto-start MCP server in background
+            # Auto-start MCP server in background (once for all targets)
             try:
                 from commands.mcp_runner import start_mcp_if_enabled
                 start_mcp_if_enabled()
@@ -962,33 +974,41 @@ def main():
             from securagentx.agent.memory import AgentMemory
             from tools.universal_ai_client import create_default_client
 
-            # Initialize cross-session memory (silent fail if unavailable)
-            memory = AgentMemory()
-            client = create_default_client()
-            agent = VulnAgent(target=target, client=client, memory=memory)
+            for target in targets:
+                # Safety: block shell metacharacters only (target is AI context, not a real URL/domain)
+                forbidden = ["|", "&", ";", "`", "$(", "${", ">", "<", "\\", "'", '"', "!", "\n", "\r"]
+                if any(c in target for c in forbidden):
+                    print_error(f"Invalid target {target!r}: contains shell metacharacters")
+                    continue
 
-            print_info("Starting autonomous vulnerability hunt...")
-            print_info(f"Target: {target}")
-            if memory._vector:
-                print_info("Cross-session memory: ACTIVE")
-            console.print("")
+                # Initialize cross-session memory (silent fail if unavailable)
+                memory = AgentMemory()
+                client = create_default_client()
+                agent = VulnAgent(target=target, client=client, memory=memory)
 
-            try:
-                report = agent.hunt()
-                report_text = report.render()
-                print_success("Hunt finished!")
-                console.print(report_text)
+                print_info("Starting autonomous vulnerability hunt...")
+                print_info(f"Target: {target}")
+                if memory._vector:
+                    print_info("Cross-session memory: ACTIVE")
+                console.print("")
 
-                # Save report
-                safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
-                report_path = get_reports_path(f"vuln-hunt_{safe_name}.md")
-                report_path.parent.mkdir(parents=True, exist_ok=True)
-                report_path.write_text(report_text)
-                print_info(f"Full report: {report_path}")
-            except KeyboardInterrupt:
-                print_info("Hunt interrupted by user")
-            except Exception as e:
-                print_error(f"Hunt error: {e}")
+                try:
+                    report = agent.hunt()
+                    report_text = report.render()
+                    print_success("Hunt finished!")
+                    console.print(report_text)
+
+                    # Save report
+                    safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
+                    report_path = get_reports_path(f"vuln-hunt_{safe_name}.md")
+                    report_path.parent.mkdir(parents=True, exist_ok=True)
+                    report_path.write_text(report_text)
+                    print_info(f"Full report: {report_path}")
+                except KeyboardInterrupt:
+                    print_info("Hunt interrupted by user")
+                    break
+                except Exception as e:
+                    print_error(f"Hunt error: {e}")
             return
 
         elif args.command == "arsenal":

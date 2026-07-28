@@ -36,6 +36,12 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from securagentx.paths import get_data_path
 from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
 from urllib.parse import parse_qsl, urlparse
 
 logger = logging.getLogger("securagentx.coverage_analyzer")

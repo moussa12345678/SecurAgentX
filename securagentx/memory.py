@@ -14,8 +14,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from uuid import uuid4
 
-import chromadb
-from chromadb.config import Settings
+try:
+    import chromadb
+    from chromadb.config import Settings
+    _HAS_CHROMADB = True
+except ImportError:
+    _HAS_CHROMADB = False
+    chromadb = None
+    Settings = None
 
 from .types import Finding, MissionContext
 
@@ -61,6 +67,12 @@ class VectorMemoryBackend(MemoryBackend):
     """ChromaDB Vector Memory Backend"""
 
     def __init__(self, persist_dir: str = "./data/memory"):
+        if not _HAS_CHROMADB:
+            raise ImportError(
+                "chromadb is required for VectorMemoryBackend. "
+                "Install with: pip install chromadb"
+            )
+
         self.persist_dir = Path(persist_dir)
         self.persist_dir.mkdir(parents=True, exist_ok=True)
 
@@ -249,10 +261,21 @@ class CognitiveMemoryManager:
 
     def __init__(self, backends: Optional[List["MemoryBackend"]] = None, config: Optional[Dict] = None):
         self.config = config or {}
-        self.backends = backends or [
-            SQLiteMemoryBackend(self.config.get("sqlite_path", "./data/memory.db")),
-            VectorMemoryBackend(self.config.get("vector_path", "./data/memory"))
-        ]
+        if backends is not None:
+            self.backends = backends
+        else:
+            self.backends = [
+                SQLiteMemoryBackend(self.config.get("sqlite_path", "./data/memory.db")),
+            ]
+            if _HAS_CHROMADB:
+                try:
+                    self.backends.append(
+                        VectorMemoryBackend(self.config.get("vector_path", "./data/memory"))
+                    )
+                except Exception as e:
+                    logger.warning(f"VectorMemoryBackend unavailable, skipping: {e}")
+            else:
+                logger.debug("chromadb not installed, using SQLiteMemoryBackend only")
         self._cache: Dict[str, MemoryEntry] = {}
         self._lock = asyncio.Lock()
 

@@ -439,8 +439,29 @@ class UniversalAIClient:
             f"sources={resolved['sources']}"
         )
 
+    def get_active_provider(self) -> str:
+        """Read active provider from config.yaml (via tools.ai_config).
+
+        Returns the configured active_provider, or 'auto' if not set.
+        """
+        # Late import to avoid circular dep
+        from tools.ai_config import get_active_provider as _get_active_provider
+
+        return _get_active_provider()
+
     def _detect_provider(self) -> str:
         """Auto-detect provider from environment variables."""
+        # Check config.yaml active_provider first
+        try:
+            active = self.get_active_provider()
+            # 'auto' / 'custom' / 'none' are sentinels, not real providers;
+            # falling through to them would break PROVIDER_CONFIGS lookup.
+            if active and active not in ("auto", "custom", "none"):
+                return active
+        except Exception:
+            pass
+
+        # Fall back to environment variable detection
         # Priority order
         if os.getenv("OPENAI_API_KEY"):
             return "openai"

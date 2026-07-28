@@ -10,6 +10,7 @@ import asyncio
 import functools
 import hashlib
 import logging
+import os
 import threading
 import time
 from collections import OrderedDict
@@ -17,6 +18,11 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger("securagentx.perf")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -244,7 +250,7 @@ class FastHTTP:
             adapter = HTTPAdapter(max_retries=retries, pool_maxsize=self.max_connections)
             s.mount("http://", adapter)
             s.mount("https://", adapter)
-            s.verify = False
+            s.verify = not INSECURE
             self._session = s
         return self._session
 

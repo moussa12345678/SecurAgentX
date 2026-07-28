@@ -22,14 +22,14 @@
 
 ## What is SecurAgentX?
 
-SecurAgentX is a **true autonomous AI agent** for security research. It doesn't follow checklists or script chains — it **reasons** about targets, **chooses** its own tools, **pivots** when stuck, and **writes new tools** when existing ones aren't enough.
+SecurAgentX is an **autonomous AI agent** for security research. It doesn't follow checklists or script chains — it **reasons** about targets, **chooses** its own tools, **pivots** when stuck, and **writes new tools** when existing ones aren't enough.
 
 ```text
 User: "Find vulnerabilities in example.com"
     │
     ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  VulnAgent — True AI Agent (free will, 25 tools)             │
+│  VulnAgent — Autonomous AI Agent (tool-selection autonomy, 25 tools) │
 │  ├── Reasons about target and builds strategy                │
 │  ├── Selects tools from AVAILABLE_TOOLS (freedom to skip)    │
 │  ├── Creates new tools on the fly (edit_own_tool)            │
@@ -65,7 +65,8 @@ Unlike "script chaining with an AI on top", SecurAgentX gives the AI **genuine a
 ### Install
 
 ```bash
-pip install securagentx
+git clone https://github.com/moussa12345678/SecurAgentX.git
+cd SecurAgentX && pip install -e .[dev]
 ```
 
 ### First Run
@@ -112,9 +113,9 @@ securagentx hunt example.com
 
 ## Features
 
-### True AI Agent Architecture
+### Autonomous AI Agent Architecture
 
-SecurAgentX uses **VulnAgent** — a genuine autonomous AI agent with **free will** over tool selection and execution flow:
+SecurAgentX uses **VulnAgent** — an autonomous AI agent with **tool-selection autonomy** over tool selection and execution flow:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -153,7 +154,7 @@ Every command passes through a **Governance Layer** before execution:
 |:----------:|--------|---------|
 | **SAFE** | Execute immediately | `nmap`, `curl`, `python3` |
 | **PRIVILEGED** | Ask user approval | `sudo apt install`, `pip install` |
-| **DESTRUCTIVE** | Auto-deny (blocked unconditionally) | `rm -rf /`, `dd`, `mkfs` |
+| **DESTRUCTIVE** | Auto-deny (blocked by default; see Governance) | `rm -rf /`, `dd`, `mkfs` |
 
 ### MCP Integration
 
@@ -198,7 +199,7 @@ securagentx configure            # Setup wizard
 securagentx doctor               # System health check
 ```
 
-**All scan/hunt commands now use VulnAgent** — the same true AI agent with 25 tools, memory, and free will. No script chains, no forced phases.
+**All scan/hunt commands now use VulnAgent** — the same AI agent with 25 tools, memory, and tool-selection autonomy. No script chains, no forced phases.
 
 ### Multi-target
 
@@ -229,13 +230,12 @@ securagentx hunt "example.com, api.example.com"
           ▼                                 ▼
 ┌─────────────────────┐          ┌─────────────────────────┐
 │  VulnAgent           │          │  MCP Server              │
-│  (True AI Agent)     │          │  (Background daemon)     │
+│  (Autonomous AI Agent) │          │  (Background daemon)     │
 │                      │          │                          │
 │   AVAILABLE_TOOLS    │          │  stdio transport         │
 │   ├─ 15 builtin     │          │  HTTP transport          │
 │   ├─ 4 memory       │          │  25 dynamic tools        │
 │   ├─ 4 skill        │          └──────────────────────────┘
-│   ├─ 2 meta         │
 │   ├─ create_tool    │
 │   └─ edit_own_tool  │
 └──────────┬───────────┘
@@ -262,6 +262,14 @@ The old script-driven pipeline (`pipeline/phase_registry`, `pipeline/unified`) h
     "sequential-thinking": {
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "chain-of-recursive-thoughts": {
+      "type": "local",
+      "command": ["npx", "-y", "recursive-thinking-mcp"]
+    },
+    "mcp-structured-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "structured-thinking"]
     },
     "memory": {
       "type": "local",
@@ -325,7 +333,7 @@ SecurAgentX/
 │   ├── scan.py             # AI-driven scan (VulnAgent)
 │   └── mcp_runner.py       # MCP auto-start helper
 ├── securagentx/              # Canonical module location
-│   ├── agent/              # True AI agent (VulnAgent)
+│   ├── agent/              # Autonomous AI agent (VulnAgent)
 │   │   ├── __init__.py     # Exports VulnAgent
 │   │   ├── vuln_agent.py   # Main agent + 25 tools
 │   │   ├── agent_memory.py # JSON-backed memory store
@@ -366,7 +374,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 1. Fork `moussa12345678/SecurAgentX` and create a feature branch.
 2. Run `securagentx doctor` to confirm your dev environment.
 3. Add or update tests under `tests/` — SecurAgentX requires new behaviour to be covered.
-4. Run `python3 -m pytest tests/ -v` before pushing; all collected tests must pass (3117).
+4. Run `python3 -m pytest tests/ -v` before pushing; all collected tests must pass (3121).
 5. Open a pull request against `main`; CI runs the full SecurAgentX test matrix.
 
 See [SECURITY.md](SECURITY.md) for responsible-disclosure and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.

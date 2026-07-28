@@ -24,6 +24,11 @@ from collections import deque
 from pathlib import Path
 from securagentx.paths import get_data_dir
 from typing import (
+    Any,
+    Callable,
+    List,
+    Optional,
+)
 
 from rich.align import Align
 from rich.box import ASCII

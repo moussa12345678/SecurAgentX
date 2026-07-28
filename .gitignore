@@ -159,3 +159,7 @@ service_account*.json
 .env.local
 .env.production
 .env.staging
+
+# Build/release tarballs (never commit binary archives)
+*.tar.gz
+securagentx-integration.tar.gz

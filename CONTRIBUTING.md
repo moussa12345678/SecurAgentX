@@ -8,7 +8,7 @@ Thank you for your interest in contributing to SecurAgentX.
 SecurAgentX/
 ├── main.py              # CLI entry point
 ├── securagentx/         # Core package (brain, agent, scanning, reports, etc.)
-├── tools/               # 140+ security tool modules
+├── tools/               # 139 security tool modules
 ├── agents/              # Legacy agent shims (deprecated)
 ├── cli/                 # CLI UI components
 ├── commands/            # CLI command handlers

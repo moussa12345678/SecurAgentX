@@ -15,6 +15,12 @@ import traceback
 from pathlib import Path
 from securagentx.paths import get_reports_path
 from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+)
 
 from tools.cvss_calculator import CVSSCalculator
 from tools.governance import Governance

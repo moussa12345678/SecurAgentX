@@ -14,6 +14,7 @@ Safety:
 """
 
 import logging
+import os
 import uuid
 from typing import Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -21,6 +22,11 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 import requests
 
 logger = logging.getLogger("securagentx.injection")
+
+# Issue 32 (P8-C): TLS verification is ON by default. Set
+# SECURAGENTX_INSECURE=1|true|yes to opt into verify=False for hostile
+# targets (self-signed certs, pentest labs). See verify=not INSECURE calls.
+INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 _TIMEOUT = 10
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -147,7 +153,7 @@ def _open_redirect_payloads() -> List[Dict]:
 def _make_session() -> requests.Session:
     s = requests.Session()
     s.headers["User-Agent"] = _UA
-    s.verify = False
+    s.verify = not INSECURE
     return s
 
 

@@ -35,6 +35,5 @@ jobs:
           --tb=short
 
     - name: Run integration tests (network, allowed to fail)
-      continue-on-error: true
       run: |
         python -m pytest tests/ -v -m "integration" --tb=short

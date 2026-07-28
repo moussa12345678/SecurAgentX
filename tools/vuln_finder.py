@@ -310,7 +310,6 @@ class VulnFinder:
         import asyncio
         from pathlib import Path
         from securagentx.paths import get_reports_path
-        from typing import (
         report_dir = get_data_dir("reports")
         report_dir.mkdir(parents=True, exist_ok=True)
         semaphore = asyncio.Semaphore(1)

@@ -24,6 +24,12 @@ from enum import Enum
 from pathlib import Path
 from securagentx.paths import get_reports_path
 from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
 
 logger = logging.getLogger("securagentx.hunt")
 

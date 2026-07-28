@@ -19,7 +19,6 @@ import logging
 import os
 from pathlib import Path
 from securagentx.paths import get_reports_path
-from typing import (
 from rich.box import ROUNDED, SIMPLE
 from rich.panel import Panel
 from rich.table import Table

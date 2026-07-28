@@ -26,6 +26,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from securagentx.paths import get_reports_path
 from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+)
 from uuid import uuid4
 
 from tools.mission_state import MissionState

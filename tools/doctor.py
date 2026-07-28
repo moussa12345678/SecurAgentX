@@ -249,7 +249,12 @@ def check_health(interactive: bool = True) -> bool:
     """
     from cli.ui_components import confirm, console, print_error, print_success, print_warning
 
-    console.print("\n[bold red]System Health Check[/bold red] [dim]1.0.0[/dim]\n")
+    try:
+        from importlib.metadata import version as _pkg_version
+        _ver = _pkg_version("securagentx")
+    except Exception:
+        _ver = "unknown"
+    console.print(f"\n[bold red]System Health Check[/bold red] [dim]{_ver}[/dim]\n")
     all_ok = True
     runtime_python = _project_python()
     project_venv = _find_project_venv()

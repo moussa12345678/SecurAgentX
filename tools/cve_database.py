@@ -14,6 +14,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from securagentx.paths import get_data_dir
 from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
 from urllib.parse import urlencode
 
 import requests
