@@ -35,10 +35,23 @@ def get_data_path(name: str) -> Path:
 
 
 def get_reports_path(subdir: str = "") -> Path:
-    """Return ~/.securagentx/reports[/{subdir}], creating dirs as needed."""
-    p = SECURAGENTX_DIRS["reports"] / subdir if subdir else SECURAGENTX_DIRS["reports"]
-    p.mkdir(parents=True, exist_ok=True)
-    return p
+    """Return ~/.securagentx/reports[/{subdir}], creating dirs as needed.
+
+    If `subdir` looks like a filename (contains a "."), only the parent
+    directory is created so that callers can safely write_text() to the
+    returned path. Otherwise the full path is treated as a directory.
+    """
+    path = SECURAGENTX_DIRS["reports"]
+    if subdir:
+        full_path = path / subdir
+        # If subdir looks like a filename (has extension), create parent only
+        if "." in subdir:
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            full_path.mkdir(parents=True, exist_ok=True)
+        return full_path
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def get_data_dir(subdir: str = "") -> Path:

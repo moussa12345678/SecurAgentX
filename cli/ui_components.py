@@ -716,15 +716,24 @@ def prompt_choice(options: List[str]) -> int:
 
 
 def confirm(message: str, default: bool = False) -> bool:
-    """Display a yes/no confirmation prompt."""
+    """Display a yes/no confirmation prompt.
+
+    Safely handles closed stdin (EOFError) and user interrupts (KeyboardInterrupt)
+    by falling back to ``default``. This keeps non-interactive environments such
+    as CI pipelines or ``< /dev/null`` invocations from crashing the caller.
+    """
     default_text = "Y/n" if default else "y/N"
-    response = (
-        console.input(
-            f"[bold #ffffff]{message}[/bold #ffffff] [dim #ffffff]({default_text})[/dim #ffffff]: "
+    try:
+        response = (
+            console.input(
+                f"[bold #ffffff]{message}[/bold #ffffff] [dim #ffffff]({default_text})[/dim #ffffff]: "
+            )
+            .lower()
+            .strip()
         )
-        .lower()
-        .strip()
-    )
+    except (EOFError, KeyboardInterrupt):
+        # Stdin closed (CI, /dev/null) or user interrupted: fall back silently.
+        return default
 
     if not response:
         return default
