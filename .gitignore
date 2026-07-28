@@ -143,3 +143,19 @@ data/chroma_learning/
 
 # Internal audit reports (not for public repo)
 audit/
+
+# ═══════════════════════════════════════════════════════
+# Security - never commit secrets
+# ═══════════════════════════════════════════════════════
+*.key
+*.pem
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*credentials*
+secrets.json
+service_account*.json
+.env.local
+.env.production
+.env.staging

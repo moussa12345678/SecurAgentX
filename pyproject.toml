@@ -123,6 +123,19 @@ include-package-data = true
 minversion = "7.0"
 testpaths = ["tests"]
 asyncio_mode = "auto"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Narrowed filterwarnings — do NOT blanket-ignore DeprecationWarning.
+# Show each unique deprecation/pending-deprecation warning once (default action)
+# so regressions surface instead of being silently swallowed.
+# Tests that assert on warnings use local `warnings.catch_warnings()` +
+# `warnings.simplefilter("always")`, which override these globally.
+filterwarnings = [
+    "default::DeprecationWarning",
+    "default::PendingDeprecationWarning",
+    "default::ResourceWarning",
+]
 markers = [
     "integration: opt-in integration tests that hit real network/services (deselect with '-m \"not integration\"')",
 ]

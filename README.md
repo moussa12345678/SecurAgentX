@@ -12,7 +12,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-white?style=for-the-badge&logo=python&logoColor=red)](https://python.org)
 [![License](https://img.shields.io/badge/License-GPL_3.0-red?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-334%20passing-white?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX/actions)
+[![Tests](https://img.shields.io/badge/Tests-3000%2B%20passing-white?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX/actions)
 [![MCP](https://img.shields.io/badge/MCP-Supported-red?style=for-the-badge)](https://modelcontextprotocol.io)
 [![Security](https://img.shields.io/badge/Security-Governance-red?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX)
 
@@ -305,7 +305,7 @@ SecurAgentX loads YAML config from `~/.securagentx/config.yaml` (auto-created fr
 ## Testing
 
 ```bash
-# Full test suite (334 tests)
+# Full test suite (3000+ tests)
 python3 -m pytest tests/ -v
 
 # Stable suite (no network required)
@@ -315,7 +315,7 @@ python3 -m pytest tests/test_tui.py tests/test_security.py tests/test_core_modul
 python3 -m pytest tests/test_securagentx_paths.py tests/test_securagentx_scope.py tests/test_securagentx_governance.py -v
 ```
 
-**334 tests** covering: governance, shell execution, target validation, MCP protocol, VulnAgent tools, agent memory, agent skills, the SecurAgentX path/scope/governance layer, and more.
+**3000+ tests** covering: governance, shell execution, target validation, MCP protocol, VulnAgent tools, agent memory, agent skills, the SecurAgentX path/scope/governance layer, and more.
 
 <img src="assets/red-divider.svg" width="100%">
 
@@ -350,7 +350,7 @@ SecurAgentX/
 ├── cli/                    # UI components + TUI (textual.py)
 ├── core/                   # Legacy (deprecated stubs)
 ├── pipeline/               # LEGACY: only scope.py remains
-├── tests/                  # 334 tests
+├── tests/                  # 3000+ tests
 └── dist/                   # Built wheel (securagentx-*.whl)
 ```
 
@@ -371,7 +371,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 1. Fork `moussa12345678/SecurAgentX` and create a feature branch.
 2. Run `securagentx doctor` to confirm your dev environment.
 3. Add or update tests under `tests/` — SecurAgentX requires new behaviour to be covered.
-4. Run `python3 -m pytest tests/ -v` before pushing; all 334 tests must pass.
+4. Run `python3 -m pytest tests/ -v` before pushing; all 3000+ tests must pass.
 5. Open a pull request against `main`; CI runs the full SecurAgentX test matrix.
 
 See [SECURITY.md](SECURITY.md) for responsible-disclosure and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.

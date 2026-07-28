@@ -5,7 +5,7 @@
 # Usage:
 #   1. Fork https://github.com/moussa12345678/SecurAgentX on GitHub
 #   2. Clone YOUR fork locally
-#   3. Place this script + securagentx-pentagi-integration.tar.gz
+#   3. Place this script + the integration archive (.tar.gz)
 #      in the root of your cloned fork
 #   4. Run: bash apply_to_fork.sh
 # ============================================================
@@ -14,7 +14,6 @@ set -e
 
 # --- Configuration ---
 ARCHIVE="elengenix-pentagi-integration.tar.gz"
-PATCH="securagentx-pentagi-integration.patch"
 BRANCH_NAME="feat/pentagi-integration"
 COMMIT_MSG="feat: integrate PentAGI features into SecurAgentX
 

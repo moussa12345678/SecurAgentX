@@ -1357,10 +1357,15 @@ class TestExecuteToolRegistry:
 
         expected = ToolResult(success=True, tool_name="nmap", category=ToolCategory.RECON, output="direct")
 
-        with patch("securagentx.scanning.executor.asyncio.run") as mock_async_run:
-            mock_async_run.return_value = expected
+        def fake_async_run(coro):
+            # Close the coroutine to avoid "coroutine was never awaited" RuntimeWarning.
+            coro.close()
+            return expected
+
+        with patch("securagentx.scanning.executor.asyncio.run", side_effect=fake_async_run) as mock_async_run:
             result = execute_tool_registry("nmap", "127.0.0.1", tmp_path)
 
+        assert mock_async_run.called
         assert result == expected
 
     @patch("securagentx.scanning.executor.registry")
@@ -1593,8 +1598,13 @@ class TestExecuteToolRegistryEdgeCases:
         mock_tool.execute = mock_execute
         mock_registry.get_tool.return_value = mock_tool
         sem = MagicMock()
-        with patch("securagentx.scanning.executor.asyncio.run") as mock_run:
-            expected = ToolResult(success=True, tool_name="nmap", category=ToolCategory.RECON, output="ok")
-            mock_run.return_value = expected
+        expected = ToolResult(success=True, tool_name="nmap", category=ToolCategory.RECON, output="ok")
+
+        def fake_async_run(coro):
+            # Close the coroutine to avoid "coroutine was never awaited" RuntimeWarning.
+            coro.close()
+            return expected
+
+        with patch("securagentx.scanning.executor.asyncio.run", side_effect=fake_async_run) as mock_run:
             result = execute_tool_registry("nmap", "127.0.0.1", tmp_path, semaphore=sem)
             assert result.success is True

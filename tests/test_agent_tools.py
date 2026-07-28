@@ -108,8 +108,8 @@ class TestSearchFiles:
         assert r["success"], r
         assert r["total_matches"] > 0
 
-    def test_search_no_match(self):
-        r = _tool_search_files("ZZZZ_XYZZY_NONEXISTENT_99999", path="/tmp")
+    def test_search_no_match(self, tmp_path):
+        r = _tool_search_files("ZZZZ_XYZZY_NONEXISTENT_99999", path=str(tmp_path))
         assert r["success"]
         assert r.get("total_matches", 0) == 0 or "No matches" in r["output"]
 
