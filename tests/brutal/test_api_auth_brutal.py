@@ -428,9 +428,28 @@ def auth_headers():
 
 
 @pytest.fixture
-def session_cookie():
-    """Cookie header with a 'session' cookie (accepted by _auth)."""
-    return {"Cookie": "securagentx_session=session-1-9999999999"}
+def session_cookie(app_state):
+    """Cookie header with a validly-signed ``securagentx_session`` cookie.
+
+    Security hardening (issue #39): ``_extract_session_cookie`` now
+    delegates to :func:`securagentx.auth.sessions.validate_session_cookie`,
+    which enforces the itsdangerous HMAC signature. The opaque
+    ``session-<uid>-<exp>`` placeholder used previously is no longer
+    accepted. We mint a real signed cookie for the mock ``alice`` user
+    using the module-level ``SESSION_SECRET`` (the same fallback used by
+    ``try_auth`` when ``app.state.session_secret`` is unset).
+    """
+    from securagentx.auth.sessions import create_session_cookie
+    user = {
+        "id": 1,
+        "hash": TEST_USER_HASH,
+        "role_id": 2,
+        "name": "alice",
+    }
+    cookie_value = create_session_cookie(
+        user, secret_key=api_auth.SESSION_SECRET, ttl_seconds=3600,
+    )
+    return {"Cookie": f"securagentx_session={cookie_value}"}
 
 
 # ===========================================================================
@@ -621,8 +640,16 @@ class TestValidateToken:
         """A flipped signature byte must fail validation."""
         jwt_str, _ = self._make()
         parts = jwt_str.split(".")
-        # Flip a char in the signature (third part).
-        bad_sig = parts[2][:-1] + ("A" if parts[2][-1] != "A" else "B")
+        # Flip a char in the signature (third part). We avoid the LAST
+        # char of the base64url signature because its lower bits are
+        # padding (32-byte HMAC-SHA256 → 43 chars, last char carries
+        # 4 real bits + 2 padding bits). Flipping only padding bits is
+        # silently ignored by PyJWT, so we tamper the first char which
+        # is fully significant.
+        sig = parts[2]
+        first = sig[0]
+        bad_first = "A" if first != "A" else "B"
+        bad_sig = bad_first + sig[1:]
         tampered = ".".join([parts[0], parts[1], bad_sig])
         assert tk.validate_token(tampered, TEST_SALT) is None
 
@@ -2477,10 +2504,21 @@ class TestResponseEnvelope:
         assert "page" in data and "per_page" in data and "total" in data
 
     def test_cors_headers_present(self, client):
-        """CORS Access-Control-Allow-Origin is set on responses."""
+        """CORS Access-Control-Allow-Origin is set on responses for an
+        allow-listed origin.
+
+        Security hardening (issue #30): ``create_app`` no longer
+        defaults to ``allow_origins=["*"]`` with credentials — that
+        combination is effectively a full bypass. The default allow-list
+        is ``["http://localhost:3000", "http://127.0.0.1:3000"]``.
+        ``CORSMiddleware`` only attaches ``Access-Control-Allow-Origin``
+        when the request ``Origin`` matches the allow-list, so the test
+        uses one of those origins (instead of the previously-used
+        ``https://example.com`` which is no longer allowed).
+        """
         r = client.get("/api/v1/info",
-                       headers={"Origin": "https://example.com"})
-        # CORSMiddleware attaches the header when Origin is present.
+                       headers={"Origin": "http://localhost:3000"})
+        # CORSMiddleware attaches the header when Origin is allow-listed.
         assert "access-control-allow-origin" in {k.lower() for k in r.headers}
 
     def test_gzip_compression_for_large_responses(self, client, auth_headers):
