@@ -649,7 +649,7 @@ class Refiner:
             user_prompt=user_prompt,
             completion_tools=completion_tools,
             auxiliary_tools=(SearchToolName,),
-        )
+        )  # type: ignore[call-arg]
 
         result: SubtaskPatch | None = captured["patch"]
         if result is None:

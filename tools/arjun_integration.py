@@ -154,7 +154,7 @@ class ArjunTool(BaseTool):
         urls: List[str],
         report_dir: Path,
         semaphore: asyncio.Semaphore,
-        methods: List[str] = None,
+        methods: List[str] | None = None,
     ) -> List[ToolResult]:
         """Run parameter discovery on multiple URLs with multiple methods."""
         if methods is None:

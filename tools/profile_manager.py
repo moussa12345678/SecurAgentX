@@ -189,7 +189,7 @@ class ProfileManager:
         """Get a profile by name."""
         return self.profiles.get(name)
 
-    def list_profiles(self, category: str = None) -> List[CommandProfile]:
+    def list_profiles(self, category: str | None = None) -> List[CommandProfile]:
         """List all available profiles."""
         profiles = list(self.profiles.values())
 
@@ -205,10 +205,10 @@ class ProfileManager:
         self,
         name: str,
         base_command: str,
-        description: str = None,
-        args: List[str] = None,
-        options: Dict[str, Any] = None,
-        tags: List[str] = None,
+        description: str | None = None,
+        args: List[str] | None = None,
+        options: Dict[str, Any] | None = None,
+        tags: List[str] | None = None,
     ) -> bool:
         """
         Create a new custom profile.
@@ -275,7 +275,7 @@ class ProfileManager:
             logger.error(f"Failed to delete profile: {e}")
             return False
 
-    def expand_profile(self, name: str, target: str = None) -> Optional[Tuple[str, List[str]]]:
+    def expand_profile(self, name: str, target: str | None = None) -> Optional[Tuple[str, List[str]]]:
         """
         Expand a profile to full command and arguments.
 
@@ -315,7 +315,7 @@ class ProfileManager:
         return (profile.base_command, args)
 
     def clone_profile(
-        self, source_name: str, new_name: str, modifications: Dict[str, Any] = None
+        self, source_name: str, new_name: str, modifications: Dict[str, Any] | None = None
     ) -> bool:
         """
         Clone an existing profile with modifications.
@@ -396,7 +396,7 @@ class ProfileManager:
             logger.error(f"Failed to import profile: {e}")
             return False
 
-    def get_recommended_profile(self, target_type: str = None) -> Optional[str]:
+    def get_recommended_profile(self, target_type: str | None = None) -> Optional[str]:
         """Get recommended profile based on context."""
         if target_type:
             if "api" in target_type.lower():
@@ -407,7 +407,7 @@ class ProfileManager:
         # Default to deep scan
         return "deep"
 
-    def format_profile_list(self, profiles: List[CommandProfile] = None) -> str:
+    def format_profile_list(self, profiles: List[CommandProfile] | None = None) -> str:
         """Format profile list for display."""
         if profiles is None:
             profiles = self.list_profiles()

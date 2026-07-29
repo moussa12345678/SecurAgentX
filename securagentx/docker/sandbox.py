@@ -604,7 +604,7 @@ class DockerSandbox:
             }
 
         await self._ensure_network()
-        client = await self._get_client()
+        _client = await self._get_client()
 
         # Step 5: container create (with fallback on failure)
         container_id: Optional[str] = None
@@ -1022,7 +1022,7 @@ class DockerSandbox:
             tar_bytes = b""
             stat = None
             if isinstance(stream, tuple) and len(stream) >= 2:
-                stat = stream[1]
+                _stat = stream[1]
                 stream = stream[0]
             if isinstance(stream, bytes):
                 tar_bytes = stream

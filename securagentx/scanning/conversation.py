@@ -198,7 +198,7 @@ Provide a brief summary (2-3 sentences):"""
             if turn["role"] == "assistant":
                 last_assistant = turn["content"]
             elif turn["role"] == "user" and last_assistant is None:
-                last_user_query = turn["content"]
+                _last_user_query = turn["content"]
 
         if not last_assistant:
             return

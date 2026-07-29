@@ -36,7 +36,7 @@ class ExecutionResult:
 class FileEditor:
     """Intelligent file editor like Claude Code."""
 
-    def __init__(self, base_dir: str = None):
+    def __init__(self, base_dir: str | None = None):
         self.base_dir = Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
         self.edit_history: List[Dict] = []
 
@@ -340,7 +340,7 @@ class PackageManager:
         },
     }
 
-    def execute(self, manager: str, action: str, package: str = None) -> ExecutionResult:
+    def execute(self, manager: str, action: str, package: str | None = None) -> ExecutionResult:
         """Execute package manager command."""
         if manager not in self.MANAGERS:
             return ExecutionResult(
@@ -399,7 +399,7 @@ class UniversalExecutor:
     Combines file editing, package management, and flexible shell execution.
     """
 
-    def __init__(self, base_dir: str = None):
+    def __init__(self, base_dir: str | None = None):
         self.file_editor = FileEditor(base_dir)
         self.package_manager = PackageManager()
         self.execution_history: List[Dict] = []
@@ -474,7 +474,7 @@ class UniversalExecutor:
         return True, ""
 
     def execute_shell(
-        self, command: str, timeout: int = 300, cwd: str = None, agent_id: int = -1
+        self, command: str, timeout: int = 300, cwd: str | None = None, agent_id: int = -1
     ) -> ExecutionResult:
         """Execute shell command with shell=False (CWE-78 hardening, issue 28).
 
@@ -978,7 +978,7 @@ You can perform these actions:
 _universal_executor = None
 
 
-def get_universal_executor(base_dir: str = None) -> UniversalExecutor:
+def get_universal_executor(base_dir: str | None = None) -> UniversalExecutor:
     """Get singleton UniversalExecutor instance."""
     global _universal_executor
     if _universal_executor is None:

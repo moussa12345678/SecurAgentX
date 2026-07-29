@@ -521,7 +521,7 @@ class CoverageAnalyzer:
             "next",
             "return",
         ]
-        placeholders = ",".join("?" * len(high_value))
+        _placeholders = ",".join("?" * len(high_value))
         rows = cur.execute(
             """
             SELECT e.url, e.params_json FROM endpoints e

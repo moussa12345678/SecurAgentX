@@ -111,7 +111,7 @@ class SmartScanner:
     def __init__(
         self,
         target: str,
-        mission_id: str = None,
+        mission_id: str | None = None,
         token_manager: TokenManager = None,
         telegram_bridge: TelegramBridge = None,
         auto_pause: bool = True,

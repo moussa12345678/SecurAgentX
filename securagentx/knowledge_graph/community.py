@@ -408,7 +408,7 @@ class CommunityDetector:
         for idx, node_set in enumerate(raw_communities):
             if len(node_set) < min_community_size:
                 continue
-            edge_uuids = [
+            _edge_uuids = [
                 e.uuid for e in edges
                 if e.source_node_uuid in node_set
                 and e.target_node_uuid in node_set

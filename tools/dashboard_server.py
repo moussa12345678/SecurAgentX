@@ -405,7 +405,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
         findings_html = ""
         for f in findings[:100]:  # Limit to 100 for report
-            sev_class = f.get("severity", "info")
+            _sev_class = f.get("severity", "info")
             findings_html += """
             <div class="finding-item {sev_class}">
                 <h4>[{f.get('severity', 'N/A').upper()}] {f.get('type', 'Unknown')}</h4>
@@ -1177,6 +1177,22 @@ def start_dashboard(
 
 
 def stop_dashboard(server_thread: threading.Thread):
-    """Stop the dashboard server."""
-    # Note: Proper shutdown would require storing the server instance
-    logger.info("Dashboard stop requested (server runs in daemon thread)")
+    """Stop the dashboard server.
+
+    The HTTPServer instance itself isn't reachable from here (it is captured
+    by ``start_dashboard``'s closure), but the daemon thread that runs
+    ``serve_forever`` is. We join it briefly so any in-flight request gets a
+    chance to complete before the caller tears down surrounding state.
+    """
+    if not server_thread.is_alive():
+        logger.info("Dashboard server already stopped")
+        return
+    logger.info("Dashboard stop requested (joining server thread)")
+    # Daemon thread: process exit will reap it, but joining with a short
+    # timeout lets the current request finish cleanly.
+    server_thread.join(timeout=2.0)
+    if server_thread.is_alive():
+        logger.warning(
+            "Dashboard server thread still alive after join timeout; "
+            "it will terminate when the main process exits"
+        )

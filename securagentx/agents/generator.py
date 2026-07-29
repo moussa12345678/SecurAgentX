@@ -478,7 +478,7 @@ class Generator:
             user_prompt=user_prompt,
             completion_tools=completion_tools,
             auxiliary_tools=(SearchToolName,),
-        )
+        )  # type: ignore[call-arg]
 
         result: SubtaskList | None = captured["list"]
         if result is None:

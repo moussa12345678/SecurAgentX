@@ -358,7 +358,7 @@ def fingerprint_tech(
 ) -> List[Dict[str, Any]]:
     """Detect technology stack from response headers and body."""
     detected: List[Dict[str, Any]] = []
-    headers_lower = {k.lower(): v for k, v in headers.items()}
+    _headers_lower = {k.lower(): v for k, v in headers.items()}
 
     for tech, sigs in TECH_SIGNATURES.items():
         if not isinstance(sigs, dict):

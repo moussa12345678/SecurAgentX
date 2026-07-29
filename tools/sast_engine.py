@@ -330,8 +330,8 @@ class SASTEngine:
             if file_path.suffix in supported_extensions:
                 findings = self.pattern_scanner.scan_file(file_path)
                 all_findings.extend(findings)
-                if findings or True:  # Count all scanned files
-                    files_scanned += 1
+                # Count all scanned files
+                files_scanned += 1
 
         self.findings = all_findings
         return self._generate_report(files_scanned)

@@ -341,36 +341,6 @@ def _parse_nuclei_findings(findings_file: str) -> list:
     except Exception as e:
         logger.warning(f"Could not parse output: {e}")
     return findings
-    try:
-        with open(findings_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                m = re.match(r"\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\S+)", line)
-                if m:
-                    findings.append(
-                        {
-                            "name": m.group(1),
-                            "severity": m.group(2).upper(),
-                            "url": m.group(3),
-                            "details": line,
-                            "tool": "nuclei",
-                        }
-                    )
-                else:
-                    findings.append(
-                        {
-                            "name": line[:80],
-                            "severity": "INFO",
-                            "url": "-",
-                            "details": line,
-                            "tool": "nuclei",
-                        }
-                    )
-    except Exception as e:
-        logger.warning(f"Could not parse findings: {e}")
-    return findings
 
 
 def list_available_tools() -> None:

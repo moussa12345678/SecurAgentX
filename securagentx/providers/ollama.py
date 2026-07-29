@@ -649,7 +649,7 @@ class OllamaProvider:
             raw = {k: v for k, v in vars(response).items() if not k.startswith("_")} if hasattr(response, "__dict__") else {}
 
         msg = raw.get("message") or {}
-        role = msg.get("role") or "assistant"
+        _role = msg.get("role") or "assistant"
         content = msg.get("content") or ""
         tool_calls_raw = msg.get("tool_calls") or []
         tcs: List[ToolCall] = []

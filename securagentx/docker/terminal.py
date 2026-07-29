@@ -253,7 +253,7 @@ class DockerTerminal:
                 await result_queue.put(_ExecResult(output="", error=exc))
 
         # Detached task: do NOT cancel on parent cancellation (best-effort).
-        task = asyncio.create_task(_runner())
+        _task = asyncio.create_task(_runner())
         try:
             result = await asyncio.wait_for(
                 result_queue.get(), timeout=DEFAULT_QUICK_CHECK_TIMEOUT

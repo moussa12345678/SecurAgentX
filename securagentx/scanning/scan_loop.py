@@ -62,7 +62,7 @@ class ScanLoop:
         self,
         decision_engine: DecisionEngine,
         post_processor: PostExecutionProcessor,
-        executor: Callable = None,
+        executor: Callable | None = None,
         loop_threshold: int = 3,
         cot_logger=None,
         callback: Optional[Callable] = None,

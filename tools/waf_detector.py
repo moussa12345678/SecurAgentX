@@ -272,7 +272,7 @@ class SmartWAFDetector:
 
     def _payloads_with_param(self, base_url: str) -> List[Tuple[str, str]]:
         """Build (label, full_url) tuples for each probe payload."""
-        parsed = urllib.parse.urlparse(base_url)
+        _parsed = urllib.parse.urlparse(base_url)
         results = []
         for label, payload in WAF_PROBE_PAYLOADS:
             # Inject as 'q' param

@@ -38,7 +38,7 @@ class ConstitutionalCourt:
         constitutional = len(violations) == 0
 
         # หา Precedents ที่เกี่ยวข้อง
-        relevant_precedents = self._find_relevant_precedents(action)
+        _relevant_precedents = self._find_relevant_precedents(action)
 
         ruling = ConstitutionalRuling(
             action_id=str(id(action)),
@@ -167,7 +167,7 @@ class ConstitutionalAIEngine:
 
     def _interpret_constitution(self, action: "AIAction") -> str:
         """ตีความรัฐธรรมนูญในบริบทการกระทำ"""
-        action_type = getattr(action, 'action_type', 'unknown')
+        _action_type = getattr(action, 'action_type', 'unknown')
         relevant_articles = []
 
         for article in self.constitution.articles.values():

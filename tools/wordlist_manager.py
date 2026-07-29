@@ -843,8 +843,8 @@ Return JSON only."""
 
 # Convenience function for quick usage
 def get_smart_wordlist(
-    tech_stack: List[str] = None,
-    custom_paths: List[str] = None,
+    tech_stack: List[str] | None = None,
+    custom_paths: List[str] | None = None,
     state: Any = None,
     ai_client: Any = None,
     max_paths: int = 100,

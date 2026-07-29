@@ -278,7 +278,7 @@ class RaceConditionTester:
 
         if success_count > 1:
             # Check if responses indicate successful double-spend
-            success_responses = [text for code, text in responses if 200 <= code < 300]
+            _success_responses = [text for code, text in responses if 200 <= code < 300]
 
             race_result = RaceConditionResult(
                 test_type="double_spend",

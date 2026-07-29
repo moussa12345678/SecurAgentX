@@ -327,7 +327,7 @@ class KnowledgeGraphIntegration:
         if not output:
             return
         try:
-            args_str = self._stringify_args(args)
+            _args_str = self._stringify_args(args)
             episode_uuid = await self._record_episode(
                 group_id=group_id,
                 source="tool_execution",

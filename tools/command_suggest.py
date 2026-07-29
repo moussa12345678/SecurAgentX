@@ -344,7 +344,7 @@ class CommandSuggester:
 
         return matches
 
-    def get_contextual_help(self, command: str = None, after_error: bool = False) -> str:
+    def get_contextual_help(self, command: str | None = None, after_error: bool = False) -> str:
         """
         Get helpful suggestions based on context.
 
@@ -454,7 +454,7 @@ class CommandSuggester:
         return None
 
 
-def handle_command_error(input_cmd: str, args: List[str] = None) -> str:
+def handle_command_error(input_cmd: str, args: List[str] | None = None) -> str:
     """
     Handle unknown command with helpful suggestions.
 

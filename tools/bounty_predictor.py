@@ -497,8 +497,8 @@ class BountyPredictor:
 
     def _generate_report_template(self, finding: Dict[str, Any], bounty_score: float) -> str:
         """Generate suggested report template."""
-        vuln_type = finding.get("type", "Vulnerability")
-        target = finding.get("target", finding.get("url", "target"))
+        _vuln_type = finding.get("type", "Vulnerability")
+        _target = finding.get("target", finding.get("url", "target"))
 
         template = """# {vuln_type} on {target}
 

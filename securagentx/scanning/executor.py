@@ -458,7 +458,7 @@ def execute_batch(
             results.append(_run_one(sub))
 
     # Preserve input order in the merged output (better for AI comprehension).
-    order = {id(sub): i for i, sub in enumerate(actions)}
+    _order = {id(sub): i for i, sub in enumerate(actions)}
     results.sort(key=lambda r: r.get("command", ""))
 
     # Build a single merged summary string the AI can reason about.

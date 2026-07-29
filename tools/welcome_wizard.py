@@ -164,7 +164,7 @@ class WelcomeWizard:
         """Print suggestion/tip."""
         print(f"  → {message}")
 
-    def _ask_input(self, prompt: str, default: str = "", options: List[str] = None) -> str:
+    def _ask_input(self, prompt: str, default: str = "", options: List[str] | None = None) -> str:
         """Ask user input with smart defaults."""
         if options:
             print(f"\n  {prompt}")

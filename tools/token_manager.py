@@ -139,7 +139,7 @@ class TokenManager:
         self,
         daily_budget_usd: float = 20.0,
         monthly_budget_usd: float = 100.0,
-        provider_configs: Dict[str, ProviderConfig] = None,
+        provider_configs: Dict[str, ProviderConfig] | None = None,
     ):
         """
         Initialize token manager.
@@ -196,7 +196,7 @@ class TokenManager:
         conn.close()
 
     def calculate_cost(
-        self, provider: str, tokens_input: int, tokens_output: int, model: str = None
+        self, provider: str, tokens_input: int, tokens_output: int, model: str | None = None
     ) -> float:
         """
         Calculate cost for token usage.
@@ -226,7 +226,7 @@ class TokenManager:
         model: str,
         tokens_input: int,
         tokens_output: int,
-        mission_id: str = None,
+        mission_id: str | None = None,
     ) -> TokenUsage:
         """
         Record token usage.

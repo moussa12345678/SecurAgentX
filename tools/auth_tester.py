@@ -232,7 +232,7 @@ def test_oauth_misconfig(
 
 
 def test_session_management(
-    base_url: str, cookies: Dict[str, str] = None, headers: Dict[str, str] = None
+    base_url: str, cookies: Dict[str, str] | None = None, headers: Dict[str, str] | None = None
 ) -> List[AuthFinding]:
     """
     Test session management security.
@@ -291,7 +291,7 @@ def test_session_management(
 
 
 def run_auth_tests(
-    target: str, token: str = None, headers: Dict[str, str] = None
+    target: str, token: str | None = None, headers: Dict[str, str] | None = None
 ) -> List[Dict[str, Any]]:
     """
     Run all authentication/authorization tests.

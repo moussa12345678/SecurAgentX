@@ -63,7 +63,7 @@ class BOLAHarness:
         return r.status_code, text, parsed
 
     def _request(
-        self, method: str, path: str, headers: Dict[str, str], json_body: Dict[str, Any] = None
+        self, method: str, path: str, headers: Dict[str, str], json_body: Dict[str, Any] | None = None
     ) -> Tuple[int, str, Dict[str, Any]]:
         """Send HTTP request with any method (GET, POST, PUT, DELETE, PATCH)."""
         self._sleep_rate_limit()

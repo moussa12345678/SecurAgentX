@@ -34,7 +34,7 @@ class ToolResult:
 class BaseTool(ABC):
     """Base Tool Class"""
 
-    def __init__(self, config: Dict = None):
+    def __init__(self, config: Dict | None = None):
         self.config = config or {}
 
     @property

@@ -210,7 +210,7 @@ class MLFilter:
     def _make_pattern_id(self, finding: Dict[str, Any]) -> str:
         """Create a canonical pattern ID for a finding type."""
         vuln_type = finding.get("type", "unknown")
-        url = finding.get("url", "") or ""
+        _url = finding.get("url", "") or ""
         param = finding.get("param", "") or ""
         title = (finding.get("title", "") or "")[:60]
         return f"{vuln_type}:{title}:{param}"

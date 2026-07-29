@@ -303,7 +303,7 @@ class EndpointDiscovery:
                 async with sem, self.session.get(url, allow_redirects=False) as r:
                     if r.status in (200, 201, 204, 301, 302, 401, 403, 405):
                         ct = r.headers.get("content-type", "")
-                        body = await r.text()
+                        _body = await r.text()
                         params = self._extract_params_from_path(path)
                         # Try POST if path looks POST-likely OR GET returned 405
                         methods_to_try = ["GET"]

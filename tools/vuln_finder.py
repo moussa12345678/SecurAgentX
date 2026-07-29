@@ -268,7 +268,7 @@ class VulnFinder:
         """
         self.state.status = MissionStatus.EXECUTING
         self.state.steps += 1
-        start_time = time.time()
+        _start_time = time.time()
 
         target_url = attack_path.get("url", self.target)
         tool_name = attack_path.get("tool", "")
@@ -346,7 +346,7 @@ class VulnFinder:
                 for finding in tool_result.findings:
                     self.add_finding(finding)
                     # Also add to knowledge graph with tool relationship
-                    finding_id = f"finding-{len(self.state.findings)}"
+                    _finding_id = f"finding-{len(self.state.findings)}"
                     self.kg.add_edge(self.target, "found_by", tool_name)
 
             if tool_result.error_message:

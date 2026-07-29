@@ -200,7 +200,7 @@ class LearningEngine:
         """
         # SQL-based recall
         cur = self._conn.cursor()
-        placeholders = ",".join("?" * len(tech_stack))
+        _placeholders = ",".join("?" * len(tech_stack))
         vuln_clause = "AND vuln_class = ?" if vuln_class else ""
         # Build SQL via prefix/suffix vars (avoids f-string → bandit B608).
         _query_prefix = """

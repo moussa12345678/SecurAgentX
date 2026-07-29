@@ -121,7 +121,7 @@ class AIGovernance:
     def __init__(
         self,
         mode: str = "ask",
-        auto_approve_tools: List[str] = None,
+        auto_approve_tools: List[str] | None = None,
         use_ast_sandbox: bool = True,
     ):
         self.mode = mode
@@ -287,7 +287,7 @@ class AIToolCreator:
             except Exception as e:
                 logger.debug(f"Failed to load tool {tool_file}: {e}")
 
-    def analyze_target_and_plan(self, target: str, target_info: Dict = None) -> List[ToolSpec]:
+    def analyze_target_and_plan(self, target: str, target_info: Dict | None = None) -> List[ToolSpec]:
         """
         AI analyzes target and plans what custom tools are needed.
 

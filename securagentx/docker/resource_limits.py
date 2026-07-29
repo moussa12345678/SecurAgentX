@@ -254,7 +254,7 @@ def apply_to_container_config(
         host_config["ReadonlyRootfs"] = True
         # tmpfs for /tmp and /run — without these, even ``apt update``
         # fails because it can't write to /var/cache/apt.
-        tmpfs: list[dict[str, Any]] = list(host_config.get("Tmpfs") or {})
+        _tmpfs: list[dict[str, Any]] = list(host_config.get("Tmpfs") or {})
         # Docker accepts ``Tmpfs`` as a dict mapping mount-point -> opts.
         tmpfs_dict: dict[str, str] = dict(host_config.get("Tmpfs") or {})
         # NOTE: ``/tmp`` and ``/run`` here are Docker *in-container* mount

@@ -30,18 +30,18 @@ def generate_html_report(
     findings: List[Dict],
     output_path: str,
 ) -> str:
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    total = len(findings)
-    critical = sum(1 for f in findings if f.get("severity", "").upper() == "CRITICAL")
-    high = sum(1 for f in findings if f.get("severity", "").upper() == "HIGH")
-    medium = sum(1 for f in findings if f.get("severity", "").upper() == "MEDIUM")
+    _now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _total = len(findings)
+    _critical = sum(1 for f in findings if f.get("severity", "").upper() == "CRITICAL")
+    _high = sum(1 for f in findings if f.get("severity", "").upper() == "HIGH")
+    _medium = sum(1 for f in findings if f.get("severity", "").upper() == "MEDIUM")
 
     rows = ""
     for f in findings:
-        sev = html.escape(str(f.get("severity", "INFO")))
-        name = html.escape(str(f.get("name", "–")))
-        url = html.escape(str(f.get("url", "–")))
-        det = html.escape(str(f.get("details", "–"))[:150])
+        _sev = html.escape(str(f.get("severity", "INFO")))
+        _name = html.escape(str(f.get("name", "–")))
+        _url = html.escape(str(f.get("url", "–")))
+        _det = html.escape(str(f.get("details", "–"))[:150])
         rows += """
             <tr>
               <td>{name}</td>

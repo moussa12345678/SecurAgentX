@@ -730,7 +730,7 @@ class MassAssignmentDetector:
         )
         if baseline_resp is None:
             return findings
-        baseline_text = baseline_resp.get("text") or ""
+        _baseline_text = baseline_resp.get("text") or ""
         baseline_len = baseline_resp.get("length", 0)
         baseline_status = baseline_resp.get("status", 0)
 
@@ -2240,7 +2240,7 @@ class JWTAlgorithmDetector:
             if resp is None:
                 continue
             status = resp.get("status", 0)
-            text = resp.get("text") or ""
+            _text = resp.get("text") or ""
             # Acceptance = response differs from baseline and is 2xx.
             accepted = 200 <= status < 300 and status != baseline_status
             if accepted:

@@ -268,7 +268,7 @@ class CognitiveMemoryManager:
         target: str = "global",
         category: str = "general",
         importance: float = 0.5,
-        tags: List[str] = None,
+        tags: List[str] | None = None,
         **metadata
     ) -> str:
         """Store memory"""

@@ -363,7 +363,7 @@ class OAuthRegistry:
 
         Lazy-builds the authlib ``OAuth`` registry on first call.
         """
-        cfg = self.get_config(provider)
+        _cfg = self.get_config(provider)
 
         if self._oauth is None:
             self._oauth = self._build_authlib_oauth()
@@ -683,7 +683,7 @@ async def login_callback(request: Any, provider: Optional[str] = None) -> Any:
     if not resolved_provider:
         raise ValueError("provider not present in state")
 
-    cfg = oauth_registry.get_config(resolved_provider)
+    _cfg = oauth_registry.get_config(resolved_provider)
     client = get_oauth_client(resolved_provider)
     if client is None:
         raise RuntimeError(
@@ -851,7 +851,6 @@ async def _resolve_google_email(nonce: str, token: dict) -> str:
     try:
         from authlib.jose import errors as jose_errors
         from authlib.oidc.core import IDToken
-        from authlib.oidc.core.impl import use_id_token_nonce
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "securagentx.auth.oauth requires authlib for Google OIDC "

@@ -350,7 +350,7 @@ class ProgressDisplay:
         }
         return icons.get(status, "[?]")
 
-    def _make_progress_bar(self, percent: float, width: int = None) -> str:
+    def _make_progress_bar(self, percent: float, width: int | None = None) -> str:
         """Create a progress bar string."""
         width = width or self.BAR_WIDTH
         filled = int(width * percent / 100)
@@ -390,7 +390,7 @@ class Spinner:
         self._thread.daemon = True
         self._thread.start()
 
-    def stop(self, final_message: str = None) -> None:
+    def stop(self, final_message: str | None = None) -> None:
         """Stop spinner."""
         self._running = False
         if self._thread:

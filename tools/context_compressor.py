@@ -159,7 +159,7 @@ class ContextCompressor:
     def compress(
         self,
         conversation_history: List[Dict[str, str]],
-        target_tokens: int = None,
+        target_tokens: int | None = None,
     ) -> CompressionResult:
         """
         Compress conversation history to fit within token budget.
@@ -257,7 +257,7 @@ class ContextCompressor:
     def compress_and_return_history(
         self,
         conversation_history: List[Dict[str, str]],
-        target_tokens: int = None,
+        target_tokens: int | None = None,
     ) -> List[Dict[str, str]]:
         """
         Compress and return the compressed history list.

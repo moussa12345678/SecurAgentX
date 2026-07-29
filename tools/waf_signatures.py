@@ -60,7 +60,7 @@ WAF_SIGNATURES = {
 }
 
 
-def detect_waf_from_response(headers: dict, body: str = "", cookies: dict = None) -> tuple:
+def detect_waf_from_response(headers: dict, body: str = "", cookies: dict | None = None) -> tuple:
     """
     Detect WAF from HTTP response characteristics.
 

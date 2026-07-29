@@ -41,8 +41,8 @@ class Skill:
         binary_name: str,
         status: SkillStatus,
         install_command: str,
-        use_cases: list = None,
-        alternatives: list = None,
+        use_cases: list | None = None,
+        alternatives: list | None = None,
     ):
         self.name = name
         self.description = description

@@ -312,11 +312,11 @@ if _HAS_TEXTUAL:
             yield Container(
                 Static("SecurAgentX Security Dashboard", id="header-panel"),
                 Horizontal(
-                    MetricCard(value="0", label_text="Active Scans", color=RED_ACCENT),
-                    MetricCard(value="0", label_text="Total Findings", color=DARK_ACCENT),
-                    MetricCard(value="0", label_text="Critical", color=RED_ACCENT),
-                    MetricCard(value="0", label_text="High", color="#ff8844"),
-                    ScanStatusCard(status="idle", target_text="", findings_count=0),
+                    MetricCard(value="0", label_text="Active Scans", color=RED_ACCENT),  # type: ignore[call-arg]
+                    MetricCard(value="0", label_text="Total Findings", color=DARK_ACCENT),  # type: ignore[call-arg]
+                    MetricCard(value="0", label_text="Critical", color=RED_ACCENT),  # type: ignore[call-arg]
+                    MetricCard(value="0", label_text="High", color="#ff8844"),  # type: ignore[call-arg]
+                    ScanStatusCard(status="idle", target_text="", findings_count=0),  # type: ignore[call-arg]
                     id="metrics-row",
                 ),
                 Horizontal(
@@ -483,7 +483,7 @@ def run_minimal():
     from rich.panel import Panel
     from rich.table import Table
 
-    console = Console()
+    _console = Console()
     layout = Layout()
     layout.split_column(
         Layout(name="header", size=3),
@@ -491,7 +491,7 @@ def run_minimal():
         Layout(name="footer", size=3),
     )
 
-    with Live(layout, refresh_per_second=4, screen=True) as live:
+    with Live(layout, refresh_per_second=4, screen=True) as _live:
         try:
             import signal
 

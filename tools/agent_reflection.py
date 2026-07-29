@@ -259,7 +259,7 @@ class AgentReflection:
             # Query: Find negative feedback records
             # Use simple keyword matching since we don't have embeddings here
             words = current_query.lower().split()
-            word_conditions = " OR ".join("query LIKE ?" for _ in words)
+            _word_conditions = " OR ".join("query LIKE ?" for _ in words)
             params = [f"%{w}%" for w in words]
 
             cursor = conn.execute(
@@ -334,7 +334,7 @@ class AgentReflection:
 
     def get_recent_reflections(
         self,
-        sentiment: str = None,
+        sentiment: str | None = None,
         limit: int = 10,
     ) -> List[Dict[str, str]]:
         """
@@ -382,7 +382,7 @@ class AgentReflection:
             logger.error(f"Failed to get reflections: {e}")
             return []
 
-    def clear_reflections(self, sentiment: str = None) -> int:
+    def clear_reflections(self, sentiment: str | None = None) -> int:
         """
         Clear reflection records.
 

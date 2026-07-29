@@ -499,7 +499,7 @@ class Reporter:
             completion_tools=completion_tools,
             auxiliary_tools=(SearchInMemoryToolName,),
             barrier_tools=(ReportResultToolName,),
-        )
+        )  # type: ignore[call-arg]
 
         result: TaskResult | None = captured["result"]
         if result is None:

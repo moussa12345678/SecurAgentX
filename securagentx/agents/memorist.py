@@ -1130,7 +1130,7 @@ class Memorist:
             max_iterations=self.max_iterations,
             execution_context=execution_context,
             on_barrier=_on_barrier,
-        )
+        )  # type: ignore[call-arg]
 
         result: MemoristResult | None = captured["result"]
         if result is None:

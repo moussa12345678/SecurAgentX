@@ -134,7 +134,7 @@ class GovernanceGate:
         """
         # 1. Determine policy
         policy_name = self._get_policy_for_action(action)
-        policy = self.policies.get(policy_name, self.policies.get("scan"))
+        _policy = self.policies.get(policy_name, self.policies.get("scan"))
 
         # 2. Risk Assessment
         risk_assessment = self._assess_risk(action)

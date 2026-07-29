@@ -6,6 +6,8 @@ file editing, web research, and bug bounty specialization.
 
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import json
 import logging
 import re
@@ -23,6 +25,24 @@ from tools.universal_executor import get_universal_executor
 from tools.vector_memory import get_context_for_ai, remember
 
 logger = logging.getLogger("securagentx.agent")
+
+
+def _brain_run_async(coro_factory: Callable[[], Any], timeout: int = 30) -> Any:
+    """Run an async coroutine from sync context, thread-safely.
+
+    If an event loop is already running (e.g. inside async framework), submit
+    to a worker thread with ``concurrent.futures`` and await with timeout.
+    Otherwise, run inline via ``loop.run_until_complete``.
+
+    Raises the same exceptions as the underlying coroutine plus
+    ``RuntimeError`` (no/running event loop), ``asyncio.TimeoutError``,
+    or ``concurrent.futures.TimeoutError``.
+    """
+    loop = asyncio.get_event_loop()
+    if loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            return pool.submit(asyncio.run, coro_factory()).result(timeout=timeout)
+    return loop.run_until_complete(coro_factory())
 
 
 def _format_preflight_context(findings: List[Dict[str, Any]]) -> str:
@@ -150,44 +170,26 @@ def _run_brain_mode(
         # ── Step 0: Recall past memories (persistent memory) ──────────
         memory_context = ""
         try:
-            import asyncio
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    memory_entries = pool.submit(
-                        asyncio.run,
-                        memory.recall(f"target={target}", limit=10)
-                    ).result(timeout=10)
-            else:
-                memory_entries = loop.run_until_complete(
-                    memory.recall(f"target={target}", limit=10)
-                )
+            memory_entries = _brain_run_async(
+                lambda: memory.recall(f"target={target}", limit=10), timeout=10
+            )
             if memory_entries:
                 memory_lines = [f"- {m.content[:150]}" for m in memory_entries[:5]]
                 memory_context = "\n".join(memory_lines)
                 if callback:
                     callback(f"[Brain] Recalled {len(memory_entries)} past memories")
-        except Exception as e:
+        except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError) as e:
             logger.debug(f"Memory recall failed (non-fatal): {e}")
 
         if callback:
             callback("[Brain] Planning attack strategy...")
 
         # ── Step 1: Plan the attack (with memory context) ─────────────
-        import asyncio
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    plan = pool.submit(
-                        asyncio.run,
-                        brain.planner.plan(user_input, context)
-                    ).result(timeout=30)
-            else:
-                plan = loop.run_until_complete(brain.planner.plan(user_input, context))
-        except Exception as e:
+            plan = _brain_run_async(
+                lambda: brain.planner.plan(user_input, context), timeout=30
+            )
+        except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError) as e:
             logger.warning(f"Brain planning failed: {e}")
             return None
 
@@ -240,61 +242,38 @@ def _run_brain_mode(
                             "phase": phase.name,
                         })
                         consecutive_no_findings = 0  # reset on finding
-                    except Exception:
+                    except (ValueError, KeyError, AttributeError, TypeError):
                         consecutive_no_findings += 1
 
                     # ── Self-correction: replan when stuck ───────────
                     if consecutive_no_findings >= max_no_findings:
                         if callback:
                             callback(f"[Brain] Self-correction: no findings after {consecutive_no_findings} tools, replanning...")
-                        try:
-                            failure = {
-                                "reason": f"No findings after {consecutive_no_findings} consecutive tool executions",
-                                "tried_tools": list(tried_tools),
-                            }
-                            import asyncio as _ai
-                            _loop = _ai.get_event_loop()
-                            if _loop.is_running():
-                                import concurrent.futures
-                                with concurrent.futures.ThreadPoolExecutor() as _pool:
-                                    new_plan = _pool.submit(
-                                        _ai.run,
-                                        brain.planner.replan(failure, context)
-                                    ).result(timeout=30)
-                            else:
-                                new_plan = _loop.run_until_complete(brain.planner.replan(failure, context))
-                            if new_plan and new_plan.phases:
-                                plan.phases.extend(new_plan.phases)
-                                if callback:
-                                    callback(f"[Brain] Replan: added {len(new_plan.phases)} new phases")
-                            consecutive_no_findings = 0  # reset after replan
-                        except Exception as e:
-                            logger.debug(f"Replan failed: {e}")
+                        consecutive_no_findings = _brain_replan_if_stuck(
+                            brain=brain,
+                            failure_reason=f"No findings after {consecutive_no_findings} consecutive tool executions",
+                            tried_tools=tried_tools,
+                            context=context,
+                            plan=plan,
+                            callback=callback,
+                            current_no_findings=consecutive_no_findings,
+                        )
 
-                except Exception as e:
+                except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
                     logger.debug(f"Brain tool execution failed for {tool_name}: {e}")
                     consecutive_no_findings += 1
 
         # ── Step 3: Remember findings (persistent memory) ─────────────
         try:
             if all_findings:
-                import asyncio
                 finding_summary = f"Target: {target}. Found {len(all_findings)} vulnerabilities: {', '.join(f['type'] for f in all_findings[:5])}"
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        pool.submit(
-                            asyncio.run,
-                            memory.remember(finding_summary, target=target, category="semantic", importance=0.8)
-                        ).result(timeout=10)
-                else:
-                    loop.run_until_complete(
-                        memory.remember(finding_summary, target=target, category="semantic", importance=0.8)
-                    )
+                _brain_run_async(
+                    lambda: memory.remember(finding_summary, target=target, category="semantic", importance=0.8),
+                    timeout=10,
+                )
                 if callback:
                     callback(f"[Brain] Remembered {len(all_findings)} findings for future reference")
-        except Exception as e:
+        except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError) as e:
             logger.debug(f"Memory save failed (non-fatal): {e}")
 
         # ── Step 4: Generate summary ──────────────────────────────────
@@ -329,11 +308,46 @@ def _run_brain_mode(
 
         return "\n".join(lines)
 
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
         logger.error(f"Brain mode failed: {e}", exc_info=True)
         if callback:
             callback(f"[Brain] Error: {e}")
         return None
+
+
+def _brain_replan_if_stuck(
+    brain: Any,
+    failure_reason: str,
+    tried_tools: set,
+    context: Any,
+    plan: Any,
+    callback: Optional[Callable] = None,
+    current_no_findings: int = 0,
+) -> int:
+    """Ask the brain planner to replan after a stuck sequence.
+
+    Returns the post-replan ``consecutive_no_findings`` counter: 0 on
+    successful replan, or the unchanged ``current_no_findings`` on failure
+    (so the next iteration will attempt another replan, matching the
+    original semantics).  Extends ``plan.phases`` in-place when the
+    replan yields new phases.
+    """
+    failure = {
+        "reason": failure_reason,
+        "tried_tools": list(tried_tools),
+    }
+    try:
+        new_plan = _brain_run_async(
+            lambda: brain.planner.replan(failure, context), timeout=30
+        )
+        if new_plan and new_plan.phases:
+            plan.phases.extend(new_plan.phases)
+            if callback:
+                callback(f"[Brain] Replan: added {len(new_plan.phases)} new phases")
+        return 0  # reset after successful replan
+    except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError) as e:
+        logger.debug(f"Replan failed: {e}")
+        return current_no_findings  # unchanged; next iteration will retry replan
 
 
 def _create_mission_context(target: str, objective: str):
@@ -349,6 +363,275 @@ def _create_mission_context(target: str, objective: str):
         constraints={},
         metadata={},
     )
+
+
+# ── Helpers extracted from process_universal to reduce complexity ─────────
+
+
+def _handle_casual_chat(
+    user_input: str,
+    intent: str,
+    target: str,
+    conversation_history: List[Dict[str, str]],
+    reflection_caution: str,
+    client: Any,
+) -> Optional[str]:
+    """Handle casual / security_chat queries that have no target.
+
+    Returns the chat response string, or ``None`` if the caller should
+    continue with the main execution loop (e.g. the AI returned empty).
+    """
+    past_memories = get_context_for_ai(
+        user_input,
+        target=target or "universal",
+        max_memories=12,
+        conversation_history=conversation_history,
+    )
+    logger.info(f"Retrieved {len(past_memories.splitlines())} memories from the cloud.")
+
+    now_context = _get_now_context()
+    profile_context = _get_memory_profile_context()
+
+    available_tools = registry.list_available_tools()
+    tool_names = [name for name, info in available_tools.items() if info.get("available")]
+    tool_list = ", ".join(tool_names[:10]) + ("..." if len(tool_names) > 10 else "")
+
+    has_thai = bool(re.search(r"[฀-๿]", user_input))
+    detected_lang = "Thai" if has_thai else "English"
+
+    chat_prompt = f"""You are SecurAgentX AI — A Universal AI Agent specialized for Bug Bounty and Security Research.
+Intent category: {intent}
+Detected user language: {detected_lang}
+
+{now_context}
+
+### [PROFILE] LONG-TERM PROFILE:
+{profile_context}
+
+### [MEMORY] PAST CONVERSATIONS (RELEVANT CONTEXT):
+{past_memories}
+
+{reflection_caution}
+
+### YOUR IDENTITY & CAPABILITIES:
+- Name: SecurAgentX AI (SecurAgentX AI)
+- Version:
+- Primary role: Security researcher and penetration testing assistant
+
+### WHAT YOU CAN DO:
+
+[LIVE INTERNET ACCESS - Real-time data:]
+- Search Google for current news, sports scores, weather, stock prices
+- Get TODAY's information - no knowledge cutoff!
+- Research CVEs, exploits, and security advisories
+
+[SECURITY TOOLS:]
+{tool_list}
+Plus: Built-in Python scanners for SSRF, SSTI, XXE, Deserialization,
+GraphQL, CORS, JWT, Race Conditions, Business Logic, Supply Chain
+
+[GENERAL CAPABILITIES:]
+- File editing, shell commands, package installation
+- Code review and script generation
+- Web research and OSINT
+
+### LANGUAGE RULE:
+- Detect the language of the user's input
+- If user wrote Thai → respond in Thai
+- If user wrote English → respond in English
+- Respond naturally in the detected language
+
+### OTHER RULES:
+1. Do not use emojis.
+2. Do not attempt to run scans or use tools for this casual query.
+3. Answer directly based on your knowledge above.
+4. If asked what you can do, explain your capabilities including LIVE WEB SEARCH."""
+
+    messages = _build_chat_messages(conversation_history, chat_prompt, user_input)
+    direct = (client.chat(messages).content or "").strip()
+
+    if direct:
+        _append_history(conversation_history, "user", user_input)
+        _append_history(conversation_history, "assistant", direct)
+        remember(
+            content=f"User interaction: {user_input} | AI Response: {direct[:150]}...",
+            target=target or "universal",
+            category="conversation",
+        )
+        return direct
+    if has_thai:
+        return "สวัสดีครับ! ผมคือ SecurAgentX AI ผู้ช่วยวิจัยความปลอดภัย มีอะไรให้ช่วยไหมครับ?"
+    return (
+        "Hello! I'm SecurAgentX AI, your security research assistant. How can I help you today?"
+    )
+
+
+# Common greetings used to short-circuit the AI loop.
+_SIMPLE_GREETINGS = (
+    "hi", "hello", "hey", "hiya", "yo",
+    "สวัสดี", "สวัสดีครับ", "สวัสดีค่ะ",
+    "หวัดดี", "หวัดดีครับ", "หวัดดีค่ะ",
+    "สัวสดี", "สวัส", "สวัดดี", "สวัสดีจ้า",
+    "ไง", "ไงครับ", "ไงค่ะ", "ไงจ้า", "ว่าไง",
+    "sawasdee", "sawasdee krub", "sawasdee krap",
+)
+_SIMPLE_QUESTIONS = ("how are you", "what can you do", "help", "?", "who are you")
+
+
+def _detect_simple_greeting(
+    user_input: str,
+    intent: str,
+    target: str,
+    is_security_task: bool,
+) -> bool:
+    """Detect whether input is a simple greeting / small-talk question.
+
+    Returns True for short greetings ("hi", "hello", "สวัสดี", etc.) or
+    simple small-talk questions when no target is set and intent is not
+    research/scan — these don't need the full agent loop.
+    """
+    normalized = user_input.lower().strip()
+
+    starts_with_thai_greeting = any(
+        normalized.replace(" ", "").startswith(g.replace(" ", ""))
+        for g in _SIMPLE_GREETINGS
+        if re.search(r"[฀-๿]", g)
+    )
+    thai_only = bool(re.fullmatch(r"[\s฀-๿\.!?]+", user_input.strip()))
+    is_thai_greeting = starts_with_thai_greeting or (
+        thai_only and any(g in user_input.strip() for g in ["สวั", "หวัด", "ดี"])
+    )
+    is_short_thai_chat = thai_only and 0 < len(user_input.strip()) <= 8
+
+    return (
+        (
+            any(normalized.startswith(g) for g in _SIMPLE_GREETINGS)
+            or any(q in normalized for q in _SIMPLE_QUESTIONS)
+            or is_thai_greeting
+            or is_short_thai_chat
+        )
+        and not is_security_task
+        and not target
+        and intent not in ("research", "scan")
+    )
+
+
+def _handle_simple_greeting(user_input: str, client: Any) -> str:
+    """Generate a short, conversational response for simple greetings.
+
+    Uses a minimal prompt to keep the response short and language-correct.
+    """
+    wants_thai = bool(re.search(r"[฀-๿]", user_input))
+    if wants_thai:
+        return "Hello! How can I help you?"
+    lang_rule = "Respond in Thai ONLY." if wants_thai else "Respond in English ONLY."
+    simple_prompt = f"""You are SecurAgentX AI 1.0.0.
+User input: "{user_input}"
+Contains Thai characters: {wants_thai}
+
+### LANGUAGE RULE (STRICT):
+{lang_rule}
+- If Thai detected in input → respond in Thai language
+- If English detected → respond in English language
+- ABSOLUTELY NO other languages (no Turkish, Spanish, French, etc.)
+- This is a HARD requirement
+
+### RESPONSE:
+Keep it short and conversational. No tools. No emojis."""
+
+    response = (
+        client.chat(
+            [
+                AIMessage(role="system", content=simple_prompt),
+                AIMessage(role="user", content="Greeting"),
+            ]
+        ).content
+        or ""
+    )
+    if not response.strip():
+        return (
+            "Hello! How can I help you?" if wants_thai else "Hello! How can I help you today?"
+        )
+    return response.strip()
+
+
+def _init_brain_loop(
+    user_input: str,
+    target: str,
+    client: Any,
+    governance: Governance,
+    callback: Optional[Callable],
+) -> tuple:
+    """Initialize the brain-enhanced decision loop (planner + decision engine).
+
+    Returns a tuple ``(brain_loop, brain_planner, brain_decision, brain_plan)``
+    where ``brain_loop`` is False if any component is unavailable or planning
+    fails, in which case the caller falls back to the legacy JSON loop.
+    """
+    brain_loop = False
+    brain_planner = None
+    brain_decision = None
+    brain_plan = None
+
+    try:
+        from securagentx.brain import PlanningEngine, DecisionEngine, ReasoningEngine
+        from securagentx.memory import CognitiveMemoryManager
+        from securagentx.constitution_engine import ConstitutionalAIEngine
+
+        _memory = CognitiveMemoryManager(backends=[])
+        _reasoning = ReasoningEngine(client, _memory)
+        brain_decision = DecisionEngine(client, _reasoning, ConstitutionalAIEngine(), governance)
+        brain_planner = PlanningEngine(client, _reasoning, _memory)
+        brain_loop = True
+
+        if callback:
+            callback("[Brain Loop] Initializing planning engine...")
+
+        # Generate initial plan
+        try:
+            brain_plan = _brain_run_async(
+                lambda: brain_planner.plan(user_input, _create_mission_context(target, user_input)),
+                timeout=30,
+            )
+            if callback and brain_plan:
+                callback(f"[Brain Loop] Plan: {len(brain_plan.phases)} phases")
+        except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError) as e:
+            logger.debug(f"Brain planning failed, falling back to legacy: {e}")
+            brain_loop = False
+
+    except ImportError as e:
+        logger.debug(f"Brain components not available: {e}")
+        brain_loop = False
+
+    return brain_loop, brain_planner, brain_decision, brain_plan
+
+
+def _build_security_summary(
+    target: str,
+    step: int,
+    all_findings: List[Dict[str, Any]],
+    history: List[Dict[str, str]],
+) -> str:
+    """Build the markdown summary for a security task assessment."""
+    scored = all_findings
+    sev_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3, "Info": 4}
+    scored.sort(key=lambda s: sev_order.get(s["severity"], 5))
+
+    lines = ["## Universal Agent Summary", ""]
+    if target:
+        lines.append(f"**Target**: {target}")
+    lines.append(f"**Steps**: {step + 1}")
+    lines.append(f"**Findings**: {len(scored)}")
+    lines.append("")
+    if scored:
+        lines.append("| Severity | Type | CVSS |")
+        lines.append("|----------|------|------|")
+        for s in scored:
+            lines.append(f"| {s['severity']} | {s['type']} | {s['cvss']:.1f} |")
+
+    summary = "\n".join(lines)
+    _append_history(history, "assistant", summary)
+    return summary
 
 
 def process_universal(

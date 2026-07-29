@@ -316,8 +316,12 @@ class PlanningEngine:
         # 1. Understand goal deeply
         goal_analysis = await self._analyze_goal(goal, context)
 
-        # 2. Generate strategic plan via LLM
-        plan = await self._generate_strategic_plan(goal_analysis, {}, context)
+        # 2. Generate strategic plan via LLM; forward caller-supplied
+        #    constraints (scope, time budget, risk ceiling, excluded
+        #    techniques, ...) so the planner actually respects them.
+        plan = await self._generate_strategic_plan(
+            goal_analysis, {}, context, constraints=constraints
+        )
 
         # 3. Risk assessment
         plan.risk_assessment = {"overall": "medium", "by_phase": {}}
@@ -366,16 +370,25 @@ Return JSON:
         self,
         goal_analysis: Dict,
         attack_surface: Dict,
-        context: "MissionContext"
+        context: "MissionContext",
+        constraints: Optional[Dict] = None,
     ) -> "AttackPlan":
         target = getattr(context, "target", "unknown")
         objective = getattr(context, "objectives", ["discover vulnerabilities"])[0]
+        attack_surface_str = (
+            json.dumps(attack_surface, default=str) if attack_surface else "{}"
+        )
+        constraints_str = (
+            json.dumps(constraints, default=str) if constraints else "{}"
+        )
 
         prompt = f"""You are a security planning AI. Create an attack plan for a penetration test.
 
 Target: {target}
 Objective: {objective}
 Goal Analysis: {json.dumps(goal_analysis, default=str)}
+Attack Surface: {attack_surface_str}
+Constraints: {constraints_str}
 
 Generate a prioritized attack plan as JSON:
 {{
@@ -640,7 +653,7 @@ class DecisionEngine:
     def _risk_score(self, action: Dict) -> float:
         """Score risk level of action (0-1, higher = riskier)."""
         tool = action.get("tool", "")
-        params = action.get("params", {})
+        _params = action.get("params", {})
         risk_level = action.get("risk_level", "safe")
 
         score = 0.3  # base

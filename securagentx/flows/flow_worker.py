@@ -728,7 +728,7 @@ class FlowWorker:
         :meth:`is_task_cancelled`).
         """
         async with self._task_mx:
-            cancel_event = self._task_cancel_event
+            _cancel_event = self._task_cancel_event
 
         # Mark the task as running (clear the completion event).
         async with self._task_done_mx:

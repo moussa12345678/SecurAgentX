@@ -153,7 +153,7 @@ def _parse_json(text: str) -> dict:
     return result if isinstance(result, dict) else {}
 
 
-def _build_headers(state: AgentState, extra: dict = None) -> dict:
+def _build_headers(state: AgentState, extra: dict | None = None) -> dict:
     """Build HTTP headers with auth credentials if available."""
     h = {"User-Agent": "Mozilla/5.0 (SecurAgentX/3.0)"}
     auth = state.assets.get("auth_headers", {})
@@ -1770,7 +1770,7 @@ class AutonomousAgent:
             f"ai={'yes' if self.ai_client else 'fallback'})"
         )
 
-    def run_autonomous_scan(self, target: str, goal: str = None) -> ScanResult:
+    def run_autonomous_scan(self, target: str, goal: str | None = None) -> ScanResult:
         start_time = datetime.now(timezone.utc)
 
         _display(f"\n[Autonomous Mode] Starting scan on: {target}")
@@ -2072,7 +2072,7 @@ class AutonomousAgent:
                 lines.append(f"  {k}: {len(v)}")
         return "\n".join(lines)
 
-    def run_team_scan(self, target: str, goal: str = None) -> ScanResult:
+    def run_team_scan(self, target: str, goal: str | None = None) -> ScanResult:
         """
         TEAM AEGIS MODE for Autonomous Agent.
 

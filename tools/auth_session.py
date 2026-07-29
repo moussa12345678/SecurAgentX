@@ -221,7 +221,7 @@ async def discover_and_login(
     session: aiohttp.ClientSession,
     base_url: str,
     endpoints: List[Any],  # List[Endpoint] — avoid circular import
-    credentials: List[Tuple[str, str]] = None,
+    credentials: List[Tuple[str, str]] | None = None,
 ) -> List[AuthSession]:
     """Try to authenticate against any discovered login endpoint.
 

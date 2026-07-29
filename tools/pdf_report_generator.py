@@ -207,19 +207,19 @@ class PDFReportGenerator:
         findings_html = []
         for i, f in enumerate(findings, 1):
             color = severity_colors.get(f.severity, "#6b7280")
-            cwe_section = f"<p><strong>CWE:</strong> {f.cwe_id}</p>" if f.cwe_id else ""
-            cve_section = f"<p><strong>CVE:</strong> {f.cve_id}</p>" if f.cve_id else ""
+            _cwe_section = f"<p><strong>CWE:</strong> {f.cwe_id}</p>" if f.cwe_id else ""
+            _cve_section = f"<p><strong>CVE:</strong> {f.cve_id}</p>" if f.cve_id else ""
             urls_section = ""
             if f.affected_urls:
                 urls_html = "\n".join([f"<li>{url}</li>" for url in f.affected_urls[:5]])
-                urls_section = f"<h4>Affected URLs:</h4><ul>{urls_html}</ul>"
+                _urls_section = f"<h4>Affected URLs:</h4><ul>{urls_html}</ul>"
 
             refs_section = ""
             if f.references:
                 refs_html = "\n".join(
                     [f'<li><a href="{ref}">{ref}</a></li>' for ref in f.references]
                 )
-                refs_section = f"<h4>References:</h4><ul>{refs_html}</ul>"
+                _refs_section = f"<h4>References:</h4><ul>{refs_html}</ul>"
 
             finding_html = """
             <div class="finding severity-{f.severity}" id="finding-{i}">
@@ -258,7 +258,7 @@ class PDFReportGenerator:
         summary_cards = []
         for sev, count in severity_counts.items():
             if count > 0:
-                color = severity_colors.get(sev, "#6b7280")
+                _color = severity_colors.get(sev, "#6b7280")
                 summary_cards.append(
                     """
                     <div class="summary-card" style="border-color: {color}">

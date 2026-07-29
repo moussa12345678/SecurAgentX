@@ -559,9 +559,9 @@ class ComplianceEngine:
         relevant = []
 
         for f in findings:
-            title = (f.get("title", "") or "").lower()
+            _title = (f.get("title", "") or "").lower()
             vuln_type = (f.get("type", "") or "").lower()
-            details = (f.get("details", "") or "").lower()
+            _details = (f.get("details", "") or "").lower()
 
             # Map finding types to control categories
             if cid in ("6.1", "6.2", "a06", "a03"):
@@ -641,7 +641,7 @@ class ComplianceEngine:
 
     def _write_html(self, assessment: Dict[str, Any], path: Path) -> None:
         """Generate Apple-aesthetic HTML compliance report."""
-        std = assessment.get("standard", {})
+        _std = assessment.get("standard", {})
         controls = assessment.get("controls", [])
 
         rows = ""
@@ -652,7 +652,7 @@ class ComplianceEngine:
                 "not_tested": "#888888",
                 "error": "#ff8844",
             }
-            color = status_color.get(cr["status"], "#888")
+            _color = status_color.get(cr["status"], "#888")
             rows += """
             <tr>
                 <td>{cr['control_id']}</td>
@@ -666,8 +666,8 @@ class ComplianceEngine:
         sev_bars = ""
         for level in ["critical", "high", "medium", "low", "info"]:
             count = sev.get(level, 0)
-            pct = count / max(1, assessment.get("total_findings", 1)) * 100
-            color_map = {
+            _pct = count / max(1, assessment.get("total_findings", 1)) * 100
+            _color_map = {
                 "critical": "#ff4444",
                 "high": "#ff8844",
                 "medium": "#ffcc44",

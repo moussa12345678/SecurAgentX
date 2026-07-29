@@ -772,13 +772,13 @@ setInterval(refreshScans, 5000); refreshScans(); connectWS();
     async def global_websocket(websocket: WebSocket):
         """Global WebSocket for all scan events."""
         await websocket.accept()
-        session_id = f"session_{uuid.uuid4().hex[:8]}"
+        _session_id = f"session_{uuid.uuid4().hex[:8]}"
         if "global" not in _ws_connections:
             _ws_connections["global"] = set()
         _ws_connections["global"].add(websocket)
         try:
             while True:
-                data = await websocket.receive_text()
+                _data = await websocket.receive_text()
         except WebSocketDisconnect:
             pass
         finally:

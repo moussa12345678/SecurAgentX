@@ -505,9 +505,9 @@ class Installer:
             max_iterations=self.max_iterations,
             completion_tool=self.COMPLETION_TOOL,
             lang=self.lang,
-        )
+        )  # type: ignore[call-arg]
 
-        result = await perform_agent_chain(ctx)
+        result = await perform_agent_chain(ctx)  # type: ignore[call-arg, arg-type]
         logger.info(
             "Installer run complete (result_len=%d)", len(result or "")
         )

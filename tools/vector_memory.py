@@ -41,7 +41,7 @@ class VectorMemory:
     Remembers everything, searches by semantic similarity.
     """
 
-    def __init__(self, persist_directory: str = None):
+    def __init__(self, persist_directory: str | None = None):
         self.persist_dir = (
             Path(persist_directory)
             if persist_directory
@@ -85,7 +85,7 @@ class VectorMemory:
         return hashlib.sha256(hash_input.encode()).hexdigest()[:16]
 
     def add_memory(
-        self, content: str, target: str, category: str = "general", metadata: Dict[str, Any] = None
+        self, content: str, target: str, category: str = "general", metadata: Dict[str, Any] | None = None
     ) -> str:
         """
         Add a new memory to the vector database.
@@ -132,8 +132,8 @@ class VectorMemory:
     def search(
         self,
         query: str,
-        target: str = None,
-        category: str = None,
+        target: str | None = None,
+        category: str | None = None,
         n_results: int = 10,
         min_similarity: float = 0.4,
     ) -> List[Dict[str, Any]]:
@@ -196,7 +196,7 @@ class VectorMemory:
             return self._fallback_search(query, target, category, n_results)
 
     def get_target_memories(
-        self, target: str, category: str = None, limit: int = 100
+        self, target: str, category: str | None = None, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """
         Get all memories for a specific target.
@@ -543,7 +543,7 @@ def remember(content: str, target: str, category: str = "general", **metadata) -
 
 
 def recall(
-    query: str, target: str = None, category: str = None, n_results: int = 5
+    query: str, target: str | None = None, category: str | None = None, n_results: int = 5
 ) -> List[Dict[str, Any]]:
     """
     Find memories similar to query.

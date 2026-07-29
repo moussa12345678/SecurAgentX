@@ -212,7 +212,7 @@ class MissionState:
                 (now, now, self.mission_id),
             )
 
-    def update_phase(self, phase: str, phase_index: int = None) -> None:
+    def update_phase(self, phase: str, phase_index: int | None = None) -> None:
         """Update current phase."""
         with _get_conn() as conn:
             if phase_index is not None:

@@ -268,7 +268,7 @@ class GraphQLScanner:
         # Test 4: Depth limit bypass
         result.total_tests += 1
         try:
-            deep_query = '{"query": "query { ' + "a { " * 20 + "__typename " + "} " * 20 + '}"}'
+            _deep_query = '{"query": "query { ' + "a { " * 20 + "__typename " + "} " * 20 + '}"}'
             response = requests.post(
                 target_url,
                 json={"query": "query { " + "a { " * 20 + "__typename " + "} " * 20 + "}"},

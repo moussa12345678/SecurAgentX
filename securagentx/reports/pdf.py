@@ -533,7 +533,6 @@ def _build_story(blocks: List[Tuple[str, Any]], styles: dict) -> list:
     from reportlab.lib import colors
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import (
-        Paragraph,
         Spacer,
         PageBreak,
         Table,

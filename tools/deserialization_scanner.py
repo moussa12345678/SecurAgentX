@@ -193,7 +193,7 @@ class DeserializationScanner:
             )
 
             response_text = response.text[:50000]
-            response_headers = dict(response.headers)
+            _response_headers = dict(response.headers)
 
             # Check for deserialization patterns
             for pattern, format_type in DESER_PATTERNS:

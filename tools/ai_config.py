@@ -238,7 +238,7 @@ def get_provider_order() -> List[str]:
       2. ACTIVE_AI_PROVIDER from env (if not "custom" sentinel)
       3. All known providers (fallback chain)
     """
-    ai = get_ai_section()
+    _ai = get_ai_section()
     active = get_active_provider()
     if active == "auto":
         active = "nvidia"  # sensible default for the current deployment

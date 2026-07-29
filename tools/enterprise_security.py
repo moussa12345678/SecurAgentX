@@ -571,7 +571,7 @@ class ThreatIntel:
     def check(self, url: str, techs: List[str]) -> List[Dict[str, Any]]:
         """Check a target against known threat intelligence."""
         findings = []
-        url_lower = url.lower()
+        _url_lower = url.lower()
         # Check for known vulnerable software
         for vuln in self.cisa_kev:
             vuln_lower = vuln["name"].lower()

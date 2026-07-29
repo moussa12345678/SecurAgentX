@@ -25,7 +25,7 @@ TERRAIN_SEGMENTS = 400  # Longer terrain for high speeds
 class ObbyGame:
     """Minimal 2D platformer — jump or die."""
 
-    def __init__(self, app: Any, on_exit: callable = None):
+    def __init__(self, app: Any, on_exit: callable | None = None):
         self.app = app
         self.on_exit = on_exit
         self.running = False

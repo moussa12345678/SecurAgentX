@@ -75,13 +75,6 @@ class ReconWorker(BaseWorker):
             output_lines.append(f"DNS lookup failed: {e}")
 
         return WorkerResult(
-            success=len(findings) > 0,
-            worker_name=self.name,
-            output="\n".join(output_lines),
-            findings=findings,
-        )
-
-        return WorkerResult(
             success=bool(findings),
             worker_name=self.name,
             output="\n".join(output_lines),

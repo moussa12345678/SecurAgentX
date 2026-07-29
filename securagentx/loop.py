@@ -102,7 +102,7 @@ class TrueAgenticLoop:
         await self._constitutional_oath()
 
         # 2. GOAL UNDERSTANDING
-        goal_understanding = await self.brain.understand_goal(goal, context)
+        _goal_understanding = await self.brain.understand_goal(goal, context)
 
         # 3. SOVEREIGN PLANNING
         plan = await self.brain.planner.plan(goal, context)
@@ -122,7 +122,7 @@ class TrueAgenticLoop:
             self.cognitive_state.situation_awareness = situation
 
             # 4.2 REASONING
-            reasoning = await self.brain.reason(situation, self.cognitive_state.current_goal)
+            _reasoning = await self.brain.reason(situation, self.cognitive_state.current_goal)
 
             # 4.3 DECISION (with Constitutional Guidance)
             action = await self.brain.decide(situation, self.cognitive_state.active_plan)
@@ -290,7 +290,7 @@ class TrueAgenticLoop:
         self.metrics_data.replans += 1
 
         # Get current state
-        context = self._get_current_context()
+        _context = self._get_current_context()
 
         # Generate new plan
         new_plan = await self.brain.planner.replan(

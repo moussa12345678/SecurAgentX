@@ -463,7 +463,7 @@ class PluginHost:
 
         api = PluginAPI(info, self)
         try:
-            result = module.register(api)
+            _result = module.register(api)
         except Exception as e:
             info.state = PluginState.FAILED
             info.error = str(e)

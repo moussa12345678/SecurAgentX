@@ -153,7 +153,7 @@ class HistoryManager:
         success: bool = True,
         findings: int = 0,
         target: str = "",
-        tags: List[str] = None,
+        tags: List[str] | None = None,
     ) -> None:
         """
         Record a command execution.
@@ -492,7 +492,7 @@ class HistoryManager:
         }
 
     def format_history_list(
-        self, entries: List[CommandEntry] = None, show_favorites_only: bool = False
+        self, entries: List[CommandEntry] | None = None, show_favorites_only: bool = False
     ) -> str:
         """Format history entries for display."""
         if entries is None:
