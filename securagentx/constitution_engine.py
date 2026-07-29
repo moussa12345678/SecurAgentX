@@ -44,7 +44,7 @@ class ConstitutionalCourt:
             action_id=str(id(action)),
             action_description=action.description,
             constitutional=constitutional,
-            violations=violations,
+            violations=violations,  # type: ignore[arg-type]
             considerations=self._generate_considerations(violations),
             relevant_precedents=[p.action_id for p in self._find_relevant_precedents(action)[:3]],
             confidence=self._calculate_confidence(violations),
@@ -146,7 +146,7 @@ class ConstitutionalAIEngine:
             constitutional_interpretation=self._interpret_constitution(action),
             recommended_considerations=self.court._generate_considerations(ruling.violations),
             requires_human_review=not ruling.constitutional and any(
-                v.get("severity") in ("critical", "high") for v in ruling.violations
+                v.get("severity") in ("critical", "high") for v in ruling.violations  # type: ignore[attr-defined]
             )
         )
 

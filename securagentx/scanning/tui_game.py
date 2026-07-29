@@ -25,7 +25,7 @@ TERRAIN_SEGMENTS = 400  # Longer terrain for high speeds
 class ObbyGame:
     """Minimal 2D platformer — jump or die."""
 
-    def __init__(self, app: Any, on_exit: callable | None = None):
+    def __init__(self, app: Any, on_exit: callable | None = None):  # type: ignore[valid-type]
         self.app = app
         self.on_exit = on_exit
         self.running = False
@@ -44,7 +44,7 @@ class ObbyGame:
         # Terrain & Security Tokens
         self.terrain = self._generate_terrain()
         self.tokens = self._generate_tokens()
-        self.collected_tokens = set()
+        self.collected_tokens = set()  # type: ignore[var-annotated]
 
     def _generate_terrain(self) -> list[str]:
         """Generate terrain: safe start area, then progressive difficulty."""

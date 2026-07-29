@@ -661,7 +661,7 @@ class Summarizer:
         ai_msg = {
             "role": "ai",
             "content": "",
-            "tool_calls": [
+            "tool_calls": [  # type: ignore[dict-item]
                 {
                     "id": tool_call_id,
                     "name": SUMMARY_TOOL_NAME,

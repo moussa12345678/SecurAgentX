@@ -217,7 +217,7 @@ def _install_python_packages(packages: List[str]) -> Tuple[bool, str]:
     venv_output = ""
 
     if _find_project_venv() is None:
-        python_executable, venv_output = _ensure_project_venv()
+        python_executable, venv_output = _ensure_project_venv()  # type: ignore[assignment]
         if python_executable is None:
             return False, venv_output
 

@@ -385,7 +385,7 @@ class SettingsOverlayWidget(Widget, can_focus=True):
                     if agent is not None:
                         break
                     _time.sleep(0.05)
-            self._overlay = SettingsOverlay(agent, None, target=getattr(self.app, "target", ""))
+            self._overlay = SettingsOverlay(agent, None, target=getattr(self.app, "target", ""))  # type: ignore[arg-type,assignment]
         except Exception as e:
             logger.debug("Failed to load settings overlay: %s", e)
             self._overlay = None
@@ -448,17 +448,17 @@ class SettingsOverlayWidget(Widget, can_focus=True):
             if hasattr(self.app, "_load_session_by_id"):
                 self.app._load_session_by_id(sid)
         elif r and r.startswith("saved"):
-            self.app._chat_write_system("[dim]Settings saved. Reloading agent...[/]")
+            self.app._chat_write_system("[dim]Settings saved. Reloading agent...[/]")  # type: ignore[attr-defined]
             # Extract active models if provided
             if ":" in r:
                 models_part = r.split(":", 1)[1]
                 if models_part:
                     os.environ["ACTIVE_MODELS"] = models_part
             # Reload agent with new config
-            self.app._load_agent()
+            self.app._load_agent()  # type: ignore[attr-defined]
             self.hide()
         elif r == "error":
-            self.app._chat_write_system("[dim]Settings failed.[/]")
+            self.app._chat_write_system("[dim]Settings failed.[/]")  # type: ignore[attr-defined]
             self.hide()
         else:
             self.query_one("#custom_url_row").remove_class("visible")
@@ -707,9 +707,9 @@ ProgressBar { height: 1; padding: 0 1; background: $surface; display: none; }
         try:
             from tools.session_manager import SessionManager
 
-            self._session_mgr = SessionManager()
+            self._session_mgr = SessionManager()  # type: ignore[assignment]
             if self._load_sid:
-                self._pending_session = self._session_mgr.resume_session(self._load_sid)
+                self._pending_session = self._session_mgr.resume_session(self._load_sid)  # type: ignore[attr-defined]
                 if self._pending_session:
                     self.session_name = self._load_sid
                     self.target = self._pending_session.get("target", self.target)
@@ -770,7 +770,7 @@ ProgressBar { height: 1; padding: 0 1; background: $surface; display: none; }
     def _load_agent(self) -> None:
         try:
             logging.getLogger().setLevel(logging.WARNING)
-            self._agent = get_agent()
+            self._agent = get_agent()  # type: ignore[assignment]
             if self._agent:
                 _ = self._agent.governance
                 if hasattr(self, "_pending_session") and self._pending_session:
@@ -847,7 +847,7 @@ ProgressBar { height: 1; padding: 0 1; background: $surface; display: none; }
         # Smooth progress bar tick
         if hasattr(self, "_progress_total") and self._progress_total > 0:
             self._smooth_progress += (
-                self._progress_cur / max(self._progress_total, 1) - self._smooth_progress
+                self._progress_cur / max(self._progress_total, 1) - self._smooth_progress  # type: ignore[attr-defined]
             ) * 0.3
             try:
                 pb = self.query_one("#progress_bar", ProgressBar)
@@ -856,9 +856,9 @@ ProgressBar { height: 1; padding: 0 1; background: $surface; display: none; }
                 bar = f"[white]{'█' * filled}[/][dim]{'█' * (w - filled)}[/]"
                 pb.update(
                     (
-                        f"  {bar}  {self._progress_tool}  "
-                        f"[dim]({self._progress_cur}/{self._progress_total})[/]  "
-                        f"{self._progress_findings} findings"
+                        f"  {bar}  {self._progress_tool}  "  # type: ignore[attr-defined]
+                        f"[dim]({self._progress_cur}/{self._progress_total})[/]  "  # type: ignore[attr-defined]
+                        f"{self._progress_findings} findings"  # type: ignore[attr-defined]
                     )
                 )
             except Exception as e:
@@ -1592,13 +1592,13 @@ ProgressBar { height: 1; padding: 0 1; background: $surface; display: none; }
             if len(parts) > 1:
                 v = parts[1].strip()
                 if v in ("1", "2", "3"):
-                    self._talk_to = int(v)
+                    self._talk_to = int(v)  # type: ignore[assignment]
                 elif v in ("all", "*"):
                     self._talk_to = "all"
                 else:
                     self._chat_write_system("Usage: /talk <1|2|3|all>")
             self._chat_write_system(
-                f"Talk to: {self._talk_to if self._talk_to == 'all' else AGENT_NAMES[self._talk_to]}"
+                f"Talk to: {self._talk_to if self._talk_to == 'all' else AGENT_NAMES[self._talk_to]}"  # type: ignore[index]
             )
             self._update_sidebar()
             return True
@@ -1833,13 +1833,13 @@ ProgressBar { height: 1; padding: 0 1; background: $surface; display: none; }
 
     def action_scroll_up(self) -> None:
         try:
-            self._chat().scroll_up(10)
+            self._chat().scroll_up(10)  # type: ignore[arg-type,call-arg]
         except Exception as e:
             logger.debug("Failed to scroll chat up: %s", e)
 
     def action_scroll_down(self) -> None:
         try:
-            self._chat().scroll_down(10)
+            self._chat().scroll_down(10)  # type: ignore[arg-type,call-arg]
         except Exception as e:
             logger.debug("Failed to scroll chat down: %s", e)
 

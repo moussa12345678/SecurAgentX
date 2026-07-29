@@ -108,7 +108,7 @@ def execute_tool(
             from tools.ai_tool_creator import AIToolCreator, ToolSpec
 
             creator = AIToolCreator()
-            spec = ToolSpec(
+            spec = ToolSpec(  # type: ignore[call-arg]
                 name=action_data.get("name", "custom_tool"),
                 purpose=action_data.get("purpose", ""),
                 code=action_data.get("code", ""),
@@ -249,8 +249,8 @@ def execute_shell_command(
             success = safe_result["success"]
             output = safe_result["stdout"]
             if safe_result.get("stderr"):
-                output += "\n" + safe_result["stderr"]
-            output = output[:max_output_len]
+                output += "\n" + safe_result["stderr"]  # type: ignore[operator]
+            output = output[:max_output_len]  # type: ignore[index]
 
             # Final summary callback (backward-compatible with TUI consumers
             # that expect a single "exec:" message with the full output).
@@ -277,36 +277,36 @@ def execute_shell_command(
             success = safe_result["success"]
             output = safe_result["stdout"]
             if safe_result["stderr"]:
-                output += "\n" + safe_result["stderr"]
+                output += "\n" + safe_result["stderr"]  # type: ignore[operator]
             
             # Display in terminal mode
             from cli.ui_components import show_command_execution
             show_command_execution(
                 cmd=cmd_raw,
-                result=output,
-                success=success,
+                result=output,  # type: ignore[arg-type]
+                success=success,  # type: ignore[arg-type]
                 purpose=purpose,
                 thought=thought,
                 elapsed=elapsed,
             )
 
         if not success:
-            err = safe_result["error"] or safe_result["stderr"][:500]
+            err = safe_result["error"] or safe_result["stderr"][:500]  # type: ignore[index]
 
             # Check if failure is due to missing tool
-            if "not found" in err.lower() or "command not found" in err.lower():
+            if "not found" in err.lower() or "command not found" in err.lower():  # type: ignore[union-attr]
                 install_result = detect_and_install_missing_tool(cmd_raw, governance, callback)
                 if install_result is not None:
                     # Tool was installed — retry the command
                     try:
                         retry_result = execute_safely(cmd_raw, timeout=300)
                         if retry_result["success"]:
-                            return retry_result["stdout"][:max_output_len]
+                            return retry_result["stdout"][:max_output_len]  # type: ignore[index]
                     except Exception as e:
                         logger.debug("Suppressed Exception: %s", e)
 
             return f"[FAIL] Command failed: {err}"
-        return output
+        return output  # type: ignore[return-value]
 
     except subprocess.TimeoutExpired:
         return "[FAIL] Error: Command timed out after 300 seconds."
@@ -758,7 +758,7 @@ def detect_and_install_missing_tool(
         result = execute_safely(install_cmd, timeout=120)
         if result.get("success"):
             console.print(f"  [green][OK] {tool_name} installed successfully[/green]")
-            return result.get("stdout", "")
+            return result.get("stdout", "")  # type: ignore[return-value]
         else:
             console.print(f"  [red][FAIL] Installation failed: {result.get('stderr', '')}[/red]")
             return None

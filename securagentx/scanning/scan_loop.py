@@ -266,7 +266,7 @@ class ScanLoop:
             engine = LearningEngine()
 
             # Determine tech stack from context
-            tech_stack = []
+            tech_stack = []  # type: ignore[var-annotated]
             if hasattr(ctx, 'assets') and ctx.assets:
                 tech_stack = ctx.assets.get("tech_stack", []) or []
             if not tech_stack:
@@ -329,7 +329,7 @@ class ScanLoop:
             strategy_change = decision.reasoning or decision.action_data.get("purpose", "unknown")
 
             # Record the adaptation
-            engine.record_adaptation(
+            engine.record_adaptation(  # type: ignore[attr-defined]
                 trigger_finding=trigger,
                 strategy_change=strategy_change,
                 result=f"Discovered {len(findings)} findings",
@@ -523,7 +523,7 @@ class ScanLoop:
                 command = action_data.get("command", "")
                 if command and result is not None:
                     raw_output = getattr(result, "output", "") if result else observation or ""
-                    ctx.set_last_command_output(
+                    ctx.set_last_command_output(  # type: ignore[attr-defined]
                         command=command,
                         output=raw_output[:5000] if raw_output else "",
                         success=success,

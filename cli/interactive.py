@@ -154,7 +154,7 @@ def show_ai_disclaimer() -> bool:
 # Rate Limiting Configuration (Thread-safe)
 RATE_LIMIT = 5
 RATE_WINDOW = 60
-user_requests = deque()
+user_requests = deque()  # type: ignore[var-annotated]
 _rate_limit_lock = threading.Lock()
 
 
@@ -404,7 +404,7 @@ def show_model_selector(console: Console, manager: Any) -> Optional[List[Any]]:
 
         # Pad to 3
         while len(current_team) < 3:
-            current_team.append(None)
+            current_team.append(None)  # type: ignore[arg-type]
 
         roles = ["Strategist", "Recon Lead", "Exploit Analyst"]
 
@@ -428,7 +428,7 @@ def show_model_selector(console: Console, manager: Any) -> Optional[List[Any]]:
             for i in range(3):
                 options.append(f"Assign Agent {i+1} ({roles[i]})")
 
-            options.append(questionary.Separator())
+            options.append(questionary.Separator())  # type: ignore[arg-type]
             options.append("Remove an Agent")
             options.append("Done / Save Team")
             options.append("Cancel")
@@ -476,7 +476,7 @@ def show_model_selector(console: Console, manager: Any) -> Optional[List[Any]]:
 
                 if to_remove and to_remove != "Back":
                     idx = int(to_remove.split(" ")[1]) - 1
-                    current_team[idx] = None
+                    current_team[idx] = None  # type: ignore[call-overload]
                 continue
 
             if choice.startswith("Assign Agent"):
@@ -500,7 +500,7 @@ def show_model_selector(console: Console, manager: Any) -> Optional[List[Any]]:
                         }
                     )
 
-                provider_choices.append(questionary.Separator())
+                provider_choices.append(questionary.Separator())  # type: ignore[arg-type]
                 provider_choices.append(
                     {"name": "CUSTOM (OpenAI-compatible URL)", "value": "custom"}
                 )
@@ -866,7 +866,7 @@ def main(mode: str = "auto", target: Optional[str] = None):
                             )
                         )
                     elif role == "system":
-                        panels.append(Text.from_markup(text))
+                        panels.append(Text.from_markup(text))  # type: ignore[arg-type]
                     elif role == "error":
                         panels.append(
                             Panel(
@@ -969,7 +969,7 @@ def main(mode: str = "auto", target: Optional[str] = None):
         if active:
             return active[0].split("/")[-1] if "/" in active[0] else active[0]
         if hasattr(agent, "client") and hasattr(agent.client, "active_client"):
-            return getattr(agent.client.active_client, "model", "default")
+            return getattr(agent.client.active_client, "model", "default")  # type: ignore[attr-defined]
         return model_state[0]
 
     def _sidebar() -> Panel:
@@ -1422,7 +1422,7 @@ def main(mode: str = "auto", target: Optional[str] = None):
                 )
                 # Show current model
                 if hasattr(agent, "client") and hasattr(agent.client, "active_client"):
-                    chat.add(f"[dim]Current model: {agent.client.active_client.model}[/dim]")
+                    chat.add(f"[dim]Current model: {agent.client.active_client.model}[/dim]")  # type: ignore[attr-defined]
                 return
 
             # Remove trailing comma from env var
@@ -1896,7 +1896,7 @@ def main(mode: str = "auto", target: Optional[str] = None):
             Layout(name="input", size=4),  # Start small, expand dynamically
         )
 
-        ibuf, icur, hist, hidx = "", 0, [], 0
+        ibuf, icur, hist, hidx = "", 0, [], 0  # type: ignore[var-annotated]
         show_overlay = [False]
         overlay_obj: list[Any] = [None]
 
@@ -1956,7 +1956,7 @@ def main(mode: str = "auto", target: Optional[str] = None):
                                 show_overlay[0] = False
                                 overlay_obj[0] = None
                             else:
-                                overlay_obj[0] = SettingsOverlay(agent, console, target=target)
+                                overlay_obj[0] = SettingsOverlay(agent, console, target=target)  # type: ignore[arg-type]
                                 show_overlay[0] = True
                         elif show_overlay[0]:
                             try:

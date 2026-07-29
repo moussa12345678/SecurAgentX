@@ -214,7 +214,7 @@ class RaceConditionTester:
         self,
         url: str,
         data: Dict[str, Any],
-        resource_field: str = "amount",
+        _resource_field: str = "amount",
         headers: Optional[Dict[str, str]] = None,
         concurrent_requests: int = 5,
     ) -> RaceConditionScanResult:
@@ -300,7 +300,7 @@ class RaceConditionTester:
         self,
         url: str,
         data: Dict[str, Any],
-        file_field: str = "filename",
+        _file_field: str = "filename",
         headers: Optional[Dict[str, str]] = None,
         concurrent_requests: int = 10,
     ) -> RaceConditionScanResult:

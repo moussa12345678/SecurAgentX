@@ -223,7 +223,7 @@ def _agent(
         from securagentx.providers.base import ReasoningConfig
 
         reasoning = ReasoningConfig(max_tokens=reasoning_max_tokens)
-    return AgentConfig(
+    return AgentConfig(  # type: ignore[call-arg]
         model=model,
         temperature=temperature,
         top_p=top_p,

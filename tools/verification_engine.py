@@ -204,7 +204,7 @@ class VerificationEngine:
         ]
 
         try:
-            response = self.ai_client.chat(
+            response = self.ai_client.chat(  # type: ignore[union-attr]
                 messages=messages,
                 temperature=temperature,
                 max_tokens=500,
@@ -277,7 +277,7 @@ class VerificationEngine:
             severity_votes = [v for v in votes if v.verdict == "severity_adjustment" and v.severity_adjustment]
             if severity_votes:
                 # Weighted majority for severity adjustment
-                severity = max(
+                severity = max(  # type: ignore[assignment]
                     set(v.severity_adjustment for v in severity_votes),
                     key=lambda s: sum(v.model_weight for v in severity_votes if v.severity_adjustment == s)
                 )

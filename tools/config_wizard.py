@@ -453,7 +453,7 @@ class ConfigWizard:
             elif choice == "t" or choice == "p":
                 # Build Team Aegis
                 try:
-                    from cli import show_model_selector
+                    from cli import show_model_selector  # type: ignore[attr-defined]
                     from tools.universal_ai_client import AIClientManager
 
                     mgr = AIClientManager()
@@ -535,7 +535,7 @@ class ConfigWizard:
             for i, integ in enumerate(self.INTEGRATIONS, 1):
                 all_set = all(os.getenv(k) for k in integ["keys"])
                 status = "[green]Configured[/green]" if all_set else "[dim]Not set[/dim]"
-                table.add_row(str(i), integ["name"], status, integ["desc"])
+                table.add_row(str(i), integ["name"], status, integ["desc"])  # type: ignore[arg-type]
 
             console.print(table)
             console.print("  [dim]Enter number to configure, [0] to go back[/dim]")
@@ -823,7 +823,7 @@ class ConfigWizard:
             resp = requests.post(
                 url,
                 headers=headers,
-                json=payload,
+                json=payload,  # type: ignore[arg-type]
                 timeout=30,  # Increased to 30s to allow heavy reasoning models to think
             )
 
@@ -1000,7 +1000,7 @@ class ConfigWizard:
         for integ in self.INTEGRATIONS:
             all_set = all(os.getenv(k) for k in integ["keys"])
             status = "[green]Ready[/green]" if all_set else "[dim]Missing[/dim]"
-            table_int.add_row(integ["name"], status)
+            table_int.add_row(integ["name"], status)  # type: ignore[arg-type]
 
         console.print(table_int)
 
@@ -1291,7 +1291,7 @@ class ConfigWizard:
         for m in active_models_str.split(","):
             m = m.strip()
             if m and "/" in m:
-                p, mod = m.split("/", 1)
+                p, mod = m.split("/", 1)  # type: ignore[assignment]
                 team.append({"provider": p, "model": mod})
 
         role_idx_map = {"strategist": 0, "specialist": 1, "critic": 2}
@@ -1388,7 +1388,7 @@ class ConfigWizard:
                 }
                 for name, server_data in defaults.items():
                     if name not in config.servers:
-                        manager.add_server(name, server_data["command"], server_data["args"])
+                        manager.add_server(name, server_data["command"], server_data["args"])  # type: ignore[arg-type]
                         print_success(f"Added default server: {name}")
                 print_success("Default servers added")
 

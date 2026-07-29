@@ -290,7 +290,7 @@ class LearningEngine:
         tech_stack: Optional[List[str]] = None,
         vuln_class: Optional[str] = None,
         limit: int = 10,
-    ) -> List[Tuple[str, float, int]]:
+    ) -> List[Tuple[str, float, int]]:  # type: ignore[name-defined]
         """Rank tools by historical success rate.
 
         Returns: [(tool, success_rate, sample_size), ...]

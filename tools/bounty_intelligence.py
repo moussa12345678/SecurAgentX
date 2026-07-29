@@ -191,7 +191,7 @@ class BountyIntelligence:
             logger.warning("No API credentials, falling back to public mode")
             return self.discover_programs_public(limit=limit)
 
-        programs = []
+        programs = []  # type: ignore[var-annotated]
         page = 1
         per_page = 25
 
@@ -436,13 +436,13 @@ class BountyIntelligence:
         for prog in known_programs[:limit]:
             programs.append(
                 BountyProgram(
-                    id=prog["handle"],
-                    name=prog["name"],
+                    id=prog["handle"],  # type: ignore[arg-type]
+                    name=prog["name"],  # type: ignore[arg-type]
                     platform="hackerone",
                     url=f"https://hackerone.com/{prog['handle']}",
                     offers_bounties=True,
-                    min_bounty=prog["min"],
-                    max_bounty=prog["max"],
+                    min_bounty=prog["min"],  # type: ignore[arg-type]
+                    max_bounty=prog["max"],  # type: ignore[arg-type]
                     scope=[],
                     is_public=True,
                 )

@@ -351,7 +351,7 @@ Do NOT attempt to run a scan. Respond naturally in the user's language (English 
         # Add findings summary
         if ctx.has_findings:
             lines.append(f"### FINDINGS SO FAR ({ctx.finding_count} total):")
-            severity_count = {}
+            severity_count = {}  # type: ignore[var-annotated]
             for f in ctx.all_findings:
                 sev = f.get("severity", "unknown")
                 severity_count[sev] = severity_count.get(sev, 0) + 1

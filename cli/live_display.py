@@ -224,7 +224,7 @@ class LiveDisplay:
         layout["stats"].update(self.render_stats())
         layout["footer"].update(self.render_footer())
 
-        return layout
+        return layout  # type: ignore[return-value]
 
     def run_live(self, duration: Optional[int] = None):
         """Run live display with updates."""

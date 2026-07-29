@@ -115,7 +115,7 @@ def request_install(
             text=True,
             bufsize=1,
         )
-        for line in process.stdout:
+        for line in process.stdout:  # type: ignore[union-attr]
             if "installing" in line.lower() or "downloading" in line.lower():
                 console.print(f"    [dim]{line.strip()}[/dim]")
         process.wait(timeout=timeout)

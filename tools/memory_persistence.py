@@ -91,7 +91,7 @@ class MemoryPersistence:
             )
             conn.commit()
             self._last_session_id = session_id
-            return cursor.lastrowid
+            return cursor.lastrowid  # type: ignore[return-value]
 
     def save_conversation(
         self, session_name: str, conversation: List[Dict[str, str]], model_name: str = ""

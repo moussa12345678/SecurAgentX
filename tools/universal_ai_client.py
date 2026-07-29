@@ -393,24 +393,24 @@ class UniversalAIClient:
             api_key=api_key,
         )
         # base_url: param > config.yaml > env > PROVIDER_CONFIGS hardcoded
-        self.base_url = resolved["base_url"] or config.get("base_url", "")
+        self.base_url = resolved["base_url"] or config.get("base_url", "")  # type: ignore[attr-defined]
         if provider == "custom" and not self.base_url:
             self.base_url = os.getenv("CUSTOM_API_BASE", "")
         # model: param > config.yaml > env > PROVIDER_CONFIGS default
         self.model = (
             resolved["model"]
             or os.getenv(f"{provider.upper()}_MODEL")
-            or config.get("default_model", "gpt-4o-mini")
+            or config.get("default_model", "gpt-4o-mini")  # type: ignore[attr-defined]
         )
         # api_key: param > config.yaml lookup > PROVIDER_CONFIGS env_key
         self.api_key = resolved["api_key"]
         if not self.api_key and provider == "custom":
             self.api_key = os.getenv("CUSTOM_API_KEY", "")
-        elif not self.api_key and config.get("env_key"):
-            self.api_key = os.getenv(config["env_key"], "")
+        elif not self.api_key and config.get("env_key"):  # type: ignore[attr-defined]
+            self.api_key = os.getenv(config["env_key"], "")  # type: ignore[index]
 
         # Check if provider needs custom format (like Anthropic)
-        self.custom_format = config.get("custom_format", False)
+        self.custom_format = config.get("custom_format", False)  # type: ignore[attr-defined]
 
         # Session for connection pooling
         self.session = requests.Session()
@@ -580,7 +580,7 @@ class UniversalAIClient:
         for attempt in range(self.max_retries):
             try:
                 if stream:
-                    return self._stream_response(url, payload)
+                    return self._stream_response(url, payload)  # type: ignore[return-value]
 
                 resp = self.session.post(
                     url,
@@ -624,7 +624,7 @@ class UniversalAIClient:
                 )
 
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 401:
+                if e.response.status_code == 401:  # type: ignore[union-attr]
                     logger.error("Authentication failed - check API key")
                     raise
                 elif attempt < self.max_retries - 1:
@@ -674,9 +674,9 @@ class UniversalAIClient:
                     }
                 ]
             else:
-                system_param = system_msg
+                system_param = system_msg  # type: ignore[assignment]
         else:
-            system_param = ""
+            system_param = ""  # type: ignore[assignment]
 
         anthropic_payload: Dict[str, Any] = {
             "model": self.model,
@@ -741,7 +741,7 @@ class UniversalAIClient:
                     tool_calls=parsed_tool_calls if parsed_tool_calls else None,
                 )
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 401:
+                if e.response.status_code == 401:  # type: ignore[union-attr]
                     logger.error("Authentication failed - check API key")
                     raise
                 elif attempt < self.max_retries - 1:
@@ -768,8 +768,8 @@ class UniversalAIClient:
                 if not line:
                     continue
 
-                line = line.decode("utf-8")
-                if line.startswith("data: "):
+                line = line.decode("utf-8")  # type: ignore[assignment]
+                if line.startswith("data: "):  # type: ignore[arg-type]
                     data = line[6:]  # Remove "data: " prefix
                     if data == "[DONE]":
                         break
@@ -823,7 +823,7 @@ class UniversalAIClient:
             )
             return resp
 
-    async def _call_openai_api_async(self, url: str, payload: Dict) -> AIResponse:
+    async def _call_openai_api_async(self, url: str, payload: Dict) -> AIResponse:  # type: ignore[return]
         """Async HTTP POST via httpx."""
         headers = {
             "Content-Type": "application/json",
@@ -904,7 +904,7 @@ class UniversalAIClient:
         Cached per-instance so we only ping once.
         """
         if hasattr(self, "_ping_ok"):
-            return self._ping_ok
+            return self._ping_ok  # type: ignore[has-type]
         from urllib.parse import urlparse
 
         parsed = urlparse(self.base_url)

@@ -375,7 +375,7 @@ class ActiveFuzzer:
                         raw = e.read(self.config.max_body_capture)
                     except Exception as e:
                         logger.debug("Suppressed Exception: %s", e)
-                return e.code, raw.decode("utf-8", errors="replace"), elapsed
+                return e.code, raw.decode("utf-8", errors="replace"), elapsed  # type: ignore[misc]
             except Exception as e:
                 if attempt < self.config.max_retries - 1:
                     time.sleep(0.5)

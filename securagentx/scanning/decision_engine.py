@@ -483,11 +483,11 @@ class DecisionEngine:
         # ── Interactive mode: show last command output at the TOP ──
         # This makes the AI see the most recent shell output immediately,
         # like a human typing commands in a terminal.
-        if ctx.last_output:
+        if ctx.last_output:  # type: ignore[attr-defined]
             interactive_section = "\n\n### LAST COMMAND OUTPUT (you just ran this):\n"
-            interactive_section += f"Command: `{ctx.last_command}`\n"
-            interactive_section += f"Success: {'Yes' if ctx.last_command_success else 'No'}\n"
-            interactive_section += f"Output:\n```\n{ctx.last_output[:4000]}\n```\n"
+            interactive_section += f"Command: `{ctx.last_command}`\n"  # type: ignore[attr-defined]
+            interactive_section += f"Success: {'Yes' if ctx.last_command_success else 'No'}\n"  # type: ignore[attr-defined]
+            interactive_section += f"Output:\n```\n{ctx.last_output[:4000]}\n```\n"  # type: ignore[attr-defined]
             interactive_section += "\nBased on this output, decide your next move.\n"
             full_prompt = interactive_section + full_prompt
         if guidance:
@@ -609,7 +609,7 @@ class DecisionEngine:
         # Add findings context
         if ctx.has_findings:
             strategy_context += f"### FINDINGS SO FAR ({ctx.finding_count} total):\n"
-            severity_count = {}
+            severity_count = {}  # type: ignore[var-annotated]
             for f in ctx.all_findings:
                 sev = f.get("severity", "unknown")
                 severity_count[sev] = severity_count.get(sev, 0) + 1

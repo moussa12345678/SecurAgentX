@@ -75,7 +75,7 @@ class BOLAHarness:
             "DELETE": requests.delete,
             "PATCH": requests.patch,
         }.get(method.upper(), requests.get)
-        r = fn(url, headers=headers, json=json_body, timeout=self.timeout, allow_redirects=False)
+        r = fn(url, headers=headers, json=json_body, timeout=self.timeout, allow_redirects=False)  # type: ignore[operator]
         text = r.text or ""
         parsed: Dict[str, Any] = {}
         ctype = (r.headers.get("content-type") or "").lower()

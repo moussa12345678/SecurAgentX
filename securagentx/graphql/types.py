@@ -232,7 +232,7 @@ class FlowAssistant:
             assistant=(
                 Assistant.from_pydantic(assistant)
                 if assistant is not None
-                else Assistant.placeholder()
+                else Assistant.placeholder()  # type: ignore[attr-defined]
             ),
         )
 

@@ -32,7 +32,7 @@ try:
 except ImportError:
     _TEXTUAL_AVAILABLE = False
 
-    class Static:
+    class Static:  # type: ignore[no-redef]
         """Fallback when Textual is not available."""
 
         def __init__(self, *args, **kwargs):
@@ -71,7 +71,7 @@ class Finding:
 
     @property
     def severity_config(self) -> Dict[str, str]:
-        return SEVERITY_CONFIG.get(self.severity.lower(), SEVERITY_CONFIG["info"])
+        return SEVERITY_CONFIG.get(self.severity.lower(), SEVERITY_CONFIG["info"])  # type: ignore[return-value]
 
 
 @dataclass
@@ -292,7 +292,7 @@ class FindingsDisplay(Static):
 
             for i, finding in enumerate(filtered[: self.max_display]):
                 # Severity badge
-                config = finding.severity_config
+                config = finding.severity_config  # type: ignore[assignment]
                 sev_badge = Text(f" {config['badge']} ", style=f"bold white on {config['color']}")
 
                 # Title with selection indicator
@@ -320,7 +320,7 @@ class FindingsDisplay(Static):
                     cvss_text,
                 )
 
-            table_text = table
+            table_text = table  # type: ignore[assignment]
 
         # Expanded detail view
         detail_text = None
@@ -331,7 +331,7 @@ class FindingsDisplay(Static):
         # Assemble
         parts = [header, Text(""), table_text]
         if detail_text:
-            parts.extend([Text(""), detail_text])
+            parts.extend([Text(""), detail_text])  # type: ignore[list-item]
 
         body = Group(*parts)
 

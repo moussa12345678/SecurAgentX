@@ -101,7 +101,7 @@ class VectorMemory:
         """
         if not self._initialized:
             logger.warning("VectorMemory not initialized, storing in SQLite fallback")
-            return self._fallback_add(content, target, category, metadata)
+            return self._fallback_add(content, target, category, metadata)  # type: ignore[return-value]
 
         timestamp = datetime.now(timezone.utc).isoformat()
         memory_id = self._generate_id(content, target, timestamp)
@@ -118,7 +118,7 @@ class VectorMemory:
         }
 
         try:
-            self.collection.add(
+            self.collection.add(  # type: ignore[attr-defined]
                 ids=[memory_id],
                 documents=[doc],
                 metadatas=[meta],
@@ -127,7 +127,7 @@ class VectorMemory:
             return memory_id
         except Exception as e:
             logger.error(f"Failed to add memory: {e}")
-            return self._fallback_add(content, target, category, metadata)
+            return self._fallback_add(content, target, category, metadata)  # type: ignore[return-value]
 
     def search(
         self,
@@ -162,7 +162,7 @@ class VectorMemory:
             where_clause["category"] = category.lower()
 
         try:
-            results = self.collection.query(
+            results = self.collection.query(  # type: ignore[attr-defined]
                 query_texts=[query],
                 n_results=n_results,
                 where=where_clause if where_clause else None,
@@ -214,7 +214,7 @@ class VectorMemory:
             where_clause["category"] = category.lower()
 
         try:
-            results = self.collection.get(
+            results = self.collection.get(  # type: ignore[attr-defined]
                 where=where_clause,
                 limit=limit,
             )
@@ -245,7 +245,7 @@ class VectorMemory:
             return []
 
         try:
-            results = self.collection.get(limit=10000)
+            results = self.collection.get(limit=10000)  # type: ignore[attr-defined]
             targets = set()
 
             if results["metadatas"]:
@@ -264,7 +264,7 @@ class VectorMemory:
             return self._fallback_delete_target(target)
 
         try:
-            self.collection.delete(where={"target": target.lower().strip()})
+            self.collection.delete(where={"target": target.lower().strip()})  # type: ignore[attr-defined]
             logger.info(f"Deleted all memories for {target}")
             return 1
         except Exception as e:
@@ -277,7 +277,7 @@ class VectorMemory:
             return self._fallback_stats()
 
         try:
-            count = self.collection.count()
+            count = self.collection.count()  # type: ignore[attr-defined]
             targets = self.get_all_targets()
 
             return {
@@ -303,7 +303,7 @@ class VectorMemory:
     _FTS_DB_PATH: Optional[Path] = None
 
     def _fts_db(self) -> Path:
-        if not hasattr(self, "_fts_db_path") or self._fts_db_path is None:
+        if not hasattr(self, "_fts_db_path") or self._fts_db_path is None:  # type: ignore[has-type]
             self._fts_db_path = self.persist_dir / "fts_memory.db"
         return self._fts_db_path
 

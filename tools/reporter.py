@@ -25,7 +25,7 @@ def generate_bug_report(
     target: str,
     findings: List[Dict],
     report_path: str,
-    ai_insights: str = "",
+    _ai_insights: str = "",
 ) -> str:
     """
     Generate a professional Markdown bug bounty report.

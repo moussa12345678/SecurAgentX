@@ -153,7 +153,7 @@ def _build_models() -> dict[str, Any]:
 
     BaseModel, Field = _get_base_model()
 
-    class User(BaseModel):
+    class User(BaseModel):  # type: ignore[misc,valid-type]
         """Pydantic port of PentAGI's ``models.User`` (Go).
 
         Mirrors the JSON field names from the Go struct tags.
@@ -176,7 +176,7 @@ def _build_models() -> dict[str, Any]:
 
         model_config = {"populate_by_name": True, "extra": "ignore"}
 
-    class Role(BaseModel):
+    class Role(BaseModel):  # type: ignore[misc,valid-type]
         """Pydantic port of PentAGI's ``models.Role`` (Go)."""
 
         id: int = Field(default=0, ge=0)
@@ -185,7 +185,7 @@ def _build_models() -> dict[str, Any]:
 
         model_config = {"extra": "ignore"}
 
-    class APIToken(BaseModel):
+    class APIToken(BaseModel):  # type: ignore[misc,valid-type]
         """Pydantic port of PentAGI's ``models.APIToken`` (Go)."""
 
         id: int = Field(default=0, ge=0, description="Token DB primary key")
@@ -201,7 +201,7 @@ def _build_models() -> dict[str, Any]:
 
         model_config = {"extra": "ignore"}
 
-    class APITokenClaims(BaseModel):
+    class APITokenClaims(BaseModel):  # type: ignore[misc,valid-type]
         """Pydantic port of PentAGI's ``models.APITokenClaims`` (Go).
 
         Used as JWT claims payload. Field names match the Go struct's

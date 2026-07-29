@@ -656,12 +656,12 @@ class OllamaProvider:
         for tc in tool_calls_raw:
             tc_dict = tc if isinstance(tc, dict) else {}
             fn = tc_dict.get("function") if isinstance(tc_dict.get("function"), dict) else {}
-            args = fn.get("arguments", {})
+            args = fn.get("arguments", {})  # type: ignore[union-attr]
             if not isinstance(args, str):
                 args = json.dumps(args) if args else "{}"
             tcs.append(ToolCall(
                 id=tc_dict.get("id", "") or "",
-                name=fn.get("name", ""),
+                name=fn.get("name", ""),  # type: ignore[union-attr]
                 arguments=args,
                 type="tool_call",
             ))

@@ -396,7 +396,7 @@ def _resolve_controller(info: Info) -> RedisSubscriptionsController:
 
 async def _with_keepalive(
     upstream: AsyncIterator[Any],
-    interval: float = KEEPALIVE_PING_INTERVAL_SECONDS,
+    _interval: float = KEEPALIVE_PING_INTERVAL_SECONDS,
 ) -> AsyncGenerator[Any, None]:
     """Yield items from ``upstream``; emit ``None`` every ``interval`` seconds.
 

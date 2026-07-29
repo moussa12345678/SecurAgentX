@@ -452,14 +452,14 @@ def cvss_result(v: CVSSVector) -> CVSSResult:
 # Required base-metric keys and their value-code → enum resolver.
 _REQUIRED_BASE_KEYS: frozenset[str] = frozenset({"AV", "AC", "PR", "UI", "S", "C", "I", "A"})
 _BASE_METRIC_RESOLVERS: dict[str, dict[str, enum.Enum]] = {
-    "AV": _AV_BY_CODE,
-    "AC": _AC_BY_CODE,
-    "PR": _PR_BY_CODE,
-    "UI": _UI_BY_CODE,
-    "S": _SCOPE_BY_CODE,
-    "C": _CIA_BY_CODE,
-    "I": _CIA_BY_CODE,
-    "A": _CIA_BY_CODE,
+    "AV": _AV_BY_CODE,  # type: ignore[dict-item]
+    "AC": _AC_BY_CODE,  # type: ignore[dict-item]
+    "PR": _PR_BY_CODE,  # type: ignore[dict-item]
+    "UI": _UI_BY_CODE,  # type: ignore[dict-item]
+    "S": _SCOPE_BY_CODE,  # type: ignore[dict-item]
+    "C": _CIA_BY_CODE,  # type: ignore[dict-item]
+    "I": _CIA_BY_CODE,  # type: ignore[dict-item]
+    "A": _CIA_BY_CODE,  # type: ignore[dict-item]
 }
 
 

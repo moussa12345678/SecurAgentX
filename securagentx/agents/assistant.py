@@ -285,7 +285,7 @@ class Assistant:
             accumulated: list[str] = []
             tool_invocation: Optional[ToolInvocation] = None
 
-            async for chunk in self.provider.stream_async(
+            async for chunk in self.provider.stream_async(  # type: ignore[attr-defined]
                 user_input,
                 system=self.system_prompt,
                 history=working_history,

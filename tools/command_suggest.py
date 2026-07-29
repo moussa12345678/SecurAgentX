@@ -295,19 +295,19 @@ class CommandSuggester:
 
         # Check aliases
         for cmd, meta in self.COMMANDS.items():
-            if input_lower in [a.lower() for a in meta.get("aliases", [])]:
+            if input_lower in [a.lower() for a in meta.get("aliases", [])]:  # type: ignore[attr-defined]
                 return cmd
 
         # Fuzzy matching for close matches
         all_names = list(self.COMMANDS.keys())
         for cmd, meta in self.COMMANDS.items():
-            all_names.extend(meta.get("aliases", []))
+            all_names.extend(meta.get("aliases", []))  # type: ignore[arg-type]
 
         matches = get_close_matches(input_lower, all_names, n=1, cutoff=0.6)
         if matches:
             # Map alias back to main command
             for cmd, meta in self.COMMANDS.items():
-                if matches[0].lower() in [a.lower() for a in meta.get("aliases", [])]:
+                if matches[0].lower() in [a.lower() for a in meta.get("aliases", [])]:  # type: ignore[attr-defined]
                     return cmd
             return matches[0]
 
@@ -334,7 +334,7 @@ class CommandSuggester:
 
         # Check aliases
         for cmd, meta in self.COMMANDS.items():
-            for alias in meta.get("aliases", []):
+            for alias in meta.get("aliases", []):  # type: ignore[attr-defined]
                 if alias.lower().startswith(partial_lower):
                     if cmd not in matches:
                         matches.append(cmd)
@@ -370,7 +370,7 @@ class CommandSuggester:
             for cmd in popular:
                 meta = self.COMMANDS.get(cmd, {})
                 desc = meta.get("description", "")
-                lines.append(f"    • {cmd:12} - {desc[:40]}")
+                lines.append(f"    • {cmd:12} - {desc[:40]}")  # type: ignore[index]
 
         else:
             # General guidance
@@ -489,7 +489,7 @@ def print_command_categories() -> None:
     """Print all commands organized by category."""
     suggester = CommandSuggester()
 
-    categories = {}
+    categories = {}  # type: ignore[var-annotated]
     for cmd, meta in suggester.COMMANDS.items():
         cat = meta.get("category", "other")
         if cat not in categories:

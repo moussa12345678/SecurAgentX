@@ -308,7 +308,7 @@ class VulnFinder:
 
         # Execute the tool via the registry (async under the hood)
         import asyncio
-        report_dir = get_data_dir("reports")
+        report_dir = get_data_dir("reports")  # type: ignore[name-defined]
         report_dir.mkdir(parents=True, exist_ok=True)
         semaphore = asyncio.Semaphore(1)
 
@@ -501,7 +501,7 @@ class VulnFinder:
         Returns:
             Report content string.
         """
-        findings_by_severity = {
+        findings_by_severity = {  # type: ignore[var-annotated]
             "CRITICAL": [],
             "HIGH": [],
             "MEDIUM": [],

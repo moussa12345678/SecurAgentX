@@ -153,7 +153,7 @@ def split_by_cjk(text: str) -> List[CJKSegment]:
             current_is_cjk = ch_is_cjk
 
     if current_text:
-        segments.append(CJKSegment(text=current_text, is_cjk=current_is_cjk))
+        segments.append(CJKSegment(text=current_text, is_cjk=current_is_cjk))  # type: ignore[arg-type]
 
     # Defensive: never return an empty list — at minimum a single empty
     # non-CJK segment must be produced so callers can index [0] safely.

@@ -85,7 +85,7 @@ class ObjectIDPermuter:
         self,
         headers_a: Dict[str, str],
         headers_b: Optional[Dict[str, str]] = None,
-        seed_endpoints: Optional[List[str]] = None,
+        _seed_endpoints: Optional[List[str]] = None,
     ) -> Dict[str, str]:
         """
         Light identity discovery via common endpoints.

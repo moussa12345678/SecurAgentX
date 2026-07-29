@@ -228,8 +228,8 @@ class ContainerLifecycle:
 
     async def close(self) -> None:
         if self._client is not None:
-            await self._client.close()
-            self._client = None
+            await self._client.close()  # type: ignore[attr-defined]
+            self._client = None  # type: ignore[assignment,method-assign]
 
     # ------------------------------------------------------------------
     # Naming helpers (static, ported from PentAGI's ``PrimaryTerminalName``)
@@ -552,7 +552,7 @@ class ContainerLifecycle:
                 await container.delete(force=True)
             except Exception as e:
                 logger.debug("Suppressed Exception: %s", e)
-            raise RuntimeError(f"ContainerStart failed for {container_name}: {e}") from e
+            raise RuntimeError(f"ContainerStart failed for {container_name}: {e}") from e  # type: ignore[misc]
 
         return docker_id
 

@@ -74,19 +74,19 @@ try:
 except ImportError:
     console = Console()
 
-    def show_section(*a, **kw):
+    def show_section(*a, **kw):  # type: ignore[misc]
         pass
 
-    def print_error(*a, **kw):
+    def print_error(*a, **kw):  # type: ignore[misc]
         pass
 
-    def print_success(*a, **kw):
+    def print_success(*a, **kw):  # type: ignore[misc]
         pass
 
-    def print_info(*a, **kw):
+    def print_info(*a, **kw):  # type: ignore[misc]
         pass
 
-    def show_progress_bar(*a, **kw):  # type: ignore[no-redef]
+    def show_progress_bar(*a, **kw):  # type: ignore[misc,no-redef]
         from rich.progress import Progress
 
         return Progress(*a, **kw)
@@ -2786,7 +2786,7 @@ def _cmd_plugins(args) -> None:
         if not name:
             console.print("[red]Usage: plugins info <name>[/red]")
             return
-        p = host.get_plugin(name)
+        p = host.get_plugin(name)  # type: ignore[assignment]
         if not p:
             console.print(f"[red]Plugin not found:[/red] {name}")
             return

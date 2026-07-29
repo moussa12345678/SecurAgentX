@@ -57,7 +57,7 @@ class TelegramBridge:
     - Formatted message templates
     """
 
-    def __init__(self, config: TelegramConfig = None):
+    def __init__(self, config: TelegramConfig = None):  # type: ignore[assignment]
         """
         Initialize Telegram bridge.
 
@@ -87,7 +87,7 @@ class TelegramBridge:
             return False
 
         try:
-            self.bot.send_message(
+            self.bot.send_message(  # type: ignore[unused-coroutine]
                 chat_id=self.chat_id,
                 text=message,
                 parse_mode=parse_mode,

@@ -43,9 +43,9 @@ class CVEEntry:
     cvss_score: float = 0.0
     cvss_vector: str = ""
     severity: str = "Unknown"
-    cwe_ids: List[str] = None
-    ref_urls: List[str] = None
-    affected_products: List[str] = None
+    cwe_ids: List[str] = None  # type: ignore[assignment]
+    ref_urls: List[str] = None  # type: ignore[assignment]
+    affected_products: List[str] = None  # type: ignore[assignment]
     exploit_available: bool = False
 
     def __post_init__(self):
@@ -435,15 +435,15 @@ class CVEDatabase:
 
         if query:
             conditions.append("(cve_id LIKE ? OR keywords LIKE ?)")
-            params.extend([f"%{query}%", f"%{query.lower()}%"])
+            params.extend([f"%{query}%", f"%{query.lower()}%"])  # type: ignore[list-item]
 
         if severity:
             conditions.append("severity = ?")
-            params.append(severity)
+            params.append(severity)  # type: ignore[arg-type]
 
         if cwe_id:
             conditions.append("cwe_ids LIKE ?")
-            params.append(f"%{cwe_id}%")
+            params.append(f"%{cwe_id}%")  # type: ignore[arg-type]
 
         if has_exploit is not None:
             conditions.append("exploit_available = ?")
@@ -509,7 +509,7 @@ class CVEDatabase:
         # Count by severity
         cursor.execute("SELECT severity, COUNT(*) FROM cves GROUP BY severity")
         for row in cursor.fetchall():
-            stats["by_severity"][row[0]] = row[1]
+            stats["by_severity"][row[0]] = row[1]  # type: ignore[index]
 
         # Count by year
         cursor.execute(
@@ -520,7 +520,7 @@ class CVEDatabase:
         )
         for row in cursor.fetchall():
             if row[0] and row[0].isdigit():
-                stats["by_year"][row[0]] = row[1]
+                stats["by_year"][row[0]] = row[1]  # type: ignore[index]
 
         # Count exploitable
         cursor.execute("SELECT COUNT(*) FROM cves WHERE exploit_available = 1")

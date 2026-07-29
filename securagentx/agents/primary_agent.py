@@ -546,7 +546,7 @@ class _PrimaryToolExecutor:
 
         if asyncio.iscoroutine(result):
             result = await result
-        return result
+        return result  # type: ignore[return-value]
 
     def is_barrier(self, name: str) -> bool:
         """Return True for ``done`` / ``ask``."""

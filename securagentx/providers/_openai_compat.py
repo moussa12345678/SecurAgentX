@@ -425,7 +425,7 @@ class OpenAICompatProvider:
         new_tc = tool_call.model_copy(deep=True)
         if new_tc.model_extra is None:
             # Force-create the model_extra dict by setting a key.
-            new_tc.model_extra = {}
+            new_tc.model_extra = {}  # type: ignore[misc]
         new_tc.model_extra["reasoning_content"] = reasoning_content
         return new_tc
 
@@ -709,7 +709,7 @@ class OpenAICompatProvider:
                     # Capture reasoning_content for preserve_reasoning_content
                     reasoning = getattr(message, "reasoning_content", None)
                     if reasoning and self._preserve_reasoning:
-                        tc.model_extra = {"reasoning_content": reasoning}
+                        tc.model_extra = {"reasoning_content": reasoning}  # type: ignore[misc]
                     tool_calls.append(tc)
 
             finish = getattr(raw_choice, "finish_reason", "") or ""

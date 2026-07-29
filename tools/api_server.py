@@ -237,7 +237,7 @@ if _HAS_FASTAPI:
         await _notify_ws(scan_id, "scan.started", {"scan_id": scan_id, "target": target})
 
         try:
-            from main import normalize_target
+            from main import normalize_target  # type: ignore[attr-defined]
             from core.orchestrator import Orchestrator
 
             normalized = normalize_target(target)
@@ -328,7 +328,7 @@ if _HAS_FASTAPI:
     ):
         """Start a new security scan."""
         try:
-            from main import normalize_target, validate_target
+            from main import normalize_target, validate_target  # type: ignore[attr-defined]
 
             normalized = normalize_target(req.target)
             if not validate_target(normalized):
@@ -479,7 +479,7 @@ if _HAS_FASTAPI:
                 export_report,
             )
 
-            summary = ExecutiveSummary(
+            summary = ExecutiveSummary(  # type: ignore[call-arg]
                 target=", ".join(s.target for s in scans),
                 scan_date=datetime.now(timezone.utc).isoformat(),
                 duration_seconds=0,

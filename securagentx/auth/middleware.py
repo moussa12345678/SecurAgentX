@@ -350,7 +350,7 @@ async def auth_token_required(request: Any) -> AuthIdentity:
     Equivalent to PentAGI's ``AuthTokenRequired`` — accepts both API
     tokens (Bearer) and interactive sessions (cookie).
     """
-    return await _resolve_identity(request, mandatory=True)
+    return await _resolve_identity(request, mandatory=True)  # type: ignore[return-value]
 
 
 async def auth_user_required(request: Any) -> AuthIdentity:
@@ -361,12 +361,12 @@ async def auth_user_required(request: Any) -> AuthIdentity:
     manage (matches the Go filter in ``services/auth.go::Info``).
     """
     identity = await _resolve_identity(request, mandatory=True)
-    if identity.tid == USER_TYPE_API:
+    if identity.tid == USER_TYPE_API:  # type: ignore[union-attr]
         logger.info(
-            "auth_user_required rejected API token for uid=%d", identity.uid
+            "auth_user_required rejected API token for uid=%d", identity.uid  # type: ignore[union-attr]
         )
         _raise_http_error(401, "interactive session required (API tokens rejected)")
-    return identity
+    return identity  # type: ignore[return-value]
 
 
 async def local_user_required(request: Any) -> AuthIdentity:
@@ -376,17 +376,17 @@ async def local_user_required(request: Any) -> AuthIdentity:
     request must have already passed through :func:`auth_user_required`.
     """
     identity = await _resolve_identity(request, mandatory=True)
-    if identity.tid == USER_TYPE_API:
+    if identity.tid == USER_TYPE_API:  # type: ignore[union-attr]
         _raise_http_error(401, "interactive session required (API tokens rejected)")
-    if identity.tid != "local":
+    if identity.tid != "local":  # type: ignore[union-attr]
         logger.info(
             "local_user_required rejected tid=%s for uid=%d",
-            identity.tid, identity.uid,
+            identity.tid, identity.uid,  # type: ignore[union-attr]
         )
         _raise_http_error(
             403, "local user required (password change unavailable for OAuth users)"
         )
-    return identity
+    return identity  # type: ignore[return-value]
 
 
 async def _resolve_identity(

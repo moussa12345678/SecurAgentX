@@ -313,7 +313,7 @@ class Mutation:
     ) -> ProviderTestResult:
         row = await _call(info, "providers", "test_provider", type.value, agents)
         if row is None:
-            return ProviderTestResult.from_pydantic(type("M", (), {})())
+            return ProviderTestResult.from_pydantic(type("M", (), {})())  # type: ignore[operator]
         return ProviderTestResult.from_pydantic(row)
 
     @strawberry.mutation(description="Persist a new user-defined provider configuration.")
@@ -328,7 +328,7 @@ class Mutation:
             info, "providers", "create_provider", _user_id(info), name, type.value, agents
         )
         if row is None:
-            return ProviderConfig.from_pydantic(type("M", (), {})())
+            return ProviderConfig.from_pydantic(type("M", (), {})())  # type: ignore[operator]
         result = ProviderConfig.from_pydantic(row)
         await _publish(info, "providerCreated", result)
         return result

@@ -228,7 +228,7 @@ class SmartReconEngine:
                         ip_node = AssetNode(
                             id=f"ip:{ip}",
                             asset_type="ip",
-                            value=ip,
+                            value=ip,  # type: ignore[arg-type]
                             properties={"resolved_from": domain},
                             sources=["dns_resolution"],
                         )

@@ -439,7 +439,7 @@ class VulnerabilityResearcher:
 
         for prereq, keywords in prereq_keywords.items():
             if any(kw in description for kw in keywords):
-                conditions["prerequisites"].append(prereq)
+                conditions["prerequisites"].append(prereq)  # type: ignore[attr-defined]
 
         return conditions
 

@@ -32,10 +32,10 @@ try:
 except ImportError:
     SKILL_REGISTRY_AVAILABLE = False
 
-    def get_skill_registry():
+    def get_skill_registry():  # type: ignore[misc]
         return None
 
-    def recommend_tools_for_scenario(s):
+    def recommend_tools_for_scenario(s):  # type: ignore[misc]
         return []
 
 
@@ -581,7 +581,7 @@ Respond with JSON:
                 "error": str(e),
             }
 
-    def _process_agent_result(self, result: Dict, executor=None) -> bool:
+    def _process_agent_result(self, result: Dict, executor=None) -> bool:  # type: ignore[return]
         """Process a single agent's result (thread-safe). Returns True if voted to finish."""
         agent_id = result.get("agent_id", 0)
         role = self.roles[agent_id]

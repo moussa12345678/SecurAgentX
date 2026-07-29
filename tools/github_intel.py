@@ -42,7 +42,7 @@ def search_code(query: str, per_page: int = 10) -> List[Dict]:
         resp = requests.get(
             f"{_API_BASE}/search/code",
             headers=_get_headers(),
-            params={"q": query, "per_page": per_page},
+            params={"q": query, "per_page": per_page},  # type: ignore[arg-type]
             timeout=_TIMEOUT,
         )
 

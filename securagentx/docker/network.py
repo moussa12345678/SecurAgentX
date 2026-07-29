@@ -99,14 +99,14 @@ class DockerNetwork:
 
     async def close(self) -> None:
         if self._client is not None:
-            await self._client.close()
-            self._client = None
+            await self._client.close()  # type: ignore[attr-defined]
+            self._client = None  # type: ignore[assignment,method-assign]
 
     async def __aenter__(self) -> "DockerNetwork":
         await self._client()
         return self
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
+    async def __aexit__(self, _exc_type, exc, tb) -> None:
         await self.close()
 
     # ------------------------------------------------------------------

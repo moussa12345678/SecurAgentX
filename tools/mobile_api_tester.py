@@ -335,8 +335,8 @@ class MobileAPITester:
             all_findings.extend(findings)
 
         # Generate report
-        severity_counts = {}
-        finding_types = {}
+        severity_counts = {}  # type: ignore[var-annotated]
+        finding_types = {}  # type: ignore[var-annotated]
 
         for finding in all_findings:
             sev = finding.severity

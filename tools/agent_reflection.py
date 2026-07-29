@@ -325,7 +325,7 @@ class AgentReflection:
                 stats["total"] += count
                 if sentiment in stats:
                     stats[sentiment] += count
-                stats["categories"][category] = stats["categories"].get(category, 0) + count
+                stats["categories"][category] = stats["categories"].get(category, 0) + count  # type: ignore[attr-defined,index]
 
             return stats
         except Exception as e:

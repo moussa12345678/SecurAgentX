@@ -243,7 +243,7 @@ class ThreatDashboard(Container):
             self._seed_demo_data()
         self._refresh_all()
         # 4 FPS is enough for dashboard updates (15 FPS if you want smoother).
-        self._tick_timer = self.set_interval(0.25, self._tick)
+        self._tick_timer = self.set_interval(0.25, self._tick)  # type: ignore[assignment]
 
     def on_unmount(self) -> None:
         """Stop the simulation timer on removal."""
@@ -505,26 +505,26 @@ class ThreatDashboard(Container):
             for x in range(self._threatmap_w):
                 # Background latitude/longitude lines.
                 if y == 0 or y == self._threatmap_h - 1:
-                    row[x] = ("-", muted)
+                    row[x] = ("-", muted)  # type: ignore[call-overload]
                 elif x == 0 or x == self._threatmap_w - 1:
-                    row[x] = ("|", muted)
+                    row[x] = ("|", muted)  # type: ignore[call-overload]
                 elif (x + y) % 8 == 0:
-                    row[x] = (".", muted)
+                    row[x] = (".", muted)  # type: ignore[call-overload]
         for m in self.markers:
             if 0 <= m.x < self._threatmap_w and 0 <= m.y < self._threatmap_h:
                 color = sev_colors.get(m.severity, primary)
                 # Pulsing glyph: + at pulse=0, * at pulse=0.5, + at pulse=1.
                 glyph = "*" if 0.3 < m.pulse < 0.7 else "+"
-                grid[m.y][m.x] = (glyph, f"bold {color}")
+                grid[m.y][m.x] = (glyph, f"bold {color}")  # type: ignore[call-overload]
                 # 4-directional pulse ring (subtle).
                 ring = "."
                 for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                     nx, ny = m.x + dx, m.y + dy
                     if 0 <= nx < self._threatmap_w and 0 <= ny < self._threatmap_h:
                         if grid[ny][nx][0] in (" ", "-", "|", "."):
-                            grid[ny][nx] = (ring, color)
+                            grid[ny][nx] = (ring, color)  # type: ignore[call-overload]
 
-        text = Text()
+        text = Text()  # type: ignore[assignment]
         for y, row in enumerate(grid):
             for item in row:
                 if isinstance(item, str):
@@ -532,13 +532,13 @@ class ThreatDashboard(Container):
                 else:
                     ch, style = item
                 if ch == " ":
-                    text.append(" ")
+                    text.append(" ")  # type: ignore[attr-defined]
                 elif style:
                     text.append(ch, style=style)
                 else:
-                    text.append(ch)
+                    text.append(ch)  # type: ignore[attr-defined]
             if y < len(grid) - 1:
-                text.append("\n")
+                text.append("\n")  # type: ignore[attr-defined]
         title = Text("THREAT MAP", style=f"bold {text}")
         title.append(f"  markers: {len(self.markers)}", style=muted)
         widget.update(
@@ -596,7 +596,7 @@ class ThreatDashboard(Container):
                     f"{int(s.eta):d}s",
                     f"[bold {status_color}]{s.status.upper():8s}[/bold {status_color}]",
                 )
-            body = table
+            body = table  # type: ignore[assignment]
 
         widget.update(
             Panel(
@@ -635,7 +635,7 @@ class ThreatDashboard(Container):
                 if f.location:
                     line.append(f"  {f.location[:24]}", style=muted)
                 rows.append(line)
-            body = Group(*rows)
+            body = Group(*rows)  # type: ignore[assignment]
 
         widget.update(
             Panel(
@@ -730,7 +730,7 @@ class ThreatDashboard(Container):
                         (f"  [{h.risk.upper():7s}]", f"bold {color}"),
                     )
                 )
-            body = Group(*rows)
+            body = Group(*rows)  # type: ignore[assignment]
 
         widget.update(
             Panel(

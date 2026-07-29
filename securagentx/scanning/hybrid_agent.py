@@ -56,9 +56,9 @@ def _extract_json(text: str):
     except json.JSONDecodeError as e:
         logger.debug("JSON decode failed for candidate: %s", e)
     # Find outermost { ... } or [ ... ]
-    for s, e in [("{", "}"), ("[", "]")]:
+    for s, e in [("{", "}"), ("[", "]")]:  # type: ignore[misc]
         si = candidate.find(s)
-        ei = candidate.rfind(e)
+        ei = candidate.rfind(e)  # type: ignore[misc]
         if si != -1 and ei > si:
             try:
                 return json.loads(candidate[si : ei + 1])
@@ -80,7 +80,7 @@ class HybridAgent:
     def __init__(
         self,
         client: Any = None,  # Legacy: single AIClientManager for both roles
-        governance: Governance = None,
+        governance: Governance = None,  # type: ignore[assignment]
         target: str = "",
         max_steps: int = 50,
         strategist_interval: int = 5,
@@ -420,8 +420,8 @@ class HybridAgent:
             import shutil
 
             if not shutil.which(tool_name):
-                from tools.dependency_manager import TOOLS as INSTALLABLE_TOOLS
-                from tools.dependency_manager import run_with_streaming, verify_and_advise
+                from tools.dependency_manager import TOOLS as INSTALLABLE_TOOLS  # type: ignore[attr-defined]
+                from tools.dependency_manager import run_with_streaming, verify_and_advise  # type: ignore[attr-defined]
 
                 if tool_name in INSTALLABLE_TOOLS:
                     console.print(
@@ -733,7 +733,7 @@ class HybridAgent:
         Attempts to parse structured JSON / JSON-Lines outputs from security tools
         (Nuclei, Httpx, Subfinder, etc.) and falls back to regex patterns for raw text.
         """
-        findings = []
+        findings = []  # type: ignore[var-annotated]
         if not output or not output.strip():
             return findings
 
@@ -898,7 +898,7 @@ class HybridAgent:
                     f.get("type", "unknown"),
                     f.get("url", ""),
                     json.dumps(f)[:200],
-                    {},
+                    {},  # type: ignore[arg-type]
                 )
                 scored.append(
                     {
@@ -949,7 +949,7 @@ class HybridAgent:
 
         # Count per severity
         if scored:
-            counts = {}
+            counts = {}  # type: ignore[var-annotated]
             for s in scored:
                 counts[s["severity"]] = counts.get(s["severity"], 0) + 1
             lines.append("\n## Summary")

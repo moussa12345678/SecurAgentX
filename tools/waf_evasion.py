@@ -32,7 +32,7 @@ logger = logging.getLogger("securagentx.waf_evasion")
 @dataclass
 class MutationTechnique:
     name: str
-    apply: callable
+    apply: callable  # type: ignore[valid-type]
     waf_targets: List[str] = field(default_factory=list)  # Which WAF types this works against
 
 
@@ -234,7 +234,7 @@ class WAFEvasionEngine:
 
         for tech in techniques[:max_variants]:
             try:
-                mutated = tech.apply(base_payload)
+                mutated = tech.apply(base_payload)  # type: ignore[misc]
                 if mutated != base_payload:
                     variants.append((mutated, [tech.name]))
             except Exception as e:
@@ -253,7 +253,7 @@ class WAFEvasionEngine:
 
         # Deduplicate
         seen = set()
-        unique = []
+        unique = []  # type: ignore[var-annotated]
         for v, t in variants:
             if v not in seen and len(unique) < max_variants:
                 seen.add(v)

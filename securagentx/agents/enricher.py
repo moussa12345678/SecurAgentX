@@ -760,7 +760,7 @@ class Enricher:
                     questions = args.get("questions") or []
                     if isinstance(questions, str):
                         questions = [questions]
-                    result = fn(questions)
+                    result = fn(questions)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else json.dumps(
@@ -784,7 +784,7 @@ class Enricher:
                         wire_args = {
                             k: v for k, v in args.items() if k != "message"
                         }
-                        result = fn(**wire_args)
+                        result = fn(**wire_args)  # type: ignore[misc]
                         if asyncio.iscoroutine(result):
                             result = await result
                         return result if isinstance(result, str) else json.dumps(
@@ -806,7 +806,7 @@ class Enricher:
                 ) -> str:
                     args = _parse_args(args_json)
                     path = args.get("path", "")
-                    result = fn(path)
+                    result = fn(path)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else json.dumps(

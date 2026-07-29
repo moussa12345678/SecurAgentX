@@ -517,7 +517,7 @@ def lerp_color(a: str, b: str, t: float) -> str:
     r = ra + (rb - ra) * t
     g = ga + (gb - ga) * t
     bch = ba + (bb - ba) * t
-    return _rgb_to_hex((r, g, bch))
+    return _rgb_to_hex((r, g, bch))  # type: ignore[arg-type]
 
 
 def gradient_stops(colors: List[str], steps: int) -> List[str]:
@@ -595,7 +595,7 @@ class ThemeManager:
         if not self._transitioning:
             return dict(self._to_colors)
         t = self._transition_progress()
-        eased = Easing.apply(self._easing, t)
+        eased = Easing.apply(self._easing, t)  # type: ignore[call-arg]
         return {
             k: lerp_color(
                 self._from_colors.get(k, "#ffffff"), self._to_colors.get(k, "#ffffff"), eased
@@ -618,7 +618,7 @@ class ThemeManager:
         """Return the names of all registered themes."""
         return list(THEMES.keys())
 
-    def register_listener(self, callback: callable) -> None:
+    def register_listener(self, callback: callable) -> None:  # type: ignore[valid-type]
         """Register a callable to be invoked on every transition tick.
 
         The callback receives ``(manager: ThemeManager)`` and may be a

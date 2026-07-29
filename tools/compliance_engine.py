@@ -604,7 +604,7 @@ class ComplianceEngine:
         return counts
 
     def _count_types(self, findings: List[Dict[str, Any]]) -> Dict[str, int]:
-        counts = {}
+        counts = {}  # type: ignore[var-annotated]
         for f in findings:
             t = f.get("type", "unknown") or "unknown"
             counts[t] = counts.get(t, 0) + 1
@@ -631,7 +631,7 @@ class ComplianceEngine:
         if format == "html":
             self._write_html(assessment, path)
         elif format == "markdown":
-            self._write_markdown(assessment, path)
+            self._write_markdown(assessment, path)  # type: ignore[attr-defined]
         else:
             with open(path, "w") as f:
                 json.dump(assessment, f, indent=2, default=str)

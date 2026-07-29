@@ -148,7 +148,7 @@ def _agent(
     reasoning = None
     if reasoning_effort is not None and reasoning_effort != ReasoningEffort.NONE:
         reasoning = ReasoningConfig(effort=reasoning_effort)
-    return AgentConfig(
+    return AgentConfig(  # type: ignore[call-arg]
         model=model,
         temperature=temperature,
         top_p=top_p,

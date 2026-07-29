@@ -97,7 +97,7 @@ class ModeProcessor:
             target=target,
             mode=mode,
             callback=callback,
-            check_context_overflow=None,
+            _check_context_overflow=None,
             preflight_findings=preflight_findings,
         )
 

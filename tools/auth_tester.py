@@ -66,7 +66,7 @@ def analyze_jwt(token: str) -> List[AuthFinding]:
     - Sensitive data in payload
     - Token entropy
     """
-    findings = []
+    findings = []  # type: ignore[var-annotated]
 
     parts = token.split(".")
     if len(parts) not in (3, 5):  # JWS or JWE

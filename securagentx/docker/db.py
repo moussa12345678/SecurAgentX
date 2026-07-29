@@ -189,26 +189,26 @@ class ContainerDB:
         if self._conn is not None:
             return
         if self._connect_lock is None:
-            self._connect_lock = asyncio.Lock()
-        async with self._connect_lock:
+            self._connect_lock = asyncio.Lock()  # type: ignore[assignment]
+        async with self._connect_lock:  # type: ignore[attr-defined]
             if self._conn is not None:
                 return
             import aiosqlite
 
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             logger.debug("opening container db at %s", self.db_path)
-            self._conn = await aiosqlite.connect(str(self.db_path))
+            self._conn = await aiosqlite.connect(str(self.db_path))  # type: ignore[assignment]
             # ``sqlite3.Row`` (re-exported as ``aiosqlite.Row``) lets us
             # access columns by name in ``_row_to_info``. We set it on
             # the connection so all subsequent cursors inherit it.
             import sqlite3
 
-            self._conn.row_factory = sqlite3.Row
+            self._conn.row_factory = sqlite3.Row  # type: ignore[attr-defined]
             # Allow concurrent reads from the same connection.
-            await self._conn.execute("PRAGMA journal_mode=WAL")
-            await self._conn.execute("PRAGMA foreign_keys=ON")
-            await self._conn.executescript(_SCHEMA_SQL)
-            await self._conn.commit()
+            await self._conn.execute("PRAGMA journal_mode=WAL")  # type: ignore[attr-defined]
+            await self._conn.execute("PRAGMA foreign_keys=ON")  # type: ignore[attr-defined]
+            await self._conn.executescript(_SCHEMA_SQL)  # type: ignore[attr-defined]
+            await self._conn.commit()  # type: ignore[attr-defined]
 
     async def close(self) -> None:
         if self._conn is None:
@@ -220,7 +220,7 @@ class ContainerDB:
         await self.connect()
         return self
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
+    async def __aexit__(self, _exc_type, exc, tb) -> None:
         await self.close()
 
     # ------------------------------------------------------------------

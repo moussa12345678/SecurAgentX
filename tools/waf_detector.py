@@ -263,9 +263,9 @@ class SmartWAFDetector:
                 except Exception as e:
                     logger.debug("Suppressed Exception: %s", e)
             return {
-                "status": e.code,
+                "status": e.code,  # type: ignore[misc]
                 "body": raw.decode("utf-8", errors="replace"),
-                "headers": {k.lower(): v for k, v in (e.headers.items() if e.headers else [])},
+                "headers": {k.lower(): v for k, v in (e.headers.items() if e.headers else [])},  # type: ignore[misc]
             }
         except Exception as e:
             return {"status": -1, "body": str(e), "headers": {}}

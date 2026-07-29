@@ -186,7 +186,7 @@ def resolve_cname(domain: str) -> Optional[str]:
     try:
         answers = socket.getaddrinfo(domain, None)
         if answers:
-            return answers[0][4][0]
+            return answers[0][4][0]  # type: ignore[return-value]
     except socket.gaierror:
         pass
 
@@ -240,7 +240,7 @@ def check_single_subdomain(subdomain: str) -> Optional[Dict]:
             if re.search(pattern, cname, re.IGNORECASE):
                 # Step 3: Verify with HTTP fingerprint
                 is_vulnerable, matched_fp = check_http_fingerprint(
-                    subdomain, sig["http_fingerprints"]
+                    subdomain, sig["http_fingerprints"]  # type: ignore[arg-type]
                 )
 
                 if is_vulnerable:

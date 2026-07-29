@@ -245,7 +245,7 @@ def render_scan_menu(
         table.add_row(
             str(i),
             f"[bold]{option['label']}[/bold]",
-            option["description"],
+            option["description"],  # type: ignore[arg-type]
         )
 
     return Panel(
@@ -415,7 +415,7 @@ def run_scan_menu() -> None:
     # Get scan type
     scan_type = questionary.select(
         "Select scan type:",
-        choices=[opt["label"] for opt in SCAN_OPTIONS],
+        choices=[opt["label"] for opt in SCAN_OPTIONS],  # type: ignore[misc]
     ).ask()
 
     if scan_type == "Back":
@@ -425,7 +425,7 @@ def run_scan_menu() -> None:
     mode = "full"
     for opt in SCAN_OPTIONS:
         if opt["label"] == scan_type:
-            mode = opt["args"].get("mode", "full")
+            mode = opt["args"].get("mode", "full")  # type: ignore[attr-defined]
             break
 
     # Run scan

@@ -535,7 +535,7 @@ class DockerSandbox:
         except Exception as exc:  # noqa: BLE001
             logger.warning("failed to pull image '%s', falling back: %s", image, exc)
             if image == self.def_image or not await _fallback_to_default():
-                self.store.update_status(info.id, ContainerStatus.FAILED, "")
+                self.store.update_status(info.id, ContainerStatus.FAILED, "")  # type: ignore[arg-type]
                 raise RuntimeError(
                     f"failed to pull image '{image}' and default image also unavailable"
                 ) from exc
@@ -614,13 +614,13 @@ class DockerSandbox:
             )
         except Exception as exc:  # noqa: BLE001
             if image == self.def_image:
-                self.store.update_status(info.id, ContainerStatus.FAILED, "")
+                self.store.update_status(info.id, ContainerStatus.FAILED, "")  # type: ignore[arg-type]
                 raise RuntimeError(
                     f"failed to create container with default image: {exc}"
                 ) from exc
             logger.warning("failed to create container, try default image: %s", exc)
             if not await _fallback_to_default():
-                self.store.update_status(info.id, ContainerStatus.FAILED, "")
+                self.store.update_status(info.id, ContainerStatus.FAILED, "")  # type: ignore[arg-type]
                 raise RuntimeError(
                     f"failed to create container and default image unavailable: {exc}"
                 ) from exc
@@ -632,7 +632,7 @@ class DockerSandbox:
                     container_config, host_config, networking_config, container_name
                 )
             except Exception as exc2:  # noqa: BLE001
-                self.store.update_status(info.id, ContainerStatus.FAILED, "")
+                self.store.update_status(info.id, ContainerStatus.FAILED, "")  # type: ignore[arg-type]
                 raise RuntimeError(
                     f"failed to create container '{image}': {exc2}"
                 ) from exc2
@@ -641,10 +641,10 @@ class DockerSandbox:
         try:
             await self._start_container(container_id)  # type: ignore[arg-type]
         except Exception as exc:  # noqa: BLE001
-            self.store.update_status(info.id, ContainerStatus.FAILED, container_id)
+            self.store.update_status(info.id, ContainerStatus.FAILED, container_id)  # type: ignore[arg-type]
             raise RuntimeError(f"failed to start container: {exc}") from exc
 
-        self.store.update_status(info.id, ContainerStatus.RUNNING, container_id)
+        self.store.update_status(info.id, ContainerStatus.RUNNING, container_id)  # type: ignore[arg-type]
         info.local_id = container_id  # type: ignore[assignment]
         info.status = ContainerStatus.RUNNING
         info.image = image
@@ -1276,5 +1276,5 @@ class DockerSandbox:
         await self._get_client()
         return self
 
-    async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+    async def __aexit__(self, _exc_type: Any, exc: Any, tb: Any) -> None:
         await self.close()

@@ -30,7 +30,7 @@ try:
 except ImportError:
     _TEXTUAL_AVAILABLE = False
 
-    class Static:
+    class Static:  # type: ignore[no-redef]
         """Fallback when Textual is not available."""
 
         def __init__(self, *args, **kwargs):
@@ -374,7 +374,7 @@ def render_scan_progress(
             )
             widget.update_phase(phase_name, phase_progress, phase_findings, status)
 
-    widget.scan.total_findings = findings_total
-    widget.scan.started_at = time.time() - elapsed
+    widget.scan.total_findings = findings_total  # type: ignore[union-attr]
+    widget.scan.started_at = time.time() - elapsed  # type: ignore[union-attr]
 
     return widget.render(primary=primary, text_color=text_color, muted=muted)

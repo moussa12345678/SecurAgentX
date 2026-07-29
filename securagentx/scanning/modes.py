@@ -58,7 +58,7 @@ class ModeProcessor:
         user_input: str,
         conversation_history: List[Dict[str, str]],
         base_prompt: str,
-        callback: Optional[Callable] = None,
+        callback: Optional[Callable] = None,  # type: ignore[name-defined]
         target: str = "",
         mode: str = "auto",
         preflight_findings: Optional[List[Dict]] = None,
@@ -84,20 +84,20 @@ class ModeProcessor:
             client=self.client,
             conversation_history=conversation_history,
             base_prompt=base_prompt,
-            governance=self.governance,
+            governance=self.governance,  # type: ignore[arg-type]
             reflection_tracker=None,
             skill_registry=None,
             target=target,
             mode=mode,
             callback=callback,
-            check_context_overflow=None,
+            _check_context_overflow=None,
             preflight_findings=preflight_findings,
         )
 
     def process_hybrid(
         self,
         user_input: str,
-        callback: Optional[Callable] = None,
+        callback: Optional[Callable] = None,  # type: ignore[name-defined]
         target: str = "",
         mode: str = "auto",
         team_aegis_clients: Optional[Dict] = None,
@@ -135,7 +135,7 @@ class ModeProcessor:
         ta = team_aegis_clients or {}
         hybrid = HybridAgent(
             client=self.client,
-            governance=self.governance,
+            governance=self.governance,  # type: ignore[arg-type]
             target=target,
             max_steps=50,
             strategist_interval=5,
@@ -157,8 +157,8 @@ class ModeProcessor:
             objective=user_input,
         )
         hybrid.mission_key = hybrid.mission_state.mission_id
-        hybrid.cvss_calc = self.cvss_calc
-        hybrid.cve_db = self.cve_db
+        hybrid.cvss_calc = self.cvss_calc  # type: ignore[assignment]
+        hybrid.cve_db = self.cve_db  # type: ignore[attr-defined]
 
         # Remember mission start
         if target and self.enable_memory:

@@ -16,12 +16,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Safe import for nest_asyncio (for async compatibility)
-try:
-    import nest_asyncio
-except ImportError:
-    nest_asyncio = None  # not critical for omni_scan
-
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
@@ -111,8 +105,8 @@ def run_omni_scan(
 
         try:
             # Use updated orchestrator with registry support
-            report_dir = asyncio.run(
-                run_standard_scan(
+            report_dir = asyncio.run(  # type: ignore[var-annotated]
+                run_standard_scan(  # type: ignore[arg-type]
                     safe_target,
                     rate_limit=rate_limit,
                     use_registry=use_new_tools,
@@ -306,7 +300,7 @@ def _print_findings_table(findings: List[Dict[str, Any]]) -> None:
 
 def _parse_nuclei_findings(findings_file: str) -> list:
     """Legacy: Parse vulnerability scan output into structured finding dicts."""
-    findings = []
+    findings = []  # type: ignore[var-annotated]
     if not os.path.exists(findings_file):
         return findings
     try:

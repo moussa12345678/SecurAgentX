@@ -627,7 +627,7 @@ class EntityExtractor:
             Message(role="system", content="You are a security knowledge-graph builder."),
             Message(role="user", content=prompt),
         ]
-        resp = await self.llm_client.call(chain=chain, tools=None)  # type: ignore[attr-defined]
+        resp = await self.llm_client.call(chain=chain, tools=None)  # type: ignore[attr-defined,union-attr]
         content = getattr(resp, "content", "") or ""
         parsed = self._parse_llm_relationship_json(content)
         edges: list[Edge] = []

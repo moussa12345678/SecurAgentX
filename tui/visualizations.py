@@ -133,7 +133,7 @@ class VulnerabilityHeatmap:
         n_cols = len(self.vuln_types)
         # Pick a column width that fits the requested width.
         if not self.endpoints:
-            return Text("(no endpoints)", style="dim")
+            return Text("(no endpoints)", style="dim")  # type: ignore[return-value]
         col_w = max(3, min(10, (self.width - len(self.endpoints[0]) - 4) // max(1, n_cols)))
         table = Table(
             show_header=True,
@@ -254,16 +254,16 @@ class FindingTimeline:
             line.append(f.title, style="bold #ffffff")
             if f.location:
                 line.append(f"  {f.location}", style="#888888")
-            rows.append(line)
+            rows.append(line)  # type: ignore[arg-type]
             if f.description:
-                rows.append(Text(f"          {f.description[:80]}", style="#666666"))
-            rows.append(Text(""))
+                rows.append(Text(f"          {f.description[:80]}", style="#666666"))  # type: ignore[arg-type]
+            rows.append(Text(""))  # type: ignore[arg-type]
 
         if not rows:
-            rows = [Text("  (no findings yet)", style="#666666")]
+            rows = [Text("  (no findings yet)", style="#666666")]  # type: ignore[list-item]
 
         return Panel(
-            Group(*rows),
+            Group(*rows),  # type: ignore[arg-type]
             title="[bold]FINDING TIMELINE[/bold]",
             border_style="#888888",
             box=ROUNDED,
@@ -329,18 +329,18 @@ class ExploitChainDiagram:
             if step.detail:
                 box.append(f"\n  |   {step.detail[:80]}", style="#888888")
             box.append("\n  +", style=color)
-            rows.append(box)
+            rows.append(box)  # type: ignore[arg-type]
             if i < len(self.steps) - 1:
-                rows.append(Text(self.ARROW, style="#888888"))
-                rows.append(Text(self.ARROW_HEAD, style="#888888"))
+                rows.append(Text(self.ARROW, style="#888888"))  # type: ignore[arg-type]
+                rows.append(Text(self.ARROW_HEAD, style="#888888"))  # type: ignore[arg-type]
 
         # Final objective block.
-        rows.append(Text("    |", style="#888888"))
-        rows.append(Text("    v", style="#ff003c"))
-        rows.append(Text("  +--[ OBJECTIVE ]-- " + self.objective, style="bold #ff003c"))
+        rows.append(Text("    |", style="#888888"))  # type: ignore[arg-type]
+        rows.append(Text("    v", style="#ff003c"))  # type: ignore[arg-type]
+        rows.append(Text("  +--[ OBJECTIVE ]-- " + self.objective, style="bold #ff003c"))  # type: ignore[arg-type]
 
         return Panel(
-            Group(*rows),
+            Group(*rows),  # type: ignore[arg-type]
             title=f"[bold]{self.title}[/bold]",
             border_style="#ff003c",
             box=ROUNDED,
@@ -521,7 +521,7 @@ class RiskGauge:
 
         # Caption (centred horizontally to the panel width).
         cap = Text(self.label, style="#888888", justify="center", end="")
-        lines.append(Align.center(cap, width=self.width))
+        lines.append(Align.center(cap, width=self.width))  # type: ignore[arg-type]
 
         return Panel(
             Group(*lines),

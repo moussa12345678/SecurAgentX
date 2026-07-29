@@ -532,7 +532,7 @@ class DecisionEngine:
                 votes.append((action, vote))
             except Exception as e:
                 logger.warning(f"Constitutional review failed for {action}: {e}")
-                votes.append((action, None))
+                votes.append((action, None))  # type: ignore[arg-type]
 
         # 3. AI decides with full context
         decision = await self._make_sovereign_decision(
@@ -773,4 +773,4 @@ class TrueAIBrain:
 
     async def verify_finding(self, finding: Finding) -> ConstitutionalGuidance:
         """Verify a finding using constitutional engine"""
-        return self.constitutional_engine.review_action(finding)
+        return self.constitutional_engine.review_action(finding)  # type: ignore[arg-type,union-attr]

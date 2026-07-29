@@ -118,7 +118,7 @@ def _resolve_host_ips(host: str) -> list[str]:
         infos = socket.getaddrinfo(host, None)
     except (socket.gaierror, socket.herror, OSError):
         return []
-    return [info[4][0] for info in infos if info[4]]
+    return [info[4][0] for info in infos if info[4]]  # type: ignore[misc]
 
 
 class DockerBrowser:

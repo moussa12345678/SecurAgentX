@@ -431,7 +431,7 @@ class HistoryManager:
                 continue
 
         if hour_counts:
-            peak_hour = max(hour_counts, key=hour_counts.get)
+            peak_hour = max(hour_counts, key=hour_counts.get)  # type: ignore[arg-type]
             if hour_counts[peak_hour] > len(self.entries) * 0.3:
                 self.patterns.append(
                     UsagePattern(
@@ -552,8 +552,8 @@ class HistoryManager:
 def get_history_manager() -> HistoryManager:
     """Get singleton history manager instance."""
     if not hasattr(get_history_manager, "_instance"):
-        get_history_manager._instance = HistoryManager()
-    return get_history_manager._instance
+        get_history_manager._instance = HistoryManager()  # type: ignore[attr-defined]
+    return get_history_manager._instance  # type: ignore[attr-defined]
 
 
 def run_cli():

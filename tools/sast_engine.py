@@ -166,7 +166,7 @@ class PatternBasedScanner:
 
     def scan_file(self, file_path: Path) -> List[CodeVulnerability]:
         """Scan a single file for vulnerabilities."""
-        findings = []
+        findings = []  # type: ignore[var-annotated]
 
         # Determine language from extension
         lang = self._detect_language(file_path)
@@ -338,8 +338,8 @@ class SASTEngine:
 
     def _generate_report(self, files_scanned: int) -> Dict[str, Any]:
         """Generate SAST scan report."""
-        severity_counts = {}
-        vuln_types = {}
+        severity_counts = {}  # type: ignore[var-annotated]
+        vuln_types = {}  # type: ignore[var-annotated]
         files_affected = set()
 
         for finding in self.findings:

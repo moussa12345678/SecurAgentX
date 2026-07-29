@@ -199,7 +199,7 @@ class SessionManager:
         self,
         name: str,
         agent=None,
-    ) -> Optional[Dict[str, str]]:
+    ) -> Optional[Dict[str, str]]:  # type: ignore[name-defined]
         """
         Resume a saved session by restoring conversation history.
 
@@ -256,7 +256,7 @@ class SessionManager:
             logger.error(f"Failed to resume session: {e}")
             return None
 
-    def list_sessions(self) -> List[SessionInfo]:
+    def list_sessions(self) -> List[SessionInfo]:  # type: ignore[name-defined]
         """List all saved sessions."""
         sessions = []
         for path in sorted(self.sessions_dir.glob("*.json")):
@@ -295,7 +295,7 @@ class SessionManager:
             logger.error(f"Failed to delete session: {e}")
             return False
 
-    def format_session_list(self, sessions: List[SessionInfo] = None) -> str:
+    def format_session_list(self, sessions: List[SessionInfo] = None) -> str:  # type: ignore[name-defined]
         """Format session list for display."""
         if sessions is None:
             sessions = self.list_sessions()

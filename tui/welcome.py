@@ -63,7 +63,7 @@ def get_system_status() -> Dict[str, Any]:
         "cpu_percent": 0.0,
         "memory_percent": 0.0,
         "disk_percent": 0.0,
-        "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
+        "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",  # type: ignore[attr-defined]
         "tools_installed": 0,
         "last_scan": "Never",
     }
@@ -429,7 +429,7 @@ def build_welcome_renderable(
         render_system_status(primary=primary, text_color=text, muted=muted),
     )
 
-    return Group(header, body)
+    return Group(header, body)  # type: ignore[return-value]
 
 
 def _render_status_footer(
@@ -531,7 +531,7 @@ class WelcomeScreen(Container):
     def on_mount(self) -> None:
         """Initial render + start clock timer."""
         self._refresh_all()
-        self._timer = self.set_interval(1.0, self._tick_clock)
+        self._timer = self.set_interval(1.0, self._tick_clock)  # type: ignore[assignment]
 
     def on_unmount(self) -> None:
         """Stop the timer when the widget is removed."""

@@ -210,7 +210,7 @@ class DeserializationScanner:
             # Check cookies for serialized data
             for cookie_name, cookie_value in response.cookies.items():
                 for pattern, format_type in DESER_PATTERNS:
-                    if re.search(pattern, cookie_value, re.IGNORECASE):
+                    if re.search(pattern, cookie_value, re.IGNORECASE):  # type: ignore[arg-type]
                         logger.info(f"Serialized data in cookie: {cookie_name}")
 
         except Exception as e:
@@ -322,12 +322,12 @@ class DeserializationScanner:
 
                 # Check for deserialization patterns
                 for pattern, format_type in DESER_PATTERNS:
-                    if re.search(pattern, cookie_value, re.IGNORECASE):
+                    if re.search(pattern, cookie_value, re.IGNORECASE):  # type: ignore[arg-type]
                         deser_result = DeserResult(
                             url=target_url,
                             param=f"cookie:{cookie_name}",
                             format_type=format_type,
-                            payload=cookie_value[:100],
+                            payload=cookie_value[:100],  # type: ignore[index]
                             vulnerable=True,
                             evidence=f"Cookie contains {format_type} data",
                             severity="Critical",

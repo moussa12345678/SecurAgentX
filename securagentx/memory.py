@@ -19,8 +19,8 @@ try:
     _HAS_CHROMADB = True
 except ImportError:
     _HAS_CHROMADB = False
-    chromadb = None
-    Settings = None
+    chromadb = None  # type: ignore[assignment]
+    Settings = None  # type: ignore[assignment,misc]
 
 
 logger = logging.getLogger("securagentx.memory")

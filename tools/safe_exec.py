@@ -175,7 +175,7 @@ def execute_with_retry(
         logger.info(
             f"transient failure (attempt {attempts}/{max_retries + 1}) "
             f"on '{command_str[:80]}', retrying in {delay:.1f}s: "
-            f"{last_result.get('error', '')[:120]}"
+            f"{last_result.get('error', '')[:120]}"  # type: ignore[index]
         )
         _time.sleep(delay)
     last_result["attempts"] = attempts
@@ -223,7 +223,7 @@ def execute_safely_streaming(
         )
 
         # Read output line by line
-        for line in process.stdout:
+        for line in process.stdout:  # type: ignore[union-attr]
             yield line
             if callback:
                 callback(line)
@@ -303,5 +303,5 @@ def execute_safely_interactive(
         "stderr": "",
         "exit_code": exit_code,
         "error": error,
-        "lines": lines,
+        "lines": lines,  # type: ignore[dict-item]
     }

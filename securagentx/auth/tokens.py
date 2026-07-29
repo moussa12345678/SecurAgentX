@@ -241,7 +241,7 @@ class TokenStatusCache:
 
         # Cache miss → ask the DB callback (if any).
         if self._db_lookup is None:
-            value: Optional[dict] = None
+            value: Optional[dict] = None  # type: ignore[no-redef]
         else:
             try:
                 value = self._db_lookup(token_id)

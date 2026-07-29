@@ -140,9 +140,9 @@ class AIGovernance:
                 )
             except ImportError:
                 logger.warning("ai_sandbox not available; falling back to regex only")
-                self._detector = None
+                self._detector = None  # type: ignore[assignment]
         else:
-            self._detector = None
+            self._detector = None  # type: ignore[assignment]
 
     def check_tool_safety(self, tool_spec: ToolSpec) -> Tuple[bool, str]:
         """Check if tool is safe to create/execute.
@@ -226,7 +226,7 @@ class DependencyManager:
     def __init__(self, cache_dir: Path = Path(".cache/ai_deps")):
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.installed = set()
+        self.installed = set()  # type: ignore[var-annotated]
 
     def install_pip_package(self, package: str) -> bool:
         """Install pip package safely.
@@ -476,9 +476,9 @@ Respond in JSON format:
             import importlib.util
 
             spec = importlib.util.spec_from_file_location(tool_name, tool_path)
-            module = importlib.util.module_from_spec(spec)
+            module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
             # Execute
-            spec.loader.exec_module(module)
+            spec.loader.exec_module(module)  # type: ignore[union-attr]
 
             # Call main function if exists
             if hasattr(module, "main"):

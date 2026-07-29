@@ -49,7 +49,7 @@ class Severity(Enum):
     CRITICAL = ("critical", 20)
 
     def __init__(self, value: str, weight: int) -> None:
-        self._value_ = value
+        self._value_ = value  # type: ignore[assignment]
         self.weight = weight
 
 

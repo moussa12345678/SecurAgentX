@@ -634,6 +634,441 @@ def _build_security_summary(
     return summary
 
 
+def _classify_universal_intent(
+    client: Any, user_input: str, callback: Optional[Callable]
+) -> str:
+    """Classify user intent via AI, falling back to 'security_chat' on error."""
+    intent = "security_chat"
+    try:
+        intent = analyze_intent(client, user_input)
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
+        logger.debug(f"Universal intent classification failed: {e}")
+        intent = "security_chat"
+    if callback:
+        callback(f"AI classified intent as: {intent.upper()}")
+    return intent
+
+
+def _get_reflection_caution(
+    reflection_tracker: Optional[AgentReflection], user_input: str
+) -> str:
+    """Retrieve reflection caution text, or empty string if unavailable."""
+    try:
+        if reflection_tracker and hasattr(reflection_tracker, "retrieve_caution"):
+            return reflection_tracker.retrieve_caution(user_input)
+        return ""
+    except (AttributeError, ValueError, KeyError, TypeError):
+        return ""
+
+
+def _select_base_prompt(
+    intent: str,
+    mode: str,
+    target: str,
+    user_input: str,
+    now_context: str,
+    client: Any,
+    governance: Governance,
+    skill_registry: Any,
+) -> str:
+    """Build the mode-specific base prompt text."""
+    if intent == "research" and not target:
+        return _build_research_prompt(user_input, now_context)
+    if mode == "bug_bounty" or target:
+        return _build_bug_bounty_prompt(
+            user_input, now_context, target, client, governance, skill_registry
+        )
+    return _build_general_prompt(user_input, now_context)
+
+
+def _maybe_run_brain_mode(
+    use_brain: bool,
+    is_security_task: bool,
+    user_input: str,
+    client: Any,
+    target: str,
+    governance: Governance,
+    executor: Any,
+    callback: Optional[Callable],
+) -> Optional[str]:
+    """Run brain mode if applicable; returns brain_result or None to fall through."""
+    if not (use_brain and is_security_task):
+        return None
+    return _run_brain_mode(
+        user_input=user_input,
+        client=client,
+        target=target,
+        governance=governance,
+        executor=executor,
+        callback=callback,
+    )
+
+
+def _build_step_prompt(
+    base_prompt_text: str,
+    history: List[Dict],
+    user_input: str,
+    step: int,
+    max_steps: int,
+) -> str:
+    """Build the per-step prompt with conversation history."""
+    recent = history[-10:]
+    history_text = "\n".join(
+        [f"{m['role'].capitalize()}: {m['content']}" for m in recent]
+    )
+    return f"""{base_prompt_text}
+
+### CONVERSATION HISTORY:
+{history_text}
+
+### USER REQUEST:
+{user_input}
+
+### CURRENT STEP: {step + 1}/{max_steps}
+
+Respond with JSON:
+{{"thought": "...",
+"action": {{"type": "shell|run_tool|read_file|write_file|edit_file|search_file|search_web|finish",
+"params": {{...}}}},
+"next_step": "..."}}"""
+
+
+def _call_ai_for_decision(
+    client: Any,
+    step_prompt: str,
+    callback: Optional[Callable],
+    consecutive_ai_failures: int,
+    ai_unavailable_marker: str,
+):
+    """Call the AI for the next action.
+
+    Returns ``(response_text, new_failure_count, signal)`` where signal is:
+      - ``"continue"`` — AI succeeded, response_text is the model output.
+      - ``"break"`` — single failure, caller should break out of the loop.
+      - ``("return", value)`` — two failures, caller should return ``value``.
+    """
+    try:
+        from tools.universal_ai_client import ACTION_TOOLS
+
+        _resp = client.chat(
+            [
+                AIMessage(role="system", content=step_prompt),
+                AIMessage(role="user", content="What is the next action?"),
+            ],
+            temperature=0.2,
+            tools=ACTION_TOOLS,
+        )
+        # Prefer native tool-calling; fall back to text-JSON extraction
+        if _resp.tool_calls:
+            _tc = _resp.tool_calls[0]
+            response_text = json.dumps(
+                {
+                    "thought": _tc.arguments.pop("thought", "execute action"),
+                    "action": {"type": _tc.name, "params": _tc.arguments},
+                }
+            )
+        else:
+            response_text = _resp.content or ""
+        return response_text, 0, "continue"
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
+        new_failures = consecutive_ai_failures + 1
+        logger.error(f"AI decision failed (consecutive={new_failures}): {e}")
+        if new_failures >= 2:
+            # Two failures in a row = AI is definitely unavailable. Bail early
+            # with a clear marker that main.py can detect.
+            logger.warning("All AI providers failed twice in a row. Exiting early.")
+            if callback:
+                callback(ai_unavailable_marker)
+            return_value = (
+                f"{ai_unavailable_marker} All AI providers failed after "
+                f"{new_failures} consecutive errors. "
+                f"Check API keys in .env or visit "
+                f"https://aistudio.google.com/apikey to fix Gemini quota."
+            )
+            return None, new_failures, ("return", return_value)
+        # Single failure: break and fall through, but if 0 actions taken, signal AI unavailable
+        return None, new_failures, "break"
+
+
+def _run_brain_decision_step(
+    step: int,
+    max_steps: int,
+    history: List[Dict],
+    all_findings: List[Dict],
+    brain_plan: Any,
+    brain_decision: Any,
+    target: str,
+    user_input: str,
+    callback: Optional[Callable],
+):
+    """Run one brain-enhanced decision step.
+
+    Returns ``(thought, action_data, brain_ok)`` where ``brain_ok`` is False
+    if the brain failed and the caller should fall back to the legacy path.
+    """
+    try:
+        import asyncio as _ai
+        situation = {
+            "step": step,
+            "max_steps": max_steps,
+            "history": history[-5:],
+            "findings": all_findings,
+            "plan_phases": [p.name for p in (brain_plan.phases if brain_plan else [])],
+        }
+        available_actions = brain_plan.phases[step].actions if (brain_plan and step < len(brain_plan.phases)) else [{"tool": "finish", "risk_level": "safe"}]
+
+        ctx = _create_mission_context(target, user_input)
+        loop = _ai.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                ai_action = pool.submit(
+                    _ai.run,
+                    brain_decision.decide(situation, available_actions, ctx)
+                ).result(timeout=30)
+        else:
+            ai_action = loop.run_until_complete(
+                brain_decision.decide(situation, available_actions, ctx)
+            )
+
+        action_data = {
+            "type": "run_tool" if ai_action.tool else "shell",
+            "params": {"tool": ai_action.tool, "target": ai_action.target or target, "command": f"{ai_action.tool} {ai_action.target or target}"}
+        }
+        thought = ai_action.description
+
+        if callback and thought:
+            callback(f"thought:{thought}")
+        return thought, action_data, True
+    except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
+        logger.debug(f"Brain decision failed: {e}")
+        return "", {"type": "finish"}, False
+
+
+def _parse_legacy_decision(response_text: str):
+    """Parse legacy JSON response into (thought, action_data)."""
+    decision = extract_json(response_text)
+    if not decision or not isinstance(decision, dict):
+        return "", {"type": "finish"}
+    thought = decision.get("thought", "")
+    action_data = decision.get("action", decision)
+    if isinstance(action_data, dict) and "type" not in action_data:
+        action_data = {"type": "shell", "params": action_data}
+    return thought, action_data
+
+
+def _normalize_action(action_data: Dict[str, Any], target: str):
+    """Normalize action_data to (action_type, params)."""
+    action_type = action_data.get("type", "shell") if isinstance(action_data, dict) else "shell"
+    params = action_data.get("params", {}) if isinstance(action_data, dict) else {}
+
+    # Convert action types
+    if action_type == "run_shell":
+        action_type = "shell"
+
+    if action_type == "run_tool":
+        tool_name = params.get("tool", "")
+        tool_target = params.get("target", target)
+        if tool_name:
+            params = {"tool": tool_name, "target": tool_target, "args": params.get("args", "")}
+        else:
+            action_type = "shell"
+
+    return action_type, params
+
+
+def _check_governance_gate(
+    governance: Optional[Governance],
+    action_type: str,
+    params: Dict[str, Any],
+    target: str,
+):
+    """Check governance gate for shell commands.
+
+    Returns ``(skip, message)``:
+      - ``skip=False`` -> proceed with execution.
+      - ``skip=True``  -> skip execution, append ``message`` to history and
+        ``continue`` the for-loop.
+    """
+    if action_type != "shell" or not governance:
+        return False, None
+    cmd = params.get("command", "")
+    gate = governance.gate(
+        mission_id=f"universal:{target}:{int(time.time())}",
+        target=target or "unknown",
+        action={"type": "run_shell", "command": cmd},
+    )
+    if gate.decision == "deny":
+        return True, f"Command blocked: {gate.rationale}"
+    if gate.decision != "needs_approval":
+        return False, None
+    from cli.ui_components import confirm
+
+    try:
+        approved = confirm(f"Run: {cmd[:80]}?", default=False)
+    except (EOFError, KeyboardInterrupt, OSError, ValueError):
+        approved = False
+    if not approved:
+        return True, "Command rejected by user."
+    return False, None
+
+
+def _score_finding(
+    is_security_task: bool,
+    result_obj: Any,
+    result: str,
+    params: Dict[str, Any],
+    action_type: str,
+    all_findings: List[Dict],
+) -> None:
+    """Score a successful security-task finding and append to all_findings."""
+    if not (is_security_task and result_obj.success):
+        return
+    calc = CVSSCalculator(use_ai=False)
+    finding_type = params.get("tool", action_type)
+    try:
+        score = calc.from_finding(finding_type, result[:200], result[:500], "")
+        all_findings.append(
+            {
+                "type": finding_type,
+                "severity": score.severity.value,
+                "cvss": score.base_score,
+                "source": "ai_reasoning",  # produced by the agent's own scoring loop
+            }
+        )
+    except (ValueError, KeyError, AttributeError, TypeError) as e:
+        logger.debug("Suppressed Exception: %s", e)
+
+
+def _build_loop_exit_message(
+    is_security_task: bool,
+    all_findings: List[Dict],
+    target: str,
+    step: int,
+    history: List[Dict],
+    ai_unavailable_marker: str,
+    max_steps: int,
+) -> str:
+    """Generate the final message after the main execution loop exits."""
+    if is_security_task and all_findings:
+        return _build_security_summary(target, step, all_findings, history)
+
+    # P2.4: If loop exited with 0 actions, AI is likely unavailable
+    if len(history) <= 1 and not all_findings:
+        return (
+            f"{ai_unavailable_marker} All AI providers failed. "
+            f"{len(history)-1} actions taken. "
+            f"Check API keys in .env or visit "
+            f"https://aistudio.google.com/apikey to fix Gemini quota."
+        )
+
+    return f"Universal session reached {max_steps} steps. History: {len(history)} actions."
+
+
+def _is_security_task(mode: str, intent: str, target: str) -> bool:
+    """Return True when this looks like a real security scanning task."""
+    return (
+        mode == "bug_bounty"
+        or intent == "scan"
+        or (bool(target) and intent in ("scan", "security_chat"))
+    )
+
+
+def _run_universal_loop_iteration(
+    step: int,
+    max_steps: int,
+    base_prompt_text: str,
+    history: List[Dict],
+    user_input: str,
+    client: Any,
+    callback: Optional[Callable],
+    consecutive_ai_failures: int,
+    ai_unavailable_marker: str,
+    brain_loop: bool,
+    brain_decision: Any,
+    brain_plan: Any,
+    target: str,
+    all_findings: List[Dict],
+    governance: Optional[Governance],
+    executor: Any,
+    is_security_task: bool,
+):
+    """Run one iteration of the main execution loop.
+
+    Returns ``(signal, return_value, consecutive_ai_failures, brain_loop)``
+    where ``signal`` is ``"continue"``, ``"break"``, or ``"return"``. When
+    signal is ``"return"``, the caller should ``return return_value`` from
+    ``process_universal``.
+    """
+    step_prompt = _build_step_prompt(base_prompt_text, history, user_input, step, max_steps)
+
+    # First AI decision call (always made; response is only used by legacy)
+    _response_text, consecutive_ai_failures, _ai_signal = _call_ai_for_decision(
+        client, step_prompt, callback, consecutive_ai_failures, ai_unavailable_marker
+    )
+    if _ai_signal == "break":
+        return "break", None, consecutive_ai_failures, brain_loop
+    if isinstance(_ai_signal, tuple) and _ai_signal[0] == "return":
+        return "return", _ai_signal[1], consecutive_ai_failures, brain_loop
+
+    # ── Brain-enhanced decision path ──────────────────────────────
+    thought = ""
+    action_data: Dict[str, Any] = {"type": "finish"}
+
+    if brain_loop and brain_decision:
+        _b_thought, _b_action, _b_ok = _run_brain_decision_step(
+            step, max_steps, history, all_findings, brain_plan, brain_decision,
+            target, user_input, callback,
+        )
+        if _b_ok:
+            thought, action_data = _b_thought, _b_action
+        else:
+            brain_loop = False  # fall through to legacy
+
+    # ── Legacy decision path (JSON parse) ─────────────────────────
+    if not brain_loop:
+        response_text, consecutive_ai_failures, _ai_signal = _call_ai_for_decision(
+            client, step_prompt, callback, consecutive_ai_failures, ai_unavailable_marker
+        )
+        if _ai_signal == "break":
+            return "break", None, consecutive_ai_failures, brain_loop
+        if isinstance(_ai_signal, tuple) and _ai_signal[0] == "return":
+            return "return", _ai_signal[1], consecutive_ai_failures, brain_loop
+
+        thought, action_data = _parse_legacy_decision(response_text)
+
+        if callback and thought:
+            callback(f"thought:{thought}")
+
+    action_type, params = _normalize_action(action_data, target)
+
+    # Governance gate for shell commands
+    _skip, _gate_msg = _check_governance_gate(governance, action_type, params, target)
+    if _skip:
+        _append_history(history, "assistant", _gate_msg)
+        return "continue", None, consecutive_ai_failures, brain_loop
+
+    # Execute
+    result_obj = executor.execute_action({"type": action_type, "params": params})
+    result = result_obj.output if result_obj.success else f"{result_obj.error}"
+
+    # Include the model's own thought in the history so its reasoning
+    # feeds the next step (self-reinforcing chain-of-thought).
+    _entry = f"[{action_type}] {result[:300]}"
+    if thought:
+        _entry = f"[Thought: {thought}]\n{_entry}"
+    _append_history(history, "assistant", _entry)
+
+    # Score findings
+    _score_finding(is_security_task, result_obj, result, params, action_type, all_findings)
+
+    # Finish condition
+    if action_type == "finish":
+        return "break", None, consecutive_ai_failures, brain_loop
+
+    return "continue", None, consecutive_ai_failures, brain_loop
+
+
 def process_universal(
     user_input: str,
     client: Any,
@@ -645,7 +1080,7 @@ def process_universal(
     target: str = "",
     mode: str = "auto",
     callback: Optional[Callable] = None,
-    check_context_overflow: Optional[Callable] = None,
+    _check_context_overflow: Optional[Callable] = None,
     preflight_findings: Optional[List[Dict]] = None,
     use_brain: bool = False,
 ) -> str:
@@ -657,36 +1092,19 @@ def process_universal(
     logger.info(f"Universal mode started: {user_input}")
 
     # ── Intent classification ───────────────────────────────────────────
-    intent = "security_chat"
-    try:
-        intent = analyze_intent(client, user_input)
-    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
-        logger.debug(f"Universal intent classification failed: {e}")
-        intent = "security_chat"
-    if callback:
-        callback(f"AI classified intent as: {intent.upper()}")
+    intent = _classify_universal_intent(client, user_input, callback)
 
     # ── Self-reflection ─────────────────────────────────────────────────
-    try:
-        if reflection_tracker and hasattr(reflection_tracker, "retrieve_caution"):
-            reflection_caution = reflection_tracker.retrieve_caution(user_input)
-        else:
-            reflection_caution = ""
-    except (AttributeError, ValueError, KeyError, TypeError):
-        reflection_caution = ""
+    reflection_caution = _get_reflection_caution(reflection_tracker, user_input)
 
     # Initialize universal executor
     executor = get_universal_executor()
 
-    is_security_task = (
-        mode == "bug_bounty"
-        or intent == "scan"
-        or (bool(target) and intent in ("scan", "security_chat"))
-    )
+    is_security_task = _is_security_task(mode, intent, target)
 
     # ── Casual / chat without target ─────────────────────────────────────
     if intent in ["casual", "security_chat"] and not target:
-        return _handle_casual_chat(
+        return _handle_casual_chat(  # type: ignore[return-value]
             user_input=user_input,
             intent=intent,
             target=target,
@@ -705,14 +1123,9 @@ def process_universal(
 
     # ── Build mode-specific prompt ──────────────────────────────────────
     now_context = _get_now_context()
-    if intent == "research" and not target:
-        base_prompt_text = _build_research_prompt(user_input, now_context)
-    elif mode == "bug_bounty" or target:
-        base_prompt_text = _build_bug_bounty_prompt(
-            user_input, now_context, target, client, governance, skill_registry
-        )
-    else:
-        base_prompt_text = _build_general_prompt(user_input, now_context)
+    base_prompt_text = _select_base_prompt(
+        intent, mode, target, user_input, now_context, client, governance, skill_registry
+    )
 
     # ── Inject SecurAgentX preflight findings as context ──────────────────
     # This is the framework's own recon data — the AI should use it as
@@ -724,18 +1137,12 @@ def process_universal(
     # ── Brain Mode: TrueAIBrain integration ────────────────────────────
     # When use_brain=True and it's a security task, use the cognitive brain
     # architecture (perceive → reason → decide → execute → reflect).
-    if use_brain and is_security_task:
-        brain_result = _run_brain_mode(
-            user_input=user_input,
-            client=client,
-            target=target,
-            governance=governance,
-            executor=executor,
-            callback=callback,
-        )
-        if brain_result:
-            return brain_result
-        # Fall through to legacy loop if brain mode fails
+    brain_result = _maybe_run_brain_mode(
+        use_brain, is_security_task, user_input, client, target, governance, executor, callback
+    )
+    if brain_result:
+        return brain_result
+    # Fall through to legacy loop if brain mode fails
 
     # ── Main execution loop ────────────────────────────────────────────
     max_steps = 5 if intent == "research" else 50
@@ -763,251 +1170,20 @@ def process_universal(
         )
 
     for step in range(max_steps):
-        # Build conversation context
-        recent = history[-10:]
-        history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in recent])
-
-        step_prompt = f"""{base_prompt_text}
-
-### CONVERSATION HISTORY:
-{history_text}
-
-### USER REQUEST:
-{user_input}
-
-### CURRENT STEP: {step + 1}/{max_steps}
-
-Respond with JSON:
-{{"thought": "...",
-"action": {{"type": "shell|run_tool|read_file|write_file|edit_file|search_file|search_web|finish",
-"params": {{...}}}},
-"next_step": "..."}}"""
-
-        # Get AI decision
-        try:
-            from tools.universal_ai_client import ACTION_TOOLS
-
-            _resp = client.chat(
-                [
-                    AIMessage(role="system", content=step_prompt),
-                    AIMessage(role="user", content="What is the next action?"),
-                ],
-                temperature=0.2,
-                tools=ACTION_TOOLS,
-            )
-            # Prefer native tool-calling; fall back to text-JSON extraction
-            if _resp.tool_calls:
-                _tc = _resp.tool_calls[0]
-                response_text = json.dumps(
-                    {
-                        "thought": _tc.arguments.pop("thought", "execute action"),
-                        "action": {"type": _tc.name, "params": _tc.arguments},
-                    }
-                )
-            else:
-                response_text = _resp.content or ""
-            consecutive_ai_failures = 0  # reset on success
-        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
-            consecutive_ai_failures += 1
-            logger.error(f"AI decision failed (consecutive={consecutive_ai_failures}): {e}")
-            if consecutive_ai_failures >= 2:
-                # Two failures in a row = AI is definitely unavailable. Bail early
-                # with a clear marker that main.py can detect.
-                logger.warning("All AI providers failed twice in a row. Exiting early.")
-                if callback:
-                    callback(ai_unavailable_marker)
-                return (
-                    f"{ai_unavailable_marker} All AI providers failed after "
-                    f"{consecutive_ai_failures} consecutive errors. "
-                    f"Check API keys in .env or visit "
-                    f"https://aistudio.google.com/apikey to fix Gemini quota."
-                )
-            # Single failure: break and fall through, but if 0 actions taken, signal AI unavailable
+        _sig, _ret_val, consecutive_ai_failures, _brain_loop = _run_universal_loop_iteration(
+            step, max_steps, base_prompt_text, history, user_input, client, callback,
+            consecutive_ai_failures, ai_unavailable_marker, _brain_loop, _brain_decision,
+            _brain_plan, target, all_findings, governance, executor, is_security_task,
+        )
+        if _sig == "break":
             break
-
-        # ── Brain-enhanced decision path ──────────────────────────────
-        thought = ""
-        action_data: Dict[str, Any] = {"type": "finish"}
-
-        if _brain_loop and _brain_decision:
-            # Use DecisionEngine to score and pick action
-            try:
-                import asyncio as _ai
-                situation = {
-                    "step": step,
-                    "max_steps": max_steps,
-                    "history": history[-5:],
-                    "findings": all_findings,
-                    "plan_phases": [p.name for p in (_brain_plan.phases if _brain_plan else [])],
-                }
-                available_actions = _brain_plan.phases[step].actions if (_brain_plan and step < len(_brain_plan.phases)) else [{"tool": "finish", "risk_level": "safe"}]
-
-                ctx = _create_mission_context(target, user_input)
-                loop = _ai.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        ai_action = pool.submit(
-                            _ai.run,
-                            _brain_decision.decide(situation, available_actions, ctx)
-                        ).result(timeout=30)
-                else:
-                    ai_action = loop.run_until_complete(
-                        _brain_decision.decide(situation, available_actions, ctx)
-                    )
-
-                action_data = {
-                    "type": "run_tool" if ai_action.tool else "shell",
-                    "params": {"tool": ai_action.tool, "target": ai_action.target or target, "command": f"{ai_action.tool} {ai_action.target or target}"}
-                }
-                thought = ai_action.description
-
-                if callback and thought:
-                    callback(f"thought:{thought}")
-            except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
-                logger.debug(f"Brain decision failed: {e}")
-                _brain_loop = False  # fall through to legacy
-
-        # ── Legacy decision path (JSON parse) ─────────────────────────
-        decision = None
-        if not _brain_loop:
-            # Get AI decision
-            try:
-                from tools.universal_ai_client import ACTION_TOOLS
-
-                _resp = client.chat(
-                    [
-                        AIMessage(role="system", content=step_prompt),
-                        AIMessage(role="user", content="What is the next action?"),
-                    ],
-                    temperature=0.2,
-                    tools=ACTION_TOOLS,
-                )
-                # Prefer native tool-calling; fall back to text-JSON extraction
-                if _resp.tool_calls:
-                    _tc = _resp.tool_calls[0]
-                    response_text = json.dumps(
-                        {
-                            "thought": _tc.arguments.pop("thought", "execute action"),
-                            "action": {"type": _tc.name, "params": _tc.arguments},
-                        }
-                    )
-                else:
-                    response_text = _resp.content or ""
-                consecutive_ai_failures = 0  # reset on success
-            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
-                consecutive_ai_failures += 1
-                logger.error(f"AI decision failed (consecutive={consecutive_ai_failures}): {e}")
-                if consecutive_ai_failures >= 2:
-                    logger.warning("All AI providers failed twice in a row. Exiting early.")
-                    if callback:
-                        callback(ai_unavailable_marker)
-                    return (
-                        f"{ai_unavailable_marker} All AI providers failed after "
-                        f"{consecutive_ai_failures} consecutive errors. "
-                        f"Check API keys in .env or visit "
-                        f"https://aistudio.google.com/apikey to fix Gemini quota."
-                    )
-                break
-
-            # Parse JSON
-            decision = extract_json(response_text)
-            if not decision or not isinstance(decision, dict):
-                action_data = {"type": "finish"}
-            else:
-                thought = decision.get("thought", "")
-                action_data = decision.get("action", decision)
-                if isinstance(action_data, dict) and "type" not in action_data:
-                    action_data = {"type": "shell", "params": action_data}
-
-            if callback and thought:
-                callback(f"thought:{thought}")
-
-        action_type = action_data.get("type", "shell") if isinstance(action_data, dict) else "shell"
-        params = action_data.get("params", {}) if isinstance(action_data, dict) else {}
-
-        # Convert action types
-        if action_type == "run_shell":
-            action_type = "shell"
-
-        if action_type == "run_tool":
-            tool_name = params.get("tool", "")
-            tool_target = params.get("target", target)
-            if tool_name:
-                params = {"tool": tool_name, "target": tool_target, "args": params.get("args", "")}
-            else:
-                action_type = "shell"
-
-        # Governance gate for shell commands
-        if action_type == "shell" and governance:
-            cmd = params.get("command", "")
-            gate = governance.gate(
-                mission_id=f"universal:{target}:{int(time.time())}",
-                target=target or "unknown",
-                action={"type": "run_shell", "command": cmd},
-            )
-            if gate.decision == "deny":
-                result = f"Command blocked: {gate.rationale}"
-                _append_history(history, "assistant", result)
-                continue
-            elif gate.decision == "needs_approval":
-                from cli.ui_components import confirm
-
-                try:
-                    approved = confirm(f"Run: {cmd[:80]}?", default=False)
-                except (EOFError, KeyboardInterrupt, OSError, ValueError):
-                    approved = False
-                if not approved:
-                    result = "Command rejected by user."
-                    _append_history(history, "assistant", result)
-                    continue
-
-        # Execute
-        result_obj = executor.execute_action({"type": action_type, "params": params})
-        result = result_obj.output if result_obj.success else f"{result_obj.error}"
-
-        # Include the model's own thought in the history so its reasoning
-        # feeds the next step (self-reinforcing chain-of-thought).
-        _entry = f"[{action_type}] {result[:300]}"
-        if thought:
-            _entry = f"[Thought: {thought}]\n{_entry}"
-        _append_history(history, "assistant", _entry)
-
-        # Score findings
-        if is_security_task and result_obj.success:
-            calc = CVSSCalculator(use_ai=False)
-            finding_type = params.get("tool", action_type)
-            try:
-                score = calc.from_finding(finding_type, result[:200], result[:500], "")
-                all_findings.append(
-                    {
-                        "type": finding_type,
-                        "severity": score.severity.value,
-                        "cvss": score.base_score,
-                        "source": "ai_reasoning",  # produced by the agent's own scoring loop
-                    }
-                )
-            except (ValueError, KeyError, AttributeError, TypeError) as e:
-                logger.debug("Suppressed Exception: %s", e)
-
-        # Finish condition
-        if action_type == "finish":
-            break
+        if _sig == "return":
+            return _ret_val
 
     # ── Generate summary ───────────────────────────────────────────────
-    if is_security_task and all_findings:
-        return _build_security_summary(target, step, all_findings, history)
-
-    # P2.4: If loop exited with 0 actions, AI is likely unavailable
-    if len(history) <= 1 and not all_findings:
-        return (
-            f"{ai_unavailable_marker} All AI providers failed. "
-            f"{len(history)-1} actions taken. "
-            f"Check API keys in .env or visit "
-            f"https://aistudio.google.com/apikey to fix Gemini quota."
-        )
-
-    return f"Universal session reached {max_steps} steps. History: {len(history)} actions."
+    return _build_loop_exit_message(
+        is_security_task, all_findings, target, step, history, ai_unavailable_marker, max_steps
+    )
 
 
 # ── Helper functions ────────────────────────────────────────────────────

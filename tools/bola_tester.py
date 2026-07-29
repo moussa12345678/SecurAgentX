@@ -144,7 +144,7 @@ class BOLATester:
                     raw = e.read(self.config.sample_body_bytes)
                 except Exception as e:
                     logger.debug("Suppressed Exception: %s", e)
-            return e.code, raw.decode("utf-8", errors="replace"), elapsed
+            return e.code, raw.decode("utf-8", errors="replace"), elapsed  # type: ignore[misc]
         except Exception as e:
             return -1, str(e), 0.0
 

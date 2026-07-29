@@ -138,7 +138,7 @@ class ProgressDisplay:
             self._console = console
         except ImportError:
             self._rich_available = False
-            self._console = None
+            self._console = None  # type: ignore[assignment]
 
     def start(self, phases: List[ScanPhase]) -> None:
         """Start progress display with defined phases."""

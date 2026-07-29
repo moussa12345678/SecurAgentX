@@ -68,7 +68,7 @@ def get_target_intel(target: str) -> Dict:
 
     # 1. Search for exploits related to target name
     exploits = search_exploits(target)
-    intel["exploits"] = exploits[:5]  # Top 5
+    intel["exploits"] = exploits[:5]  # type: ignore[assignment]  # Top 5
 
     # 2. If it's a domain, search for related mentions in indices (simplified)
     # For now, we return exploit data which is most valuable

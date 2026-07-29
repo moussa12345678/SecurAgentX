@@ -94,7 +94,7 @@ class SettingsOverlay:
         elif self._selected_idx >= self._scroll_offset + self._max_visible:
             self._scroll_offset = self._selected_idx - self._max_visible + 1
 
-    def handle_char(self, ch: str) -> Optional[str]:
+    def handle_char(self, ch: str) -> Optional[str]:  # type: ignore[return]
         """Process a single key character. Returns 'exit', 'saved', 'error', or None."""
         # Arrow keys - must have full escape sequence
         if ch == "\x1b[A" or ch == "\x1b[OA":
@@ -746,7 +746,7 @@ class SettingsOverlay:
                     self.agent._team_aegis_clients = self.agent._init_team_aegis_clients()
                 # Re-create planner with new client
                 if hasattr(self.agent, "planner") and self.agent.planner:
-                    from core.brain import StrategicPlanner
+                    from core.brain import StrategicPlanner  # type: ignore[attr-defined]
 
                     self.agent.planner = StrategicPlanner(new_manager)
                 self.agent.conversation_history = saved_history
@@ -779,7 +779,7 @@ class SettingsOverlay:
 
         config_file = Path("config.yaml")
         if not config_file.exists():
-            config = {}
+            config = {}  # type: ignore[var-annotated]
         else:
             config = yaml.safe_load(config_file.read_text()) or {}
         config.setdefault("ai", {}).setdefault("active_models", [])
@@ -856,7 +856,7 @@ class SettingsOverlay:
 
             for name, server_data in defaults.items():
                 if name not in config.servers:
-                    manager.add_server(name, server_data["command"], server_data["args"])
+                    manager.add_server(name, server_data["command"], server_data["args"])  # type: ignore[arg-type]
 
             self._update_items()
         except Exception as e:

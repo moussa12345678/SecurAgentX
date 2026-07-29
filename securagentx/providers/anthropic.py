@@ -487,7 +487,7 @@ class AnthropicProvider:
             return tool_call
         new_tc = tool_call.model_copy(deep=True)
         if new_tc.model_extra is None:
-            new_tc.model_extra = {}
+            new_tc.model_extra = {}  # type: ignore[misc]
         new_tc.model_extra["thinking_text"] = thinking_text
         new_tc.model_extra["thinking_signature"] = thinking_signature
         return new_tc
@@ -523,7 +523,7 @@ class AnthropicProvider:
                         new_p = p.model_copy(deep=True)
                         # Remove thinking_* keys; keep other extras
                         if new_p.model_extra:
-                            new_p.model_extra = {
+                            new_p.model_extra = {  # type: ignore[misc]
                                 k: v for k, v in new_p.model_extra.items()
                                 if not k.startswith("thinking_")
                             } or None
@@ -862,7 +862,7 @@ class AnthropicProvider:
                 # Stash thinking info on the tool_call so callers can
                 # re-attach via preserve_thinking_block on the next turn.
                 if thinking_text and thinking_sig:
-                    tc.model_extra = {
+                    tc.model_extra = {  # type: ignore[misc]
                         "thinking_text": thinking_text,
                         "thinking_signature": thinking_sig,
                     }

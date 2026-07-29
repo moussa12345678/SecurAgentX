@@ -964,7 +964,7 @@ class Memorist:
                     questions = args.get("questions") or []
                     if isinstance(questions, str):
                         questions = [questions]
-                    result = fn(questions)
+                    result = fn(questions)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else json.dumps(
@@ -983,7 +983,7 @@ class Memorist:
                     args = _parse_args(args_json)
                     answer = anonymize(args.get("answer", ""))
                     question = args.get("question", "")
-                    result = fn(answer=answer, question=question)
+                    result = fn(answer=answer, question=question)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else "answer stored"
@@ -1000,7 +1000,7 @@ class Memorist:
                     args = _parse_args(args_json)
                     guide = anonymize(args.get("guide", ""))
                     question = args.get("question", "")
-                    result = fn(guide=guide, question=question)
+                    result = fn(guide=guide, question=question)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else "guide stored"
@@ -1017,7 +1017,7 @@ class Memorist:
                     args = _parse_args(args_json)
                     code = anonymize(args.get("code", ""))
                     question = args.get("question", "")
-                    result = fn(code=code, question=question)
+                    result = fn(code=code, question=question)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else "code stored"

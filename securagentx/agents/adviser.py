@@ -1067,7 +1067,7 @@ class Adviser:
                     questions = args.get("questions") or []
                     if isinstance(questions, str):
                         questions = [questions]
-                    result = fn(questions)
+                    result = fn(questions)  # type: ignore[misc]
                     if asyncio.iscoroutine(result):
                         result = await result
                     return result if isinstance(result, str) else json.dumps(

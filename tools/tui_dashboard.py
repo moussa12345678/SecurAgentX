@@ -21,60 +21,58 @@ try:
     from textual import work
     from textual.app import App, ComposeResult
     from textual.binding import Binding
-    from textual.containers import Container, Horizontal, Vertical
+    from textual.containers import Container, Horizontal
     from textual.reactive import reactive
-    from textual.screen import Screen
-    from textual.widget import Widget
-    from textual.widgets import Button, DataTable, Footer, Header, Input, RichLog, Static
+    from textual.widgets import DataTable, Header, Input, RichLog, Static
 
     _HAS_TEXTUAL = True
 except ImportError:
     _HAS_TEXTUAL = False
 
     # Define stubs
-    class App:
+    class App:  # type: ignore[no-redef]
         pass
 
-    class ComposeResult:
+    class ComposeResult:  # type: ignore[no-redef]
         pass
 
-    class Container:
+    class Container:  # type: ignore[no-redef]
         pass
 
-    class Horizontal:
+    class Horizontal:  # type: ignore[no-redef]
         pass
 
-    class Vertical:
+    class Vertical:  # type: ignore[no-redef]
         pass
 
-    class Static:
+    class Static:  # type: ignore[no-redef]
         pass
 
-    class RichLog:
+    class RichLog:  # type: ignore[no-redef]
         pass
 
-    class Header:
+    class Header:  # type: ignore[no-redef]
         pass
 
-    class Footer:
+    class Footer:  # type: ignore[no-redef]
         pass
 
-    class Input:
+    class Input:  # type: ignore[no-redef]
         pass
 
-    class Button:
+    class Button:  # type: ignore[no-redef]
         pass
 
-    class DataTable:
+    class DataTable:  # type: ignore[no-redef]
         pass
 
-    class Widget:
+    class Widget:  # type: ignore[no-redef]
         pass
 
-    class Screen:
+    class Screen:  # type: ignore[no-redef]
         pass
 
-    def work(f):
+    def work(f):  # type: ignore[no-redef]
         return f
 
 
@@ -89,7 +87,7 @@ except ImportError:
     _HAS_DESIGN = False
 
     # Stubs
-    class Severity:
+    class Severity:  # type: ignore[no-redef]
         CRITICAL = ("#ff3b30", "●")
         HIGH = ("#ff9500", "●")
         MEDIUM = ("#ffcc00", "●")
@@ -225,7 +223,7 @@ if _HAS_TEXTUAL:
             self.write("[dim]SecurAgentX Dashboard ready[/dim]")
             self.write("[dim]Type /help for commands[/dim]")
 
-        def log(self, message: str, style: str = "white"):
+        def log(self, message: str, style: str = "white"):  # type: ignore[override]
             ts = datetime.now().strftime("%H:%M:%S")
             self.write(f"[dim]{ts}[/] [{style}]{message}[/]")
 
@@ -371,7 +369,7 @@ if _HAS_TEXTUAL:
                 self.call_from_thread(self._update_metric, 0, "1", RED_ACCENT)
 
                 # Import and run orchestrator
-                from main import normalize_target
+                from main import normalize_target  # type: ignore[attr-defined]
                 from core.orchestrator import Orchestrator
 
                 normalized = normalize_target(target)

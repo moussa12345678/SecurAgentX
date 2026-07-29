@@ -99,7 +99,7 @@ class AWSScanner:
         self, policy_json: Dict[str, Any], bucket_name: str
     ) -> List[CloudFinding]:
         """Parse S3 bucket policy for misconfigurations."""
-        findings = []
+        findings = []  # type: ignore[var-annotated]
 
         if not policy_json:
             return findings
@@ -455,9 +455,9 @@ class CloudScanner:
 
     def _generate_report(self) -> Dict[str, Any]:
         """Generate scan report."""
-        severity_counts = {}
-        resource_types = {}
-        finding_types = {}
+        severity_counts = {}  # type: ignore[var-annotated]
+        resource_types = {}  # type: ignore[var-annotated]
+        finding_types = {}  # type: ignore[var-annotated]
 
         for finding in self.all_findings:
             sev = finding.severity

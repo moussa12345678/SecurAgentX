@@ -255,7 +255,7 @@ class BountyFeatureExtractor:
         type_score = 0
         for pattern in self.BOUNTY_RANGES:
             if pattern in vuln_type:
-                type_score = self.BOUNTY_RANGES[pattern]["weight"] * 100
+                type_score = self.BOUNTY_RANGES[pattern]["weight"] * 100  # type: ignore[assignment]
                 break
         features["type_score"] = type_score
 
@@ -330,7 +330,7 @@ class BountyFeatureExtractor:
         exploit_score = sum(20 for ind in exploitability_indicators if ind in description)
         features["exploitability_score"] = min(100, exploit_score + 40)  # Base 40
 
-        return features
+        return features  # type: ignore[return-value]
 
     def _calculate_evidence_depth(self, evidence: Dict[str, Any], depth: int = 0) -> int:
         """Calculate depth/nesting of evidence."""

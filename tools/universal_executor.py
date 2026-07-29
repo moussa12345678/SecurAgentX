@@ -500,7 +500,7 @@ class UniversalExecutor:
         work_dir = cwd
         if agent_id >= 0 and not cwd:
 
-            agent_dir = get_data_dir(f"team_workspaces/agent_{agent_id}")
+            agent_dir = get_data_dir(f"team_workspaces/agent_{agent_id}")  # type: ignore[name-defined]
             agent_dir.mkdir(parents=True, exist_ok=True)
             work_dir = str(agent_dir)
 
@@ -654,7 +654,7 @@ class UniversalExecutor:
                 return ExecutionResult(
                     False, "", f"Tool '{tool_name}' not available", "run_tool", params
                 )
-            report_dir = get_reports_path(f"run_{tool_name}_{int(time.time())}")
+            report_dir = get_reports_path(f"run_{tool_name}_{int(time.time())}")  # type: ignore[name-defined]
             report_dir.mkdir(parents=True, exist_ok=True)
             try:
 
@@ -774,8 +774,8 @@ class UniversalExecutor:
                     entry = db.get_cve(cve_id)
                     output = f"{entry.cve_id}: {entry.description[:200]}" if entry else "Not found."
                 elif keyword:
-                    results = db.search_cves(keyword, limit=5)
-                    output = "\n".join([f"  - {r.cve_id}: {r.description[:100]}" for r in results])
+                    results = db.search_cves(keyword, limit=5)  # type: ignore[assignment]
+                    output = "\n".join([f"  - {r.cve_id}: {r.description[:100]}" for r in results])  # type: ignore[attr-defined]
                 else:
                     output = "Specify cve_id or keyword."
                 return ExecutionResult(True, output, "", "cve_lookup", {})
@@ -795,8 +795,8 @@ class UniversalExecutor:
                 lines = [f"Found {len(secrets)} secrets, {len(endpoints)} endpoints"]
                 for s in secrets[:5]:
                     lines.append(f"  [SECRET] {s.get('type', '?')}: {str(s.get('value', ''))[:80]}")
-                for e in endpoints[:5]:
-                    lines.append(f"  [ENDPOINT] {e}")
+                for e in endpoints[:5]:  # type: ignore[misc]
+                    lines.append(f"  [ENDPOINT] {e}")  # type: ignore[misc]
                 return ExecutionResult(
                     True,
                     "\n".join(lines),

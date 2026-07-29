@@ -175,39 +175,69 @@ class TargetFingerprinter:
                     self._record(result, technologies, tech)
 
         # URL-based hints
-        if url:
-            lowered = url.lower()
-            if ".php" in lowered:
-                self._record(result, technologies, "php")
-            if ".aspx" in lowered or ".asp" in lowered:
-                self._record(result, technologies, "aspnet")
-            if ".jsp" in lowered:
-                self._record(result, technologies, "java")
-            if ".do" in lowered or ".action" in lowered:
-                self._record(result, technologies, "java")
-            if "wp-" in lowered:
-                self._record(result, technologies, "wordpress")
+        self._fingerprint_url_hints(url, result, technologies)
 
         # Cookie hints
-        if cookies:
-            for name in cookies.keys():
-                lname = name.lower()
-                if "phpsessid" in lname:
-                    self._record(result, technologies, "php")
-                elif "jsessionid" in lname:
-                    self._record(result, technologies, "java")
-                elif "asp.net_sessionid" in lname or "aspsessionid" in lname:
-                    self._record(result, technologies, "aspnet")
-                elif "_rails" in lname or "_session_id" in lname:
-                    self._record(result, technologies, "rails")
-                elif "connect.sid" in lname:
-                    self._record(result, technologies, "express")
-                elif "csrftoken" in lname:
-                    self._record(result, technologies, "django")
-                elif "sid" in lname and "tomcat" in lname:
-                    self._record(result, technologies, "tomcat")
+        self._fingerprint_cookie_hints(cookies, result, technologies)
 
         # Infer language/db from server (or language)
+        self._infer_language_and_db(result)
+
+        # CDN / WAF detection
+        self._detect_cdn_waf(norm_headers, result, technologies)
+
+        result["technologies"] = technologies
+        return result
+
+    def _fingerprint_url_hints(
+        self,
+        url: Optional[str],
+        result: Dict[str, Any],
+        technologies: List[str],
+    ) -> None:
+        """Record technologies hinted at by URL suffixes (.php, .aspx, .jsp, …)."""
+        if not url:
+            return
+        lowered = url.lower()
+        if ".php" in lowered:
+            self._record(result, technologies, "php")
+        if ".aspx" in lowered or ".asp" in lowered:
+            self._record(result, technologies, "aspnet")
+        if ".jsp" in lowered:
+            self._record(result, technologies, "java")
+        if ".do" in lowered or ".action" in lowered:
+            self._record(result, technologies, "java")
+        if "wp-" in lowered:
+            self._record(result, technologies, "wordpress")
+
+    def _fingerprint_cookie_hints(
+        self,
+        cookies: Optional[Dict[str, str]],
+        result: Dict[str, Any],
+        technologies: List[str],
+    ) -> None:
+        """Record technologies hinted at by well-known cookie names."""
+        if not cookies:
+            return
+        for name in cookies.keys():
+            lname = name.lower()
+            if "phpsessid" in lname:
+                self._record(result, technologies, "php")
+            elif "jsessionid" in lname:
+                self._record(result, technologies, "java")
+            elif "asp.net_sessionid" in lname or "aspsessionid" in lname:
+                self._record(result, technologies, "aspnet")
+            elif "_rails" in lname or "_session_id" in lname:
+                self._record(result, technologies, "rails")
+            elif "connect.sid" in lname:
+                self._record(result, technologies, "express")
+            elif "csrftoken" in lname:
+                self._record(result, technologies, "django")
+            elif "sid" in lname and "tomcat" in lname:
+                self._record(result, technologies, "tomcat")
+
+    def _infer_language_and_db(self, result: Dict[str, Any]) -> None:
+        """Infer ``language`` and ``db`` slots from the detected server / language."""
         if result["server"] and not result["language"]:
             result["language"] = self.SERVER_TO_LANGUAGE.get(result["server"])
         if not result["db"]:
@@ -217,7 +247,13 @@ class TargetFingerprinter:
             if not result["db"] and result["server"]:
                 result["db"] = self.SERVER_TO_DB.get(result["server"])
 
-        # CDN / WAF detection
+    def _detect_cdn_waf(
+        self,
+        norm_headers: Dict[str, str],
+        result: Dict[str, Any],
+        technologies: List[str],
+    ) -> None:
+        """Detect CDN and WAF presence from normalized response headers."""
         for h in self.CDN_HEADERS:
             if h in norm_headers:
                 result["cdn"] = norm_headers.get("server", "cdn")
@@ -232,9 +268,6 @@ class TargetFingerprinter:
                 result["waf"] = value.split("/")[0] if "/" in value else value
                 technologies.append("waf")
                 break
-
-        result["technologies"] = technologies
-        return result
 
     @staticmethod
     def _record(result: Dict[str, Any], technologies: List[str], tech: str) -> None:

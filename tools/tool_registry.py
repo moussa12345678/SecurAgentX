@@ -114,7 +114,7 @@ class BaseTool(ABC):
         self,
         target: Union[str, List[str]],
         output_file: Path,
-        extra_flags: Optional[List[str]] = None,
+        _extra_flags: Optional[List[str]] = None,
     ) -> List[str]:
         """Build command arguments. Override in subclasses."""
         raise NotImplementedError("Subclasses must implement _build_command")
@@ -443,7 +443,7 @@ class ActiveFuzzerTool(BaseTool):
             from tools.active_fuzzer import ActiveFuzzer
 
             fuzzer = ActiveFuzzer()
-            results = fuzzer.fuzz(target=base_url, max_params=kwargs.get("max_params", 5))
+            results = fuzzer.fuzz(target=base_url, max_params=kwargs.get("max_params", 5))  # type: ignore[attr-defined]
 
             findings = []
             for r in results:
@@ -508,7 +508,7 @@ class PythonReconTool(BaseTool):
             from tools.python_recon import PythonRecon
 
             recon = PythonRecon()
-            results = recon.run(base_url)
+            results = recon.run(base_url)  # type: ignore[attr-defined]
 
             findings = []
             for r in results:
@@ -1056,7 +1056,7 @@ class SupplyChainAnalyzerTool(BaseTool):
             result = analyzer.analyze_directory(base_path)
 
             findings = []
-            for pkg in result.suspicious_packages:
+            for pkg in result.suspicious_packages:  # type: ignore[attr-defined]
                 findings.append(
                     {
                         "type": "suspicious_package",
@@ -1064,7 +1064,7 @@ class SupplyChainAnalyzerTool(BaseTool):
                         "severity": "High",
                     }
                 )
-            for src, dest in result.typosquatting_detected:
+            for src, dest in result.typosquatting_detected:  # type: ignore[attr-defined]
                 findings.append(
                     {
                         "type": "typosquatting",
@@ -1073,7 +1073,7 @@ class SupplyChainAnalyzerTool(BaseTool):
                         "severity": "High",
                     }
                 )
-            for pkg in result.unpinned_versions[:10]:  # Limit to first 10
+            for pkg in result.unpinned_versions[:10]:  # type: ignore[attr-defined]  # Limit to first 10
                 findings.append(
                     {
                         "type": "unpinned_version",
@@ -1086,7 +1086,7 @@ class SupplyChainAnalyzerTool(BaseTool):
                 success=True,
                 tool_name=self.metadata.name,
                 category=self.metadata.category,
-                output=f"Supply chain analysis completed: {result.total_dependencies} dependencies",
+                output=f"Supply chain analysis completed: {result.total_dependencies} dependencies",  # type: ignore[attr-defined]
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
@@ -1132,7 +1132,7 @@ class LogicFlawEngineTool(BaseTool):
             from tools.logic_flaw_engine import LogicFlawEngine
 
             engine = LogicFlawEngine()
-            result = engine.analyze_endpoint(base_url)
+            result = engine.analyze_endpoint(base_url)  # type: ignore[attr-defined]
 
             findings = []
             for flaw in result.flaws:

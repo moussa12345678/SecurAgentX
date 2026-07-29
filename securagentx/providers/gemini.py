@@ -432,7 +432,7 @@ class GeminiProvider:
             return tool_call
         new_tc = tool_call.model_copy(deep=True)
         if new_tc.model_extra is None:
-            new_tc.model_extra = {}
+            new_tc.model_extra = {}  # type: ignore[misc]
         new_tc.model_extra["thought_signature"] = thought_signature
         return new_tc
 
@@ -730,7 +730,7 @@ class GeminiProvider:
                     sig = p_dict.get("thought_signature")
                     if sig and self._preserve_thought_signatures:
                         thought_sigs[tc.id] = sig
-                        tc.model_extra = {"thought_signature": sig}
+                        tc.model_extra = {"thought_signature": sig}  # type: ignore[misc]
                     tool_calls.append(tc)
 
         gen_info: dict = {}
@@ -800,7 +800,7 @@ class GeminiProvider:
                         sig = p_dict.get("thought_signature")
                         if sig and self._preserve_thought_signatures:
                             thought_sigs[tc.id] = sig
-                            tc.model_extra = {"thought_signature": sig}
+                            tc.model_extra = {"thought_signature": sig}  # type: ignore[misc]
                         tool_calls.append(tc)
                 cand_finish = getattr(cand, "finish_reason", None)
                 if cand_finish:

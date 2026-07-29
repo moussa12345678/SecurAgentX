@@ -112,8 +112,8 @@ class SmartScanner:
         self,
         target: str,
         mission_id: str | None = None,
-        token_manager: TokenManager = None,
-        telegram_bridge: TelegramBridge = None,
+        token_manager: TokenManager = None,  # type: ignore[assignment]
+        telegram_bridge: TelegramBridge = None,  # type: ignore[assignment]
         auto_pause: bool = True,
         pause_after_hours: int = 3,
     ):
@@ -212,7 +212,7 @@ class SmartScanner:
 
                 # Run phase
                 logger.info(f"Starting phase: {phase_name}")
-                self.mission.update_phase(phase_name, i)
+                self.mission.update_phase(phase_name, i)  # type: ignore[union-attr]
 
                 phase_result = self._run_phase(phase_config)
                 self.phase_results[phase_name] = phase_result
@@ -233,16 +233,16 @@ class SmartScanner:
 
                 # Record token usage
                 tokens_used = phase_result.get("tokens_used", 0)
-                self.mission.add_tokens(tokens_used)
+                self.mission.add_tokens(tokens_used)  # type: ignore[union-attr]
                 results["tokens_used"] += tokens_used
 
                 # Check for findings
                 if phase_result.get("findings"):
                     new_findings = phase_result["findings"]
                     self.findings.extend(new_findings)
-                    self.mission.add_finding()
+                    self.mission.add_finding()  # type: ignore[union-attr]
                     self.last_finding_time = datetime.now(timezone.utc)
-                    self.progress.add_finding(len(new_findings))
+                    self.progress.add_finding(len(new_findings))  # type: ignore[arg-type]
 
                     # Notify about findings
                     if self.telegram_bridge:
@@ -264,7 +264,7 @@ class SmartScanner:
                     return results
 
             # Complete mission
-            self.mission.update_phase("completed")
+            self.mission.update_phase("completed")  # type: ignore[union-attr]
             results["findings"] = self.findings
             results["phases_completed"] = list(self.phase_results.keys())
             results["duration_seconds"] = (
@@ -278,8 +278,8 @@ class SmartScanner:
                 self.telegram_bridge.notify_mission_completed(
                     self.mission_id,
                     len(self.findings),
-                    results["tokens_used"],
-                    results["duration_seconds"],
+                    results["tokens_used"],  # type: ignore[arg-type]
+                    results["duration_seconds"],  # type: ignore[arg-type]
                 )
 
         except KeyboardInterrupt:
@@ -289,7 +289,7 @@ class SmartScanner:
             results["pause_reason"] = "User interrupted"
         except Exception as e:
             logger.error(f"Scan failed: {e}")
-            self.mission.update_phase("failed")
+            self.mission.update_phase("failed")  # type: ignore[union-attr]
             results["status"] = "failed"
             results["error"] = str(e)
 
@@ -412,7 +412,7 @@ class SmartScanner:
                     future = executor.submit(_run_in_new_loop)
                     report_dir = future.result(timeout=300)
             else:
-                report_dir = asyncio.run(run_standard_scan(self.target, rate_limit=5))
+                report_dir = asyncio.run(run_standard_scan(self.target, rate_limit=5))  # type: ignore[arg-type]
 
             if report_dir:
                 import json
@@ -526,7 +526,7 @@ class SmartScanner:
     def _pause_mission(self, reason: str) -> None:
         """Pause the mission."""
         logger.info(f"Pausing mission: {reason}")
-        self.mission.pause_mission()
+        self.mission.pause_mission()  # type: ignore[union-attr]
         self.progress.finish(f"Paused: {reason}")
 
         # Notify via Telegram
@@ -545,14 +545,14 @@ class SmartScanner:
 
     def resume(self) -> Dict[str, Any]:
         """Resume a paused scan."""
-        status = self.mission.get_status()
+        status = self.mission.get_status()  # type: ignore[union-attr]
 
         if status.get("status") != "paused":
             logger.warning(f"Mission is not paused: {status.get('status')}")
             return {"error": "Mission not paused"}
 
         logger.info("Resuming mission")
-        self.mission.resume_mission()
+        self.mission.resume_mission()  # type: ignore[union-attr]
 
         # Get current phase
         status.get("current_phase", "discovery")
@@ -575,7 +575,7 @@ class SmartScanner:
 
     def get_status(self) -> Dict[str, Any]:
         """Get current scan status."""
-        mission_status = self.mission.get_status()
+        mission_status = self.mission.get_status()  # type: ignore[union-attr]
         token_status = self.token_manager.get_status()
 
         return {

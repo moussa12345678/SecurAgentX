@@ -233,10 +233,10 @@ def normalize_tool_call_ids(chain: ChainLike, template: str) -> list[dict[str, A
         return _iter_messages(chain)
 
     is_ast = isinstance(chain, ChainAST)
-    ast = chain if is_ast else build_chain_ast(chain, force=True)
+    ast = chain if is_ast else build_chain_ast(chain, force=True)  # type: ignore[arg-type]
     id_mapping: dict[str, str] = {}
 
-    for section in ast.sections:
+    for section in ast.sections:  # type: ignore[union-attr]
         for bp in section.body_pairs:
             if bp.type not in (BodyPairType.REQUEST_RESPONSE, BodyPairType.SUMMARIZATION):
                 continue
@@ -280,7 +280,7 @@ def normalize_tool_call_ids(chain: ChainLike, template: str) -> list[dict[str, A
             template,
         )
 
-    return serialize_chain(ast)
+    return serialize_chain(ast)  # type: ignore[arg-type]
 
 
 def clear_reasoning(chain: ChainLike) -> list[dict[str, Any]]:
@@ -309,9 +309,9 @@ def clear_reasoning(chain: ChainLike) -> list[dict[str, Any]]:
         The (possibly mutated) flat message list.
     """
     is_ast = isinstance(chain, ChainAST)
-    ast = chain if is_ast else build_chain_ast(chain, force=True)
+    ast = chain if is_ast else build_chain_ast(chain, force=True)  # type: ignore[arg-type]
 
-    for section in ast.sections:
+    for section in ast.sections:  # type: ignore[union-attr]
         if section.header.system_message is not None:
             _strip_message_reasoning(section.header.system_message)
         if section.header.human_message is not None:
@@ -324,7 +324,7 @@ def clear_reasoning(chain: ChainLike) -> list[dict[str, Any]]:
             for tm in bp.tool_messages:
                 _strip_message_reasoning(tm)
 
-    return serialize_chain(ast)
+    return serialize_chain(ast)  # type: ignore[arg-type]
 
 
 def _strip_thought_signatures(msg: dict[str, Any]) -> None:

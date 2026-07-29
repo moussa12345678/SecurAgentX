@@ -46,8 +46,8 @@ class Finding:
     remediation: str
     cwe_id: Optional[str] = None
     cve_id: Optional[str] = None
-    affected_urls: List[str] = None
-    references: List[str] = None
+    affected_urls: List[str] = None  # type: ignore[assignment]
+    references: List[str] = None  # type: ignore[assignment]
 
     def __post_init__(self):
         if self.affected_urls is None:

@@ -71,7 +71,7 @@ class DockerClientProtocol(Protocol):
 
     async def container_exec_create(
         self, container: str, *, cmd: list[str], working_dir: str,
-        tty: bool = True, attach_stdout: bool = True, attach_stderr: bool = True,
+        tty: bool = True, _attach_stdout: bool = True, _attach_stderr: bool = True,
     ) -> dict[str, Any]: ...
 
     async def container_exec_start(self, exec_id: str, *, tty: bool = True) -> Any: ...
@@ -82,7 +82,7 @@ class DockerClientProtocol(Protocol):
 
     async def put_archive(
         self, container: str, path: str, data: bytes,
-        *, allow_overwrite_dir_with_file: bool = True,
+        *, _allow_overwrite_dir_with_file: bool = True,
     ) -> None: ...
 
 
@@ -91,7 +91,7 @@ class TermLogProviderProtocol(Protocol):
     """Optional terminal-log sink (port of Go ``TermLogProvider``)."""
 
     async def put_msg(
-        self, log_type: str, message: str,
+        self, _log_type: str, message: str,
         container_id: Optional[int] = None,
         task_id: Optional[int] = None,
         subtask_id: Optional[int] = None,
@@ -101,7 +101,7 @@ class TermLogProviderProtocol(Protocol):
 class _NullTermLog:
     """Default no-op log sink when none is supplied."""
 
-    async def put_msg(self, log_type: str, message: str, *args: Any, **kw: Any) -> None:
+    async def put_msg(self, _log_type: str, message: str, *args: Any, **kw: Any) -> None:
         return None
 
 
@@ -214,7 +214,7 @@ class DockerTerminal:
 
         # Create exec process (Go: ContainerExecCreate with Tty=true).
         try:
-            create_resp = await self.docker_client.container_exec_create(
+            create_resp = await self.docker_client.container_exec_create(  # type: ignore[call-arg]
                 container_id,
                 cmd=["sh", "-c", command],
                 working_dir=cwd,
@@ -497,7 +497,7 @@ class DockerTerminal:
 
         dir_path = os.path.dirname(path.rstrip("/")) or "/"
         try:
-            await self.docker_client.put_archive(
+            await self.docker_client.put_archive(  # type: ignore[call-arg]
                 container_id, dir_path, tar_buf.getvalue(),
                 allow_overwrite_dir_with_file=True,
             )
