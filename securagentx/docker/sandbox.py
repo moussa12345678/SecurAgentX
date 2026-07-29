@@ -309,7 +309,7 @@ class DockerSandbox:
         default_image: str = DEFAULT_IMAGE,
         docker_socket: str = DEFAULT_DOCKER_SOCKET_PATH,
         network: str = "",
-        public_ip: str = "0.0.0.0",
+        public_ip: str = "127.0.0.1",  # loopback only — container ports not exposed to LAN
         docker_inside: bool = False,
         docker_net_admin: bool = False,
         db_path: Path | str = DEFAULT_DB_PATH,
