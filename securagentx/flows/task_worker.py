@@ -1,6 +1,6 @@
-"""securagentx/flows/task_worker.py — TaskWorker asyncio port of PentAGI's task.go.
+"""securagentx/flows/task_worker.py — TaskWorker asyncio port of the original's task.go.
 
-This module ports PentAGI's ``backend/pkg/controller/task.go::TaskWorker``
+This module ports the original ``backend/pkg/controller/task.go::TaskWorker``
 to Python. The TaskWorker is the middle tier of the 4-tier hierarchy
 (Flow → Task → SubTask → Action). It owns a single Task row, runs the
 Generator agent to produce the initial subtask plan, then loops:
@@ -12,7 +12,7 @@ Generator agent to produce the initial subtask plan, then loops:
 agent to produce the task's final report (success / failure flag +
 write-up) and transitions the Task to ``FINISHED`` or ``FAILED``.
 
-Architecture (ported from PentAGI)
+Architecture (ported from the Go original)
 ---------------------------------
 * :meth:`TaskWorker.create` — classmethod that calls
   ``provider.get_task_title(input)`` to derive the title, inserts a Task
@@ -29,13 +29,13 @@ Architecture (ported from PentAGI)
 Concurrency
 -----------
 * An :class:`asyncio.Lock` (``_mx``) guards the ``completed`` / ``waiting``
-  in-memory flags (replaces PentAGI's ``mx sync.RWMutex``).
+  in-memory flags (replaces the original ``mx sync.RWMutex``).
 * Back-propagation: on each status transition, the
   :class:`TaskStateMachine` calls :func:`back_propagate_status` to
   propagate the change up to the parent Flow.
 
 Agent context propagation uses :class:`contextvars.ContextVar` via
-:func:`AgentContext.put` (mirrors PentAGI's
+:func:`AgentContext.put` (mirrors the original
 ``tools.PutAgentContext(ctx, MsgchainTypePrimaryAgent)``).
 """
 
@@ -70,8 +70,8 @@ logger = logging.getLogger("securagentx.flows.task_worker")
 
 # Hard cap on the total number of subtasks (planned + completed) before
 # the task loop terminates and the Reporter is invoked. Mirrors
-# PentAGI's ``providers.TasksNumberLimit`` (default 10). The +3 buffer
-# matches PentAGI's ``len(subtasks) < TasksNumberLimit+3`` loop guard.
+# the original ``providers.TasksNumberLimit`` (default 10). The +3 buffer
+# matches the original ``len(subtasks) < TasksNumberLimit+3`` loop guard.
 TASKS_NUMBER_LIMIT: int = 10
 _TASK_LOOP_BUFFER: int = 3
 
@@ -111,7 +111,7 @@ class TaskWorker:
         # In-memory cache of subtask workers (subtask_id → SubtaskWorker).
         self._subtask_workers: dict[int, "SubtaskWorker"] = {}
 
-        # In-memory flags mirroring PentAGI's `completed` / `waiting`.
+        # In-memory flags mirroring the original `completed` / `waiting`.
         self._completed: bool = task.status in (
             TaskStatus.FINISHED,
             TaskStatus.FAILED,
@@ -192,7 +192,7 @@ class TaskWorker:
                     status.value,
                 )
 
-            # Update in-memory flags to mirror PentAGI's taskWorker.SetStatus switch.
+            # Update in-memory flags to mirror the original taskWorker.SetStatus switch.
             if status == TaskStatus.RUNNING:
                 self._completed = False
                 self._waiting = False
@@ -202,7 +202,7 @@ class TaskWorker:
             elif status in (TaskStatus.FINISHED, TaskStatus.FAILED):
                 self._completed = True
                 self._waiting = False
-            # CREATED is not settable via this method (mirrors PentAGI).
+            # CREATED is not settable via this method (mirrors the Go original).
 
     async def get_status(self) -> TaskStatus:
         """Return the task's current status (re-read from the DB)."""
@@ -233,7 +233,7 @@ class TaskWorker:
     ) -> "TaskWorker":
         """Create a new Task + run the Generator to populate the subtask plan.
 
-        Mirrors PentAGI's ``NewTaskWorker``. Flow:
+        Mirrors the original ``NewTaskWorker``. Flow:
             1. ``provider.get_task_title(input)`` → derive title.
             2. Insert Task row in ``CREATED`` status.
             3. Log the input as a ``MsglogType.INPUT`` message-log entry.
@@ -278,7 +278,7 @@ class TaskWorker:
         finally:
             AgentContext.reset(token)
 
-    # ── subtask controller (mirrors PentAGI's subtasks.go) ─────────────
+    # ── subtask controller (mirrors the original subtasks.go) ─────────────
 
     async def _generate_subtasks(self) -> None:
         """Call the Generator agent + insert the planned subtasks in DB."""
@@ -304,7 +304,7 @@ class TaskWorker:
     async def _refine_subtasks(self) -> None:
         """Call the Refiner agent + apply the patched plan to the DB.
 
-        Mirrors PentAGI's ``subtaskController.RefineSubtasks``. The
+        Mirrors the original ``subtaskController.RefineSubtasks``. The
         Refiner returns a fresh full plan; the caller deletes all
         ``CREATED`` subtasks and inserts the new ones.
         """
@@ -342,7 +342,7 @@ class TaskWorker:
     async def _pop_subtask(self) -> "SubtaskWorker | None":
         """Pop the next planned (CREATED) subtask from the DB, FIFO.
 
-        Mirrors PentAGI's ``subtaskController.PopSubtask``. Returns
+        Mirrors the original ``subtaskController.PopSubtask``. Returns
         ``None`` when the queue is empty.
         """
         planned = await self.task_ctx.db.list_planned_subtasks(self.task_id)
@@ -381,7 +381,7 @@ class TaskWorker:
     async def put_input(self, input: str) -> None:
         """Feed user input to the currently WAITING subtask.
 
-        Mirrors PentAGI's ``taskWorker.PutInput``. Iterates over the
+        Mirrors the original ``taskWorker.PutInput``. Iterates over the
         in-memory subtask workers, finds the first one that is WAITING,
         and calls ``put_input`` on it. Raises ``RuntimeError`` if the
         task isn't WAITING.
@@ -419,7 +419,7 @@ class TaskWorker:
     async def run(self) -> None:
         """Main task loop: PopSubtask → SubtaskWorker.Run → RefineSubtasks → repeat.
 
-        Mirrors PentAGI's ``taskWorker.Run``. The loop continues until
+        Mirrors the original ``taskWorker.Run``. The loop continues until
         either the planned-subtask queue is empty OR the
         :data:`TASKS_NUMBER_LIMIT` cap is reached. Then it calls the
         Reporter for the final report and transitions the task to
@@ -435,7 +435,7 @@ class TaskWorker:
 
             while iterations < max_iterations:
                 # Check for cancellation between iterations (mirrors
-                # PentAGI's per-iteration ctx.Done() check).
+                # the original per-iteration ctx.Done() check).
                 if self.flow_worker is not None and self.flow_worker.is_task_cancelled():
                     logger.info(
                         "TaskWorker.run cancelled task_id=%d iteration=%d",
@@ -511,7 +511,7 @@ class TaskWorker:
     async def _finalize_with_reporter(self) -> None:
         """Call the Reporter agent + transition the task to FINISHED/FAILED.
 
-        Mirrors PentAGI's ``taskWorker.Run`` final block. Calls
+        Mirrors the original ``taskWorker.Run`` final block. Calls
         ``provider.get_task_result(task_id)``, stores the result, and
         transitions the task status.
         """
@@ -525,7 +525,7 @@ class TaskWorker:
         else:
             await self.set_status(TaskStatus.FAILED)
 
-        # Log the report as a message-log entry (mirrors PentAGI's
+        # Log the report as a message-log entry (mirrors the original
         # ``PutTaskMsgResult`` with type=REPORT, format=MARKDOWN).
         from securagentx.flows.models import MsglogResultFormat, MsglogType
 
@@ -547,7 +547,7 @@ class TaskWorker:
     async def _handle_interrupting(self) -> None:
         """Set the task to WAITING on cancellation / deadline (best-effort).
 
-        Mirrors PentAGI's ``taskWorker.handleInterrupting``. Skips if
+        Mirrors the original ``taskWorker.handleInterrupting``. Skips if
         the task is already FINISHED/FAILED.
         """
         if self.is_completed():
@@ -564,7 +564,7 @@ class TaskWorker:
     async def finish(self) -> None:
         """Finish the task: mark all incomplete subtasks FINISHED + set FINISHED.
 
-        Mirrors PentAGI's ``taskWorker.Finish``. Called by
+        Mirrors the original ``taskWorker.Finish``. Called by
         :class:`FlowWorker.finish` during graceful shutdown.
         """
         if self.is_completed():

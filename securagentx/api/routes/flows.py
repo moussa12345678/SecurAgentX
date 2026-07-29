@@ -1,6 +1,6 @@
 """securagentx.api.routes.flows — Flow lifecycle + related-resource listing.
 
-Ports PentAGI's ``/flows/*`` REST endpoints (originally GraphQL
+Ports the original ``/flows/*`` REST endpoints (originally GraphQL
 mutations ``createFlow`` / ``putUserInput`` / ``stopFlow`` /
 ``deleteFlow`` / ``renameFlow``, plus GraphQL queries for tasks,
 subtasks, containers, toolcalls, msglogs, termlogs, searchlogs,
@@ -617,7 +617,7 @@ async def get_flow_usage(
 ) -> JSONResponse:
     """Return aggregated token usage for the flow.
 
-    Shape mirrors PentAGI's GraphQL ``usageStatsByFlow`` query:
+    Shape mirrors the original GraphQL ``usageStatsByFlow`` query:
 
     ```
     {
@@ -688,7 +688,7 @@ async def submit_flow_input(
 ) -> JSONResponse:
     """Submit additional user input to a flow that's waiting for it.
 
-    PentAGI's GraphQL ``putUserInput`` mutation. 404 if the flow doesn't
+    The original GraphQL ``putUserInput`` mutation. 404 if the flow doesn't
     exist; 409 if the flow isn't in ``waiting`` status.
     """
     develop = bool(getattr(request.app.state, "develop", False))

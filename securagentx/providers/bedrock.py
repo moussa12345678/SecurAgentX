@@ -1,6 +1,6 @@
 """securagentx.providers.bedrock — AWS Bedrock adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/bedrock/bedrock.go`` (467 lines).
+Port of the original ``backend/pkg/providers/bedrock/bedrock.go`` (467 lines).
 The adapter talks to AWS Bedrock's Converse API via :mod:`boto3` and
 implements the full :class:`~securagentx.providers.base.Provider` protocol.
 
@@ -27,7 +27,7 @@ Key features ported from the Go original
   :func:`securagentx.providers.base.clean_tool_schemas` is applied to
   every tool config before the request is sent.
 * **429 retry** — :func:`tenacity.retry` with 10 attempts, 5 s base +
-  1 s linear increment per attempt (matches PentAGI's
+  1 s linear increment per attempt (matches the original
   ``MaxTooManyRequestsRetries`` / ``TooManyRequestsRetryDelay``).
 * **Tool-call ID template** — ``"tooluse_{r:22:x}"`` (22-char hex).
   Bedrock auto-generates tool-use IDs in this shape; the orchestrator
@@ -73,7 +73,7 @@ logger = logging.getLogger("securagentx.providers.bedrock")
 # Constants — ported from bedrock.go
 # ---------------------------------------------------------------------------
 
-#: Default Bedrock model. PentAGI's ``BedrockAgentModel`` constant points
+#: Default Bedrock model. The original ``BedrockAgentModel`` constant points
 #: at the same Claude Sonnet 4.5 cross-region inference ID.
 BEDROCK_DEFAULT_MODEL: str = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
@@ -83,13 +83,13 @@ BEDROCK_DEFAULT_MODEL: str = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 #: indistinguishable.
 BEDROCK_TOOL_CALL_ID_TEMPLATE: str = "tooluse_{r:22:x}"
 
-#: Maximum number of 429 (TooManyRequests) retries — mirrors PentAGI's
+#: Maximum number of 429 (TooManyRequests) retries — mirrors the original
 #: ``MaxTooManyRequestsRetries``.
 BEDROCK_MAX_429_RETRIES: int = 10
 
 #: Base delay (seconds) for 429 backoff — mirrors
 #: ``TooManyRequestsRetryDelay``. Each retry waits ``BASE + i`` seconds
-#: (linear, not exponential — matches PentAGI exactly).
+#: (linear, not exponential — matches the Go original exactly).
 BEDROCK_429_BASE_DELAY: float = 5.0
 
 
@@ -121,7 +121,7 @@ class DefaultAuth(_BedrockAuthBase):
     """Use the AWS SDK default credential chain (env / EC2 / SSO / …).
 
     No explicit credentials are passed to ``boto3.client``; the SDK
-    resolves them from the environment. Equivalent to PentAGI's
+    resolves them from the environment. Equivalent to the original
     ``cfg.BedrockDefaultAuth == true`` branch.
     """
 
@@ -146,7 +146,7 @@ class BearerToken(_BedrockAuthBase):
 class StaticCredentials(_BedrockAuthBase):
     """Static AWS credentials (access key + secret key + session token).
 
-    Equivalent to PentAGI's
+    Equivalent to the original
     ``credentials.NewStaticCredentialsProvider(access, secret, session)``
     branch.
     """
@@ -166,7 +166,7 @@ class StaticCredentials(_BedrockAuthBase):
 
 
 #: Union of all supported auth modes. Use :func:`resolve_auth_from_env`
-#: to pick one based on environment variables (mirrors PentAGI's
+#: to pick one based on environment variables (mirrors the original
 #: precedence: default-auth > bearer > static).
 BedrockAuth = DefaultAuth | BearerToken | StaticCredentials
 
@@ -174,7 +174,7 @@ BedrockAuth = DefaultAuth | BearerToken | StaticCredentials
 def resolve_auth_from_env() -> BedrockAuth:
     """Pick a Bedrock auth mode from environment variables.
 
-    Mirrors PentAGI's precedence in ``bedrock.go::New``:
+    Mirrors the original precedence in ``bedrock.go::New``:
 
     1. ``BEDROCK_DEFAULT_AUTH=1`` -> :class:`DefaultAuth`.
     2. ``BEDROCK_BEARER_TOKEN`` set -> :class:`BearerToken`.
@@ -247,7 +247,7 @@ def get_default_config() -> ProviderConfig:
 
     Ported verbatim from ``bedrock/config.yml``. Each of the 13 agent
     slots is populated with the same model / temperature / pricing
-    PentAGI ships out-of-the-box.
+    SecurAgentX ships out-of-the-box.
     """
     cfg = ProviderConfig()
     cfg.simple = _agent(
@@ -530,7 +530,7 @@ class BedrockProvider:
     Construction is lazy — :mod:`boto3` is imported inside
     :meth:`__init__` so importing this module never requires boto3 to be
     installed. Callers must supply a non-null :class:`BedrockAuth` (use
-    :func:`resolve_auth_from_env` for the PentAGI default precedence).
+    :func:`resolve_auth_from_env` for the SecurAgentX default precedence).
     """
 
     def __init__(
@@ -554,7 +554,7 @@ class BedrockProvider:
             models if models is not None else list(BEDROCK_DEFAULT_MODELS)
         )
 
-        # Cached tool-call ID template — PentAGI uses ``sync.Once``;
+        # Cached tool-call ID template — SecurAgentX uses ``sync.Once``;
         # Python uses a plain ``threading.Event`` for the same effect.
         self._tool_call_id_template: str | None = None
         self._tool_call_id_template_lock = threading.Lock()
@@ -633,7 +633,7 @@ class BedrockProvider:
         """Resolve the model name for ``opt``.
 
         Falls back to :data:`BEDROCK_DEFAULT_MODEL` when the slot is empty
-        — mirrors PentAGI's ``bedrockProvider.Model``.
+        — mirrors the original ``bedrockProvider.Model``.
         """
         agent = self._provider_config.get_agent_config(opt)
         if agent is not None and agent.model:
@@ -672,7 +672,7 @@ class BedrockProvider:
         """Single-prompt convenience call — wraps :meth:`call_ex`.
 
         Builds a 1-message chain (user role, single text part) and
-        returns the first choice's content. Mirrors PentAGI's
+        returns the first choice's content. Mirrors the original
         ``WrapGenerateFromSinglePrompt``.
         """
         chain = [MessageContent(role="user", parts=[TextPart(text=prompt)])]
@@ -729,7 +729,7 @@ class BedrockProvider:
         """Invoke Bedrock ``converse`` (or ``converse_stream``) with retry.
 
         The 429 retry policy uses ``tenacity`` with 10 attempts, 5 s
-        base + 1 s linear increment per attempt — matching PentAGI's
+        base + 1 s linear increment per attempt — matching the original
         ``MaxTooManyRequestsRetries`` / ``TooManyRequestsRetryDelay``
         exactly. ``tenacity`` is imported lazily so the module can be
         imported without it installed.
@@ -1052,7 +1052,7 @@ class BedrockProvider:
 
         Bedrock uses camelCase keys (``inputTokens``, ``outputTokens``,
         ``cacheReadInputTokens``, ``cacheWriteInputTokens``). We map them
-        to the PentAGI-style snake_case fields.
+        to the SecurAgentX-style snake_case fields.
         """
         return CallUsage(
             input_tokens=int(usage_dict.get("inputTokens", 0) or 0),

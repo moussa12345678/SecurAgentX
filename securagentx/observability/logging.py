@@ -1,6 +1,6 @@
 """Structured logging for SecurAgentX — ``structlog`` + OTel logs bridge.
 
-Mirrors PentAGI's ``Observability`` logrus hook behaviour
+Mirrors the original ``Observability`` logrus hook behaviour
 (``backend/pkg/observability/obs.go``): every structured-log record is
 auto-injected with the active OpenTelemetry trace context and (when
 Langfuse is enabled) the active Langfuse trace / observation ids, then
@@ -20,7 +20,7 @@ Configuration:
 The Python ``logging`` package is bridged into the OTel logs pipeline via
 ``opentelemetry-instrumentation-logging`` (registered by ``setup_otel``)
 so any module using ``logging.getLogger`` automatically gets the same
-treatment — equivalent to PentAGI's logrus hook.
+treatment — equivalent to the original logrus hook.
 """
 
 from __future__ import annotations
@@ -119,7 +119,7 @@ def _build_processors(json_logs: bool) -> list[Any]:
     Pipeline order (left-to-right):
 
     1. ``merge_contextvars`` — propagates ``contextvars``-bound keys.
-    2. ``add_log_level`` — adds ``level`` key (matches PentAGI's logrus
+    2. ``add_log_level`` — adds ``level`` key (matches the original logrus
        ``level`` field).
     3. ``TimeStamper(fmt="iso", utc=True)`` — ISO-8601 UTC timestamps
        (matches Loki ingestion expectations).

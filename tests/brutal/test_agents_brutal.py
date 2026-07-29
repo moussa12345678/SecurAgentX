@@ -1125,7 +1125,7 @@ class TestSearcher:
         This brutal test documents that the current Searcher.run implementation
         constructs an AgentContext with kwargs the dataclass does not accept
         (system_prompt, user_prompt, question, ...) and so raises TypeError
-        before any LLM call. PentAGI's contract is that the Searcher pre-
+        before any LLM call. The original contract is that the Searcher pre-
         validates the question; this assertion documents the divergence.
         """
         s = Searcher(llm_client=FakeLLMClient())
@@ -2046,7 +2046,7 @@ class TestSummarizer:
         assert any(m.get("role") == "system" for m in out)
 
     def test_summarizer_config_nine_defaults(self) -> None:
-        """SummarizerConfig defaults match PentAGI's zero-value config."""
+        """SummarizerConfig defaults match the original zero-value config."""
         cfg = SummarizerConfig()
         assert cfg.preserve_last is True
         assert cfg.use_qa is False

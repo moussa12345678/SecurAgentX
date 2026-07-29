@@ -188,7 +188,7 @@ class FlowManager:
     ) -> Flow:
         """Create a new Flow + spawn its FlowWorker + submit the initial input.
 
-        Mirrors PentAGI's ``NewFlowWorker``. Flow:
+        Mirrors the original ``NewFlowWorker``. Flow:
             1. Insert a Flow row (status=CREATED).
             2. Build a :class:`FlowContext` (DB + provider + IDs).
             3. Build the :class:`FlowProvider` via the factory.
@@ -288,7 +288,7 @@ class FlowManager:
     async def stop_flow(self, flow_id: int) -> None:
         """Stop a running flow (cancels the current task).
 
-        Mirrors PentAGI's ``stopFlow`` mutation. Calls ``worker.stop()``
+        Mirrors the original ``stopFlow`` mutation. Calls ``worker.stop()``
         which cancels the current task + transitions the flow to
         WAITING. The worker remains cached so subsequent ``submit_input``
         calls can resume processing.

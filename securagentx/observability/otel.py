@@ -1,20 +1,20 @@
-"""OpenTelemetry setup for SecurAgentX (mirrors PentAGI's otelclient.go).
+"""OpenTelemetry setup for SecurAgentX (mirrors the original otelclient.go).
 
 Ports the observability contract documented under Task 1-c of the worklog:
 
 * Single OTLP exporter to the OTel Collector on ``:4318`` (HTTP) / ``:4317``
-  (gRPC). PentAGI's Go upstream connects to ``:8148`` gRPC; the Python stack
+  (gRPC). The original Go upstream connects to ``:8148`` gRPC; the Python stack
   uses ``:4318`` HTTP because that's what the same Collector image exposes
   for the ``otlphttp`` receiver (gRPC would also work — pick the endpoint
   via ``otlp_endpoint``).
 * Three SDK providers — Tracer, Meter, Logger — each with a 30-second
-  export interval and 10-second export timeout (matches PentAGI's
+  export interval and 10-second export timeout (matches the original
   ``sdktrace.NewBatchSpanProcessor`` / ``sdkmetric.NewPeriodicReader`` /
   ``sdklog.NewBatchProcessor``).
 * Resource attributes: ``service.name``, ``service.version``,
   ``deployment.environment``.
 * W3C ``traceparent`` propagator (composite ``TraceContext + Baggage`` —
-  identical to PentAGI's `` newTextMapPropagator(tracecontext.Baggage{})``).
+  identical to the original `` newTextMapPropagator(tracecontext.Baggage{})``).
 * Auto-instruments FastAPI, httpx, asyncpg and redis (the same set the Go
   upstream instruments via otelhttp / otelpgx / otelredis).
 
@@ -32,9 +32,9 @@ from typing import Any, Optional
 
 logger = logging.getLogger("securagentx.observability.otel")
 
-# 30 s export interval — matches PentAGI's BatchSpanProcessor / PeriodicReader.
+# 30 s export interval — matches the original BatchSpanProcessor / PeriodicReader.
 EXPORT_INTERVAL_SECONDS: float = 30.0
-# 10 s export timeout — matches PentAGI's batch export timeout.
+# 10 s export timeout — matches the original batch export timeout.
 EXPORT_TIMEOUT_SECONDS: float = 10.0
 
 # Module-level state — populated by ``setup_otel``, drained by ``shutdown_otel``.
@@ -209,7 +209,7 @@ def setup_otel(
                 span_exporter,
                 export_timeout_millis=int(EXPORT_TIMEOUT_SECONDS * 1000),
                 # The default schedule delay is 5 s; align to 30 s to match
-                # PentAGI's batch processor configuration.
+                # the original batch processor configuration.
                 schedule_delay_millis=int(EXPORT_INTERVAL_SECONDS * 1000),
             )
         )

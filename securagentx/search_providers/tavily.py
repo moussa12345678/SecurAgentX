@@ -1,6 +1,6 @@
 """securagentx/search_providers/tavily.py — Tavily search provider.
 
-Ports PentAGI's ``backend/pkg/tools/tavily.go`` (323 lines) to an async
+Ports the original ``backend/pkg/tools/tavily.go`` (323 lines) to an async
 Python client. Tavily is an LLM-friendly search API whose notable quirk
 is that the API key is passed **in the request body**, not in an
 ``Authorization`` header.
@@ -8,7 +8,7 @@ is that the API key is passed **in the request body**, not in an
 Endpoint:
     ``POST https://api.tavily.com/search``
 
-Request body (port-verbatim from PentAGI):
+Request body (port-verbatim from the Go original):
     .. code-block:: json
 
        {
@@ -26,7 +26,7 @@ Response:
         "results": [{"title": "...", "url": "...", "content": "...",
                      "raw_content": "...?", "score": 0.91}]}
 
-Post-processing (mirrors PentAGI exactly):
+Post-processing (mirrors the Go original exactly):
     * If any result has a non-empty ``raw_content`` AND a summarizer is
       configured: concatenate all raw contents together (with citation
       markers like ``[Source #N]``) and hand the bundle to the LLM
@@ -63,14 +63,14 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.tavily")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's tavily.go.
+# Constants — ported verbatim from the Go original's tavily.go.
 # ---------------------------------------------------------------------------
 
 TAVILY_ENDPOINT: str = "https://api.tavily.com/search"
 TAVILY_TIMEOUT: float = 30.0
 
 #: Per-result character cap for raw_content when no summarizer is wired.
-#: Mirrors PentAGI's ``3000``-char per-result truncation.
+#: Mirrors the original ``3000``-char per-result truncation.
 TAVILY_PER_RESULT_TRUNC: int = 3000
 
 
@@ -84,7 +84,7 @@ class TavilySearchProvider(SearchProvider):
 
     Auth is unusual: the API key is sent **in the JSON request body**
     (field ``api_key``), NOT in an ``Authorization`` header. This mirrors
-    PentAGI's tavily.go verbatim.
+    the original tavily.go verbatim.
 
     Availability gate: ``TAVILY_API_KEY`` env var is non-empty.
     """
@@ -174,7 +174,7 @@ class TavilySearchProvider(SearchProvider):
 
         When any result carries a non-empty ``raw_content`` AND a
         summarizer is wired, the raw contents are concatenated and sent
-        to the summarizer (mirrors PentAGI's ``getSummarizePrompt``).
+        to the summarizer (mirrors the original ``getSummarizePrompt``).
         Otherwise each result's content is rendered with a hard
         3000-char cap per result.
         """
@@ -201,7 +201,7 @@ class TavilySearchProvider(SearchProvider):
                 )
 
         # If we have raw contents and a summarizer, route the bundle
-        # through the LLM summarizer (port of PentAGI's getSummarizePrompt
+        # through the LLM summarizer (port of the original's getSummarizePrompt
         # branch).
         if any_raw and self.summarizer is not None:
             bundle = "\n\n---\n\n".join(raw_bundles)
@@ -246,7 +246,7 @@ class TavilySearchProvider(SearchProvider):
 
 
 # ---------------------------------------------------------------------------
-# HTTP error mapping — preserved verbatim from PentAGI.
+# HTTP error mapping — preserved verbatim from the Go original.
 # ---------------------------------------------------------------------------
 
 _TAVILY_STATUS_MAP: dict[int, str] = {

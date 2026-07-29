@@ -1,6 +1,6 @@
 """securagentx/agents/summarizer.py — Chain summarization auxiliary agent.
 
-Ports PentAGI's ChainAST + 3-phase summarization algorithm
+Ports the original ChainAST + 3-phase summarization algorithm
 (``backend/pkg/cast`` + ``backend/pkg/csum`` in the Go upstream, documented
 under Task 1-c of the worklog) into SecurAgentX.
 
@@ -52,7 +52,7 @@ logger = logging.getLogger("securagentx.agents.summarizer")
 
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from pentagi/pkg/csum
+# Constants — ported verbatim from pkg/csum
 # ---------------------------------------------------------------------------
 SUMMARIZED_CONTENT_PREFIX = "Summarized content:"
 SUMMARY_TOOL_NAME = "execute_task_and_return_summary"
@@ -99,7 +99,7 @@ Rules:
 # ChainAST data structures
 # ---------------------------------------------------------------------------
 class BodyPairType(str, Enum):
-    """Mirror of PentAGI's ``BodyPairType`` enum."""
+    """Mirror of the original ``BodyPairType`` enum."""
 
     COMPLETION = "Completion"
     REQUEST_RESPONSE = "RequestResponse"
@@ -209,7 +209,7 @@ class ChainAST:
 class SummarizerConfig:
     """Tunable knobs for :meth:`Summarizer.summarize_chain`.
 
-    Defaults match PentAGI's ``SummarizerConfig`` zero-value.
+    Defaults match the original ``SummarizerConfig`` zero-value.
     """
 
     preserve_last: bool = True
@@ -304,7 +304,7 @@ def _inject_fake_thought_signatures(msg: dict[str, Any]) -> None:
 
     Gemini requires every tool call in the *current* turn to carry a
     ``thought_signature``. Summarising a turn would strip it and trigger
-    HTTP 400. PentAGI's workaround is to inject a fake sentinel value that
+    HTTP 400. The original workaround is to inject a fake sentinel value that
     Gemini's validator short-circuits on.
     """
     calls = msg.get("tool_calls")
@@ -395,7 +395,7 @@ def build_chain_ast(chain: list[dict[str, Any]], *, force: bool = True) -> Chain
         (one of ``"system"``, ``"human"``/``"user"``, ``"ai"``/``"assistant"``,
         ``"tool"``).
     force:
-        When True (default), repair inconsistencies the same way PentAGI's
+        When True (default), repair inconsistencies the same way the original
         ``NewChainAST(chain, force=true)`` does:
 
         * merge consecutive Human messages,

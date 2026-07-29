@@ -32,7 +32,7 @@ logger = logging.getLogger("securagentx.agents.assistant")
 
 
 # ---------------------------------------------------------------------------
-# System prompt — ported from pentagi/templates/prompts/assistant.tmpl
+# System prompt — ported from templates/prompts/assistant.tmpl
 # ---------------------------------------------------------------------------
 ASSISTANT_SYSTEM_PROMPT = """\
 You are the SecurAgentX Assistant, an interactive conversational agent that

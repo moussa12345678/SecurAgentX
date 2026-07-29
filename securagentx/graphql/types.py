@@ -1,5 +1,5 @@
 """
-securagentx.graphql.types — Strawberry GraphQL types ported from PentAGI's
+securagentx.graphql.types — Strawberry GraphQL types ported from the Go original's
 ``backend/pkg/graph/schema.graphqls`` (1115 lines).
 
 Every SDL ``type``/``input`` block is mirrored one-to-one here as a
@@ -16,12 +16,12 @@ type exposes:
   instance from a Pydantic model or plain dict, applying any field renames;
 * a ``to_pydantic(self)`` method that round-trips back to the source model.
 
-This mirrors PentAGI's ``pkg/database/converter`` package — Go struct →
+This mirrors the original ``pkg/database/converter`` package — Go struct →
 ``model.*`` gqlgen struct — but in the Python idiomatic direction.
 
 References:
-    * PentAGI: backend/pkg/graph/schema.graphqls
-    * PentAGI: backend/pkg/graph/model/models_gen.go
+    * SecurAgentX: backend/pkg/graph/schema.graphqls
+    * SecurAgentX: backend/pkg/graph/model/models_gen.go
 """
 from __future__ import annotations
 

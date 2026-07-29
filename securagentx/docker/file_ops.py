@@ -26,7 +26,7 @@ class DockerFileOps:
 
     Each method issues one ``docker exec`` shell command. All path
     arguments are shell-quoted with ``shlex.quote`` to prevent command
-    injection — mirroring the PentAGI convention of never interpolating
+    injection — mirroring the SecurAgentX convention of never interpolating
     untrusted paths into shell strings.
     """
 

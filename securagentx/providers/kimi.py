@@ -1,6 +1,6 @@
 """securagentx.providers.kimi — Kimi (Moonshot) LLM provider adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/kimi/kimi.go``. The adapter talks
+Port of the original ``backend/pkg/providers/kimi/kimi.go``. The adapter talks
 to Moonshot's OpenAI-compatible Chat Completions API at
 ``https://api.moonshot.cn/v1`` via the official ``openai`` Python SDK
 (with a custom ``base_url``), and implements the full
@@ -78,7 +78,7 @@ logger = logging.getLogger("securagentx.providers.kimi")
 #: ``KIMI_SERVER_URL``.
 KIMI_DEFAULT_SERVER_URL: str = "https://api.moonshot.cn/v1"
 
-#: Default Kimi model. PentAGI's ``KimiAgentModel`` constant — kimi-k2.5
+#: Default Kimi model. The original ``KimiAgentModel`` constant — kimi-k2.5
 #: is chosen as cost-effective default ($0.60/$3.00 input/output vs
 #: $0.95/$4.00 for k2.6). All legacy kimi-k2-* models (turbo-preview,
 #: 0905-preview, 0711-preview, thinking, thinking-turbo) were deprecated
@@ -106,7 +106,7 @@ def generate_tool_call_id(function_name: str = "call") -> str:
     when it needs to synthesise a tool-call ID for a tool result that
     didn't come from a real Kimi response. Defaults to ``"call"`` as the
     function-name placeholder when none is supplied (matching
-    PentAGI's behaviour).
+    the original behaviour).
     """
     # We can't use make_generate_tool_call_id here because the template
     # uses {f} which requires a function-name argument; the shared

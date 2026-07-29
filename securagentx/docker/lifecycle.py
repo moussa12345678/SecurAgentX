@@ -1,6 +1,6 @@
 """securagentx/docker/lifecycle.py — high-level container lifecycle: prepare → run → release.
 
-This module ports PentAGI's ``flowToolsExecutor.Prepare`` / ``Release``
+This module ports the original ``flowToolsExecutor.Prepare`` / ``Release``
 helpers (defined in ``backend/pkg/tools/tools.go``) to Python. The
 high-level contract is:
 
@@ -18,10 +18,10 @@ high-level contract is:
   container. Used by the orchestrator to decide whether to reuse or
   recreate.
 
-Key PentAGI behaviors preserved verbatim:
+Key SecurAgentX behaviors preserved verbatim:
 
 * **Container-name pattern**: ``pentagi-terminal-{flow_id}`` (constant
-  ``PrimaryTerminalNamePrefix``). We keep the PentAGI prefix so the
+  ``PrimaryTerminalNamePrefix``). We keep the SecurAgentX prefix so the
   existing ``containerPrimaryTypePattern = "-terminal-"`` filter in
   ``Cleanup()`` works unchanged. The DB row's ``name`` column carries
   this string.
@@ -30,7 +30,7 @@ Key PentAGI behaviors preserved verbatim:
   actually running (``IsContainerRunning``), reuse it. Otherwise remove
   the stale row/container and recreate.
 * **Image fallback chain**: requested image → ``debian:latest``
-  (matches PentAGI's ``defaultImage``). Both pull failure and create
+  (matches the original ``defaultImage``). Both pull failure and create
   failure trigger the fallback.
 * **Entrypoint**: ``["tail", "-f", "/dev/null"]`` — keeps the container
   alive indefinitely; the terminal tool runs commands via ``exec``.
@@ -45,7 +45,7 @@ Key PentAGI behaviors preserved verbatim:
   missing files as a SINGLE tar stream via ``CopyToContainer``. Highly
   optimized — typically one exec + one copy per prepare.
 
-SecurAgentX additions (NOT in PentAGI):
+SecurAgentX additions (NOT in the upstream Go original):
 
 * ``ResourceLimits`` enforcement — cgroup limits, ulimits, read-only
   rootfs, network mode. Applied via
@@ -72,7 +72,7 @@ from .resource_limits import ResourceLimits, apply_to_container_config, validate
 logger = logging.getLogger("securagentx.docker.lifecycle")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's ``docker/client.go`` and
+# Constants — ported verbatim from the Go original's ``docker/client.go`` and
 # ``tools/terminal.go``.
 # ---------------------------------------------------------------------------
 
@@ -80,32 +80,31 @@ logger = logging.getLogger("securagentx.docker.lifecycle")
 #: target for the per-flow data directory.
 WORK_FOLDER_PATH_IN_CONTAINER: str = "/work"
 
-#: PentAGI-compatible primary container name prefix. The full name is
-#: ``pentagi-terminal-{flow_id}``. We keep the PentAGI prefix so the
-#: cleanup layer's ``-terminal-`` substring filter keeps working.
-PRIMARY_TERMINAL_NAME_PREFIX: str = "pentagi-terminal-"
+#: Primary container name prefix. The full name is
+#: ``pentagi-terminal-{flow_id}``. Byte-compat constant — do not change.
+PRIMARY_TERMINAL_NAME_PREFIX: str = "pentagi-terminal-"  # Byte-compat constant — do not change
 
 #: Default image used as the fallback when the requested image fails to
-#: pull or create. Matches PentAGI's ``defaultImage`` constant.
+#: pull or create.
 DEFAULT_IMAGE: str = "debian:latest"
 
 #: Default entrypoint — keeps the container alive indefinitely. The
 #: terminal tool runs commands via ``docker exec``.
 DEFAULT_ENTRYPOINT: list[str] = ["tail", "-f", "/dev/null"]
 
-#: Default working directory inside the container. PentAGI sets this via
+#: Default working directory inside the container. SecurAgentX sets this via
 #: ``config.WorkingDir = WorkFolderPathInContainer`` in ``RunContainer``.
 DEFAULT_WORKING_DIR: str = WORK_FOLDER_PATH_IN_CONTAINER
 
 #: Subdirectories under ``{data_dir}/flow-{flow_id}-data/`` that are
-#: scanned by ``sync_missing_files``. Mirrors PentAGI's
+#: scanned by ``sync_missing_files``. Mirrors the original
 #: ``flowfiles.UploadsDirName`` / ``ResourcesDirName``.
 UPLOADS_DIR_NAME: str = "uploads"
 RESOURCES_DIR_NAME: str = "resources"
 
 #: Per-flow data directory template. The local on-disk path is
 #: ``{data_dir}/flow-{flow_id}-data/`` (the ``-data`` suffix matches
-#: PentAGI's ``flow-{flowID}-data`` convention).
+#: the original ``flow-{flowID}-data`` convention).
 FLOW_DATA_DIR_TEMPLATE: str = "flow-{flow_id}-data"
 
 
@@ -167,7 +166,7 @@ class _FileSyncEntry:
 class ContainerLifecycle:
     """High-level prepare/run/release lifecycle for flow sandboxes.
 
-    The class is the Python equivalent of PentAGI's
+    The class is the Python equivalent of the original
     ``flowToolsExecutor`` (the subset of its API that deals with
     container bring-up/teardown — NOT the tool-execution methods, which
     live in a separate module).
@@ -177,16 +176,16 @@ class ContainerLifecycle:
             container state. Required.
         data_dir: Root directory for per-flow data folders. Each flow
             gets a ``flow-{id}-data/`` subdir with ``uploads/`` and
-            ``resources/`` children. Mirrors PentAGI's ``dataDir``.
+            ``resources/`` children. Mirrors the original ``dataDir``.
         default_image: Fallback image when the requested image fails.
-            Defaults to ``debian:latest`` (matches PentAGI).
+            Defaults to ``debian:latest`` (matches the Go original).
         docker_url: Optional aiodocker connection URL. If None, uses
             ``DOCKER_HOST`` env var (or the default unix socket).
         network: Optional ``DockerNetwork`` instance for per-flow
             isolated networks. If None, the lifecycle uses the
             container's default network (set via ``ResourceLimits``).
         inside: If True, bind-mount the host's Docker socket into the
-            container (for DinD scenarios). Mirrors PentAGI's
+            container (for DinD scenarios). Mirrors the original
             ``cfg.DockerInside``. Default False.
         docker_socket: Host path to the Docker socket. Used when
             ``inside=True``. Defaults to ``/var/run/docker.sock``.
@@ -232,7 +231,7 @@ class ContainerLifecycle:
             self._client = None  # type: ignore[assignment,method-assign]
 
     # ------------------------------------------------------------------
-    # Naming helpers (static, ported from PentAGI's ``PrimaryTerminalName``)
+    # Naming helpers (static, ported from the Go original's ``PrimaryTerminalName``)
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -240,7 +239,7 @@ class ContainerLifecycle:
         """Return the canonical container name for ``flow_id``.
 
         Format: ``pentagi-terminal-{flow_id}``. The prefix is kept
-        PentAGI-compatible so the cleanup layer's
+        SecurAgentX-compatible so the cleanup layer's
         ``containerPrimaryTypePattern = "-terminal-"`` filter keeps
         working unchanged.
         """
@@ -265,7 +264,7 @@ class ContainerLifecycle:
     ) -> ContainerInfo:
         """Get a running container for ``flow_id``, creating or reusing as needed.
 
-        Algorithm (ported from PentAGI's ``flowToolsExecutor.Prepare``):
+        Algorithm (ported from the Go original's ``flowToolsExecutor.Prepare``):
 
         1. Look up the flow's primary container in the DB.
            - If status == ``running`` AND Docker confirms it's actually
@@ -281,7 +280,7 @@ class ContainerLifecycle:
         Args:
             flow_id: Flow ID.
             image: Docker image (e.g. ``"debian:latest"``,
-                ``"vxcontrol/kali-linux"``).
+                ``"kalilinux/kali-rolling"``).
             uploads: Optional dict mapping filename -> bytes for files
                 to ensure exist in ``/work/uploads/``. These are written
                 to the host data dir before the sync step.
@@ -349,7 +348,7 @@ class ContainerLifecycle:
         limits = limits or ResourceLimits.default()
 
         # Insert DB row with status=starting + a placeholder local_id.
-        # This matches PentAGI's pattern of inserting the row BEFORE
+        # This matches the original pattern of inserting the row BEFORE
         # ContainerCreate so we can track "starting" state even if the
         # daemon is unreachable.
         container_name = self.container_name(flow_id)
@@ -497,7 +496,7 @@ class ContainerLifecycle:
             "HostConfig": {
                 # Bind-mount the per-flow data dir as /work.
                 "Binds": [f"{flow_dir}:{WORK_FOLDER_PATH_IN_CONTAINER}"],
-                # Prevent auto-restart after host reboot (PentAGI quirk:
+                # Prevent auto-restart after host reboot (SecurAgentX quirk:
                 # the docker.sock dir would otherwise be recreated for
                 # DinD containers).
                 "RestartPolicy": {"Name": "on-failure", "MaximumRetryCount": 5},
@@ -557,7 +556,7 @@ class ContainerLifecycle:
         return docker_id
 
     async def _pull_image(self, image: str) -> None:
-        """Pull ``image`` if not already present locally. Mirrors PentAGI's
+        """Pull ``image`` if not already present locally. Mirrors the original
         ``pullImage`` — checks local cache via ``images.list(reference=...)``,
         falls back to ``images.pull`` + drain stream.
         """
@@ -578,7 +577,7 @@ class ContainerLifecycle:
             raise RuntimeError(f"failed to pull image {image}: {e}") from e
 
     # ------------------------------------------------------------------
-    # Internal: file sync (ported from PentAGI's syncMissingFiles)
+    # Internal: file sync (ported from the Go original's syncMissingFiles)
     # ------------------------------------------------------------------
 
     def _write_uploads(
@@ -612,7 +611,7 @@ class ContainerLifecycle:
 
     def _collect_sync_entries(self, flow_id: int) -> list[_FileSyncEntry]:
         """Walk ``{flow_data_dir}/{uploads,resources}/`` and build a list
-        of files to consider for syncing. Mirrors PentAGI's
+        of files to consider for syncing. Mirrors the original
         ``collectSyncEntries``.
         """
         flow_dir = self.flow_data_dir(self.data_dir, flow_id)
@@ -676,7 +675,7 @@ class ContainerLifecycle:
         self, local_id: str, entries: list[_FileSyncEntry]
     ) -> list[_FileSyncEntry]:
         """Run ONE shell exec inside the container to find which files
-        are missing. Mirrors PentAGI's ``findMissingInContainer``.
+        are missing. Mirrors the original ``findMissingInContainer``.
 
         The shell command is::
 
@@ -730,7 +729,7 @@ class ContainerLifecycle:
         """Build an in-memory tar archive containing all ``entries``.
 
         The tar uses POSIX format (``tarfile.PAX_FORMAT``) for full
-        Unicode filename support. File mode is 0600 (matches PentAGI).
+        Unicode filename support. File mode is 0600 (matches the Go original).
         Paths inside the tar are RELATIVE to ``/work`` so the
         ``CopyToContainer`` destination of ``/work`` reconstructs them
         correctly.
@@ -741,7 +740,7 @@ class ContainerLifecycle:
             for entry in entries:
                 data = entry.host_path.read_bytes()
                 # The tar entry name must be relative to /work (the
-                # CopyToContainer dst_path). PentAGI uses the same trick.
+                # CopyToContainer dst_path). The original uses the same trick.
                 tarinfo = tarfile.TarInfo(name=entry.rel_path)
                 tarinfo.size = len(data)
                 tarinfo.mtime = int(entry.host_path.stat().st_mtime)
@@ -752,7 +751,7 @@ class ContainerLifecycle:
 
     async def _copy_tar_to_container(self, local_id: str, tar_bytes: bytes) -> None:
         """Send a tar stream to the container at ``/work``. Mirrors
-        PentAGI's ``copyEntriesToContainer`` (which calls
+        The original ``copyEntriesToContainer`` (which calls
         ``CopyToContainer`` with ``AllowOverwriteDirWithFile: true``).
         """
         client = await self._client()
@@ -766,7 +765,7 @@ class ContainerLifecycle:
 
     async def _is_container_running(self, local_id: str) -> bool:
         """Check via the Docker daemon whether ``local_id`` is actually
-        running. Mirrors PentAGI's ``IsContainerRunning`` — also
+        running. Mirrors the original ``IsContainerRunning`` — also
         considers the health-check status (``unhealthy`` = not running).
         """
         if not local_id or local_id.startswith("tmp-id-"):
@@ -791,7 +790,7 @@ class ContainerLifecycle:
         if info.local_id and not info.local_id.startswith("tmp-id-"):
             try:
                 container = client.containers.container(info.local_id)
-                # Stop with a short grace period (matches PentAGI's
+                # Stop with a short grace period (matches the original
                 # default 10s + Docker's SIGTERM).
                 try:
                     await container.stop(timeout=10)
@@ -816,7 +815,7 @@ class ContainerLifecycle:
     async def _remove_docker_container_by_name(self, name: str) -> None:
         """Look up a container by name and force-remove it. Used during
         the image-fallback path to clean up a half-created container
-        before retrying with the default image. Mirrors PentAGI's
+        before retrying with the default image. Mirrors the original
         same-named inline logic in ``RunContainer``."""
         client = await self._client()
         try:
@@ -836,7 +835,7 @@ class ContainerLifecycle:
     @staticmethod
     def _hostname(container_name: str) -> str:
         """8-hex-char hostname derived from the container name (matches
-        PentAGI's ``crc32.ChecksumIEEE``). We use Python's built-in
+        The original ``crc32.ChecksumIEEE``). We use Python's built-in
         ``zlib.crc32`` which is bit-identical to Go's implementation."""
         import zlib
 

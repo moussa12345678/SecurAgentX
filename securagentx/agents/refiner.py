@@ -1,6 +1,6 @@
 """securagentx/agents/refiner.py — delta-patches the planned subtask list.
 
-Ported from PentAGI's ``backend/pkg/providers/performers.go::performSubtasksRefiner``
+Ported from the original ``backend/pkg/providers/performers.go::performSubtasksRefiner``
 and the ``refiner.tmpl`` / ``subtasks_refiner.tmpl`` prompt templates.
 
 The Refiner is a *planning* agent invoked after each subtask completes. Given
@@ -18,7 +18,7 @@ barrier tool: ``subtask_patch`` (a Pydantic schema:
 When the agent invokes ``subtask_patch`` the universal
 ``perform_agent_chain`` loop terminates and the parsed patch is returned to
 the caller. The caller is then responsible for applying the patch to the
-in-memory planned-subtask list (mirrors PentAGI's ``applySubtaskOperations``).
+in-memory planned-subtask list (mirrors the original ``applySubtaskOperations``).
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ SearchToolName: str = "search"
 #: Name of the completion / barrier tool that ends the Refiner's turn.
 SubtaskPatchToolName: str = "subtask_patch"
 
-#: Prefix injected before summarized historical content (mirrors PentAGI).
+#: Prefix injected before summarized historical content (mirrors the Go original).
 SummarizedContentPrefix: str = "[SUMMARIZED_CONTENT]"
 
 #: Name of the (read-only) summarization marker tool the Refiner must NOT call.
@@ -534,7 +534,7 @@ class Refiner:
     dicts. The caller is responsible for applying the patch to the in-memory
     planned-subtask list.
 
-    Ported from PentAGI's ``performSubtasksRefiner`` (performers.go).
+    Ported from the original ``performSubtasksRefiner`` (performers.go).
     """
 
     agent_type: AgentType = AgentType.REFINER  # type: ignore[attr-defined]

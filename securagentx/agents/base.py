@@ -1,20 +1,20 @@
-"""securagentx/agents/base.py — Base agent infrastructure for the PentAGI port.
+"""securagentx/agents/base.py — Base agent infrastructure for the SecurAgentX port.
 
 Provides the foundational primitives used by every agent in the SecurAgentX
 multi-agent system:
 
-* ``AgentType`` — string-valued enum of all 15 agent types (mirrors PentAGI's
+* ``AgentType`` — string-valued enum of all 15 agent types (mirrors the original
   ``database.MsgchainType`` so persisted msg-chains stay wire-compatible).
 * ``AgentContext`` — dataclass carrying ``parent_agent_type`` /
   ``current_agent_type``; propagated through asyncio tasks via
   ``contextvars.ContextVar`` (Python equivalent of Go's ``context.Value``).
 * ``perform_agent_chain`` — the universal LLM -> tool -> reflector loop ported
-  from PentAGI's ``flowProvider.performAgentChain``
+  from the original ``flowProvider.performAgentChain``
   (``backend/pkg/providers/performer.go``).
 * Protocol interfaces (``LLMClient``, ``ToolExecutor``, ``Reflector``,
   ``Summarizer``) so concrete implementations can be wired in by other
   subagents without hard dependencies on langchain / pydantic-ai / etc.
-* ``PerformResult`` enum (DONE / WAITING / ERROR) mirroring PentAGI's
+* ``PerformResult`` enum (DONE / WAITING / ERROR) mirroring the original
   ``PerformResult``.
 * Iteration-cap constants ``MAX_GENERAL_ITERATIONS=100`` and
   ``MAX_LIMITED_ITERATIONS=20`` plus the helpers ``is_general_agent`` /
@@ -39,7 +39,7 @@ from typing import Any, Callable, ClassVar, Protocol, runtime_checkable
 logger = logging.getLogger("securagentx.agents.base")
 
 # ---------------------------------------------------------------------------
-# Iteration caps — ported verbatim from PentAGI's performer.go:
+# Iteration caps — ported verbatim from the Go original's performer.go:
 #   maxGeneralAgentChainIterations = 100
 #   maxLimitedAgentChainIterations  = 20
 #   maxAgentShutdownIterations      = 3   (graceful-termination window)
@@ -54,7 +54,7 @@ MAX_REFLECTOR_CALLS_PER_CHAIN: int = 3
 class AgentType(str, Enum):
     """All 15 agent types in the SecurAgentX multi-agent system.
 
-    String values mirror PentAGI's ``database.MsgchainType`` constants so any
+    String values mirror the original ``database.MsgchainType`` constants so any
     persisted msg-chain JSON remains wire-compatible across the Go and Python
     implementations.
     """
@@ -79,7 +79,7 @@ class AgentType(str, Enum):
 class PerformResult(str, Enum):
     """Outcome of an agent-chain execution.
 
-    Mirrors PentAGI's ``PerformResult`` enum (``PerformResultError``,
+    Mirrors the original ``PerformResult`` enum (``PerformResultError``,
     ``PerformResultWaiting``, ``PerformResultDone``). String values are used
     so the enum serialises cleanly to JSON / DB columns.
     """
@@ -90,7 +90,7 @@ class PerformResult(str, Enum):
 
 
 # ---------------------------------------------------------------------------
-# Agent-type classification — ported from PentAGI's ``performAgentChain``
+# Agent-type classification — ported from the Go original's ``performAgentChain``
 # switch that selects ``maxGeneralAgentChainIterations`` vs
 # ``maxLimitedAgentChainIterations`` based on ``optAgentType``.
 # ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ def is_limited_agent(agent_type: AgentType) -> bool:
 def default_max_iterations(agent_type: AgentType) -> int:
     """Resolve the default iteration cap for ``agent_type``.
 
-    Mirrors PentAGI's switch on ``optAgentType`` inside ``performAgentChain``:
+    Mirrors the original switch on ``optAgentType`` inside ``performAgentChain``:
     general agents get ``MAX_GENERAL_ITERATIONS`` (100); all other agents get
     ``MAX_LIMITED_ITERATIONS`` (20).
     """
@@ -158,7 +158,7 @@ def default_max_iterations(agent_type: AgentType) -> int:
 class ToolCall:
     """A single LLM-emitted tool call.
 
-    Mirrors the shape used by OpenAI's function-calling API and PentAGI's
+    Mirrors the shape used by OpenAI's function-calling API and the original
     ``llms.ToolCall``. ``arguments`` is the raw JSON-encoded argument string
     (preserved verbatim so the tool-call fixer can repair malformed payloads).
     """
@@ -172,7 +172,7 @@ class ToolCall:
 class Message:
     """A single chat message in the agent chain.
 
-    Mirrors PentAGI's ``llms.MessageContent`` with a flat role/content layout
+    Mirrors the original ``llms.MessageContent`` with a flat role/content layout
     close to OpenAI's chat-completions schema so it can be serialised to JSON
     and round-tripped through any LLM provider.
 
@@ -203,7 +203,7 @@ class Message:
 
 @dataclass
 class LLMResponse:
-    """Structured LLM response (mirrors PentAGI's ``callResult``).
+    """Structured LLM response (mirrors the original ``callResult``).
 
     A response may carry ``content`` (text), ``tool_calls`` (structured
     actions), or both. ``reasoning`` holds provider-exposed thinking tokens.
@@ -242,7 +242,7 @@ class LLMClient(Protocol):
 
 @runtime_checkable
 class ToolExecutor(Protocol):
-    """Tool dispatcher protocol (mirrors PentAGI's ``tools.ContextToolsExecutor``).
+    """Tool dispatcher protocol (mirrors the original ``tools.ContextToolsExecutor``).
 
     Implementations are responsible for:
       * Routing ``execute(name, arguments)`` to the registered handler.
@@ -272,7 +272,7 @@ class ToolExecutor(Protocol):
 class Reflector(Protocol):
     """Reflector protocol — repairs responses that contain no tool calls.
 
-    Ports PentAGI's ``flowProvider.performReflector``: when the LLM returns a
+    Ports the original ``flowProvider.performReflector``: when the LLM returns a
     content-only response (no tool calls), the reflector is invoked to nudge
     the model back into structured tool use.
     """
@@ -292,7 +292,7 @@ class Reflector(Protocol):
 class Summarizer(Protocol):
     """Summarizer protocol — condenses long chains to fit context windows.
 
-    Ports PentAGI's ``csum.Summarizer.SummarizeChain``: when the running chain
+    Ports the original ``csum.Summarizer.SummarizeChain``: when the running chain
     grows too large, the summarizer replaces historical messages with a
     condensed summary to keep the chain within the model's context window.
     """
@@ -322,7 +322,7 @@ BarrierCallback = Callable[[str, str], PerformResult]
 class AgentContext:
     """Parent / current agent-type propagation for asyncio tasks.
 
-    Ports PentAGI's ``tools/context.go`` (which uses Go's ``context.Value``)
+    Ports the original ``tools/context.go`` (which uses Go's ``context.Value``)
     to Python ``contextvars.ContextVar``. The contextvar propagates
     automatically to asyncio tasks created after ``AgentContext.put()`` is
     called, mirroring Go's context propagation through goroutines.
@@ -348,7 +348,7 @@ class AgentContext:
     def put(cls, agent_type: AgentType) -> Token["AgentContext | None"]:
         """Set the contextvar with parent propagation.
 
-        Mirrors PentAGI's ``PutAgentContext``: on the first call both
+        Mirrors the original ``PutAgentContext``: on the first call both
         ``parent_agent_type`` and ``current_agent_type`` are set to
         ``agent_type``; on subsequent calls the previous ``current`` becomes
         the new ``parent`` and ``agent_type`` becomes the new ``current``.
@@ -379,7 +379,7 @@ class AgentContext:
         """Return the current context as a dict, or ``None`` if unset.
 
         The dict shape (``{"parent_agent_type": ..., "current_agent_type": ...}``)
-        matches the JSON serialisation of PentAGI's ``agentContext`` struct
+        matches the JSON serialisation of the original ``agentContext`` struct
         so logs / DB rows / observability spans stay cross-compatible.
         """
         ctx = cls._ctx_var.get()
@@ -413,14 +413,14 @@ async def perform_agent_chain(
     execution_context: str = "",
     on_barrier: BarrierCallback | None = None,
 ) -> PerformResult:
-    """Universal agent-chain loop ported from PentAGI's ``performAgentChain``.
+    """Universal agent-chain loop ported from the Go original's ``performAgentChain``.
 
     Flow per iteration:
 
       1. If ``iteration >= max_iterations`` -> return ``PerformResult.ERROR``.
       2. If ``iteration >= max_iterations - MAX_AGENT_SHUTDOWN_ITERATIONS``,
          inject a graceful-termination message (skip the LLM call) so the
-         Reflector can drive the chain to a clean close (mirrors PentAGI's
+         Reflector can drive the chain to a clean close (mirrors the original
          ``maxAgentShutdownIterations`` branch).
       3. Otherwise call ``llm_client.call(chain, tools=executor.get_tools())``.
       4. If the response has no tool calls:
@@ -436,7 +436,7 @@ async def perform_agent_chain(
              and return its ``PerformResult`` (default ``DONE``).
       7. If ``summarizer`` is configured, ``summarizer.summarize(chain)`` ->
          replace ``chain`` contents in place. Errors are swallowed (mirrors
-         PentAGI's "log and continue" behaviour).
+         The original "log and continue" behaviour).
 
     Args:
         agent_type: Which agent is running (controls the default iteration
@@ -455,7 +455,7 @@ async def perform_agent_chain(
         max_iterations: Override the default iteration cap. If ``None``,
             resolved via :func:`default_max_iterations`.
         execution_context: XML execution-context string passed to the
-            reflector (mirrors PentAGI's ``executionContext``).
+            reflector (mirrors the original ``executionContext``).
         on_barrier: Callback invoked when a barrier tool is hit; receives
             ``(tool_name, tool_args_json)`` and returns the
             ``PerformResult`` the chain should terminate with. If ``None``,
@@ -477,13 +477,13 @@ async def perform_agent_chain(
         max_iterations = default_max_iterations(agent_type)
 
     # Ensure max_iterations is at least 2x the shutdown window so the
-    # graceful-termination path has room to work (mirrors PentAGI's
+    # graceful-termination path has room to work (mirrors the original
     # ``max(fp.maxGACallsLimit, maxAgentShutdownIterations*2)`` clamp).
     if max_iterations < MAX_AGENT_SHUTDOWN_ITERATIONS * 2:
         max_iterations = max(max_iterations, MAX_AGENT_SHUTDOWN_ITERATIONS * 2)
 
     # Propagate the agent context to any asyncio tasks spawned by specialists
-    # / reflector / summarizer (mirrors PentAGI's ``ctx = tools.PutAgentContext``).
+    # / reflector / summarizer (mirrors the original ``ctx = tools.PutAgentContext``).
     token = AgentContext.put(agent_type)
 
     try:
@@ -500,7 +500,7 @@ async def perform_agent_chain(
 
             # Graceful-termination window: skip the LLM call and synthesize a
             # content-only message so the Reflector can drive the chain to a
-            # close (mirrors PentAGI's ``maxAgentShutdownIterations`` branch).
+            # close (mirrors the original ``maxAgentShutdownIterations`` branch).
             if iteration >= max_iterations - MAX_AGENT_SHUTDOWN_ITERATIONS:
                 log.warning(
                     "agent_chain_near_limit agent=%s iteration=%d max=%d -- "
@@ -549,7 +549,7 @@ async def perform_agent_chain(
 
                 # Build a temporary chain that includes the no-tool-call AI
                 # message so the Reflector sees what the LLM actually
-                # produced (mirrors PentAGI's ``append(chain, reflectorMsg)``).
+                # produced (mirrors the original ``append(chain, reflectorMsg)``).
                 reflector_chain = chain + [
                     Message(
                         role="assistant",
@@ -585,7 +585,7 @@ async def perform_agent_chain(
 
                 # Use the repaired response going forward; the caller's
                 # ``chain`` does NOT get the no-tool-call placeholder appended
-                # (matches PentAGI's behaviour where ``append(chain,
+                # (matches the original behaviour where ``append(chain,
                 # reflectorMsg)`` is a temporary copy).
                 llm_resp = repaired
 
@@ -599,7 +599,7 @@ async def perform_agent_chain(
                 )
             )
 
-            # Dispatch each tool call sequentially (mirrors PentAGI's loop).
+            # Dispatch each tool call sequentially (mirrors the original loop).
             want_to_stop = False
             result = PerformResult.ERROR
 
@@ -659,7 +659,7 @@ async def perform_agent_chain(
                 return result
 
             # Summarize the chain if a summarizer is configured. Errors are
-            # swallowed (mirrors PentAGI's "log and continue" behaviour).
+            # swallowed (mirrors the original "log and continue" behaviour).
             if summarizer is not None:
                 try:
                     summarized = await summarizer.summarize(chain)

@@ -276,6 +276,99 @@ def _tool_web_extract(url: str) -> Dict[str, Any]:
         return {"success": False, "error": str(exc)}
 
 
+def _tool_browser(
+    action: str,
+    url: str = "",
+    selector: str = "",
+    text: str = "",
+    headless: bool = True,
+) -> Dict[str, Any]:
+    """Drive a real headless browser (Playwright) for web interaction.
+
+    This is the JavaScript-rendered, form-filling, screenshot-capturing
+    successor to ``web_extract``. Use it when the target page requires
+    JS execution, when you need to click/type/submit, or when a
+    screenshot would help the analysis.
+
+    Actions (case-insensitive):
+
+    * ``navigate`` — open ``url`` and wait for ``load``.
+    * ``click`` — click the element at ``selector`` (CSS or XPath).
+    * ``type`` — fill ``text`` into the element at ``selector``.
+    * ``screenshot`` — capture a full-page PNG of ``url`` (or current
+      page if ``url`` is empty). Returned as base64 in ``screenshot``.
+    * ``content_md`` — extract page content as Markdown (trafilatura).
+    * ``content_html`` — extract raw HTML after JS execution.
+    * ``links`` — extract all ``<a href>`` links on ``url``.
+    * ``form_submit`` — submit the form at ``selector`` (or the first
+      ``<form>`` on the page if ``selector`` is empty).
+
+    Requires the ``browser`` extra::
+
+        pip install -e .[browser] && playwright install chromium
+
+    Returns a dict with ``success``, ``output``, ``screenshot``
+    (base64 PNG or ``None``), and action-specific extras.
+    """
+    import asyncio
+
+    try:
+        # Lazy import — keeps vuln_agent importable when the browser
+        # extra is not installed.
+        from securagentx.browser import BrowserTool
+
+        if not BrowserTool().is_available():
+            return {
+                "success": False,
+                "error": (
+                    "Playwright is not installed. Install with: "
+                    "pip install -e .[browser] && playwright install chromium"
+                ),
+                "output": "",
+                "screenshot": None,
+            }
+    except ImportError as exc:
+        return {
+            "success": False,
+            "error": f"securagentx.browser module unavailable: {exc}",
+            "output": "",
+            "screenshot": None,
+        }
+
+    async def _run() -> Dict[str, Any]:
+        async with BrowserTool(headless=headless) as browser:
+            return await browser.handle(action, url=url, selector=selector, text=text)
+
+    try:
+        # Bridge sync→async. If an event loop is already running in this
+        # thread (rare for the vuln_agent dispatch path, but possible
+        # inside Jupyter / hybrid_agent), fall back to a thread-pool
+        # executor so we don't deadlock.
+        try:
+            asyncio.get_running_loop()
+            in_loop = True
+        except RuntimeError:
+            in_loop = False
+
+        if in_loop:
+            import concurrent.futures
+
+            # Submit a closure that invokes ``asyncio.run`` on the
+            # coroutine — ``pool.submit(asyncio.run, _run)`` would pass
+            # the function itself, not its coroutine.
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(lambda: asyncio.run(_run())).result(timeout=180)
+        return asyncio.run(_run())
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
+        logger.error("browser tool failed: %s", exc)
+        return {
+            "success": False,
+            "error": str(exc),
+            "output": "",
+            "screenshot": None,
+        }
+
+
 def _tool_read_file(path: str, offset: int = 1, limit: int = 200) -> Dict[str, Any]:
     """Read a text file with line numbers. Use this to inspect source code,
     config files, logs, or any text file on the filesystem."""
@@ -1160,6 +1253,57 @@ def _tool_delete_skill(name: str) -> Dict[str, Any]:
     return {"success": False, "error": f"Skill '{name}' not found."}
 
 
+# ---------------------------------------------------------------------------
+# Knowledge Graph tool
+# ---------------------------------------------------------------------------
+
+def _tool_knowledge_graph(action: str = "help", **kwargs) -> Dict[str, Any]:
+    """Access the SecurAgentX Knowledge Graph - a networkx-backed graph
+    that tracks entities (domains, IPs, CVEs, services, credentials),
+    relationships between them, observations, chat messages, and episodes
+    (tool/agent runs).
+
+    Supports 7 search types via the ``action`` parameter:
+      - search_temporal             - args: start, end, max_results
+      - search_entity_relationships - args: center_entity, max_depth, max_results
+      - search_diverse              - args: query, max_results, diversity(low|medium|high)
+      - search_episode_context      - args: episode_id, max_results
+      - search_successful_tools     - args: task_type(optional), max_results
+      - search_recent_context       - args: max_results, recency(1h|6h|24h|7d)
+      - search_entity_by_label      - args: label, max_results
+
+    Plus ingestion actions:
+      - add_entity       - args: label, entity_type, properties
+      - add_relationship - args: source, target, rel_type, properties
+      - add_observation  - args: text, timestamp, metadata
+      - add_message      - args: role, content, timestamp
+      - add_episode      - args: episode_id(optional), description, metadata
+
+    Plus utility actions: stats, clear, save, load, help.
+    """
+    try:
+        from securagentx.knowledge_graph.kg_tool import KnowledgeGraphTool
+    except Exception as exc:  # noqa: BLE001 - surfaced to agent
+        return {
+            "success": False,
+            "error": f"Knowledge Graph subsystem unavailable: {exc}",
+        }
+
+    tool = KnowledgeGraphTool()
+    if not tool.is_available():
+        return {
+            "success": False,
+            "error": "Knowledge Graph subsystem unavailable (networkx missing?).",
+        }
+
+    output = tool.handle(action, kwargs)
+    return {
+        "success": True,
+        "output": output,
+        "action": action,
+    }
+
+
 # NOTE: handler_name is a string (not a function reference) so that
 # unittest.mock.patch works correctly at runtime.
 AVAILABLE_TOOLS: List[Dict[str, Any]] = [
@@ -1276,6 +1420,42 @@ AVAILABLE_TOOLS: List[Dict[str, Any]] = [
             "required": ["url"],
         },
         "handler_name": "_tool_web_extract",
+    },
+    {
+        "name": "browser",
+        "description": "Drive a real headless Chromium browser (Playwright) to navigate, click, type, screenshot, and extract content from JavaScript-rendered pages. Use this when web_extract fails (page needs JS), when you need to interact with forms (click/type/submit), or when a screenshot would help the analysis. Actions: navigate, click, type, screenshot, content_md, content_html, links, form_submit. Requires the [browser] extra (pip install -e .[browser] && playwright install chromium).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "description": "Browser action to perform. One of: navigate, click, type, screenshot, content_md, content_html, links, form_submit.",
+                    "enum": ["navigate", "click", "type", "screenshot", "content_md", "content_html", "links", "form_submit"],
+                },
+                "url": {
+                    "type": "string",
+                    "description": "Target URL (required for navigate, screenshot, content_md, content_html, links). Ignored for click/type/form_submit which operate on the current page.",
+                    "default": "",
+                },
+                "selector": {
+                    "type": "string",
+                    "description": "CSS or XPath selector (required for click, type, form_submit; ignored otherwise).",
+                    "default": "",
+                },
+                "text": {
+                    "type": "string",
+                    "description": "Text to type into the element at `selector` (required for type action).",
+                    "default": "",
+                },
+                "headless": {
+                    "type": "boolean",
+                    "description": "Run browser in headless mode (default: true). Set to false for debugging.",
+                    "default": True,
+                },
+            },
+            "required": ["action"],
+        },
+        "handler_name": "_tool_browser",
     },
     {
         "name": "read_file",
@@ -1551,6 +1731,63 @@ AVAILABLE_TOOLS: List[Dict[str, Any]] = [
             "required": ["name"]
         },
         "handler_name": "_tool_delete_skill",
+    },
+    # ------------------------------------------------------------------
+    # Knowledge Graph tool (7 search types + ingestion + utilities)
+    # ------------------------------------------------------------------
+    {
+        "name": "knowledge_graph",
+        "description": "Query or update the SecurAgentX Knowledge Graph - a networkx-backed "
+                       "graph tracking entities (domains, IPs, CVEs, services, credentials), "
+                       "relationships, observations, chat messages, and tool/agent episodes. "
+                       "Supports 7 search types mirroring Graphiti: temporal_window, "
+                       "entity_relationships, diverse_results, episode_context, "
+                       "successful_tools, recent_context, entity_by_label. "
+                       "Also supports ingestion (add_entity, add_relationship, add_observation, "
+                       "add_message, add_episode) and utilities (stats, clear, save, load, help). "
+                       "Use this to recall prior findings about a target, find related CVEs, "
+                       "retrieve successful tool patterns, or persist new observations.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "description": "Action to perform. Search: 'search_temporal', "
+                                   "'search_entity_relationships', 'search_diverse', "
+                                   "'search_episode_context', 'search_successful_tools', "
+                                   "'search_recent_context', 'search_entity_by_label'. "
+                                   "Ingest: 'add_entity', 'add_relationship', 'add_observation', "
+                                   "'add_message', 'add_episode'. "
+                                   "Utility: 'stats', 'clear', 'save', 'load', 'help'.",
+                    "default": "help",
+                },
+                "label": {"type": "string", "description": "Entity label (for add_entity, search_entity_by_label, search_entity_relationships center_entity)"},
+                "entity_type": {"type": "string", "description": "Entity type e.g. 'domain', 'ip', 'vulnerability', 'service', 'credential' (for add_entity)", "default": "entity"},
+                "properties": {"type": "object", "description": "Additional properties dict for add_entity/add_relationship"},
+                "source": {"type": "string", "description": "Source entity label or id (for add_relationship)"},
+                "target": {"type": "string", "description": "Target entity label or id (for add_relationship)"},
+                "rel_type": {"type": "string", "description": "Relationship type e.g. 'has_vulnerability', 'mentions', 'exploits' (for add_relationship)", "default": "related_to"},
+                "center_entity": {"type": "string", "description": "Center entity label/id for search_entity_relationships"},
+                "max_depth": {"type": "integer", "description": "BFS depth for search_entity_relationships (1-3, default 2)", "default": 2, "minimum": 1, "maximum": 3},
+                "query": {"type": "string", "description": "Query string for search_diverse"},
+                "diversity": {"type": "string", "description": "Diversity level: 'low', 'medium', 'high' (default 'medium')", "default": "medium", "enum": ["low", "medium", "high"]},
+                "episode_id": {"type": "string", "description": "Episode id for search_episode_context or add_episode"},
+                "description": {"type": "string", "description": "Episode description (for add_episode)"},
+                "task_type": {"type": "string", "description": "Optional task-type filter for search_successful_tools (e.g. 'recon', 'exploit', 'fuzz')"},
+                "role": {"type": "string", "description": "Chat role for add_message (e.g. 'user', 'assistant', 'system')"},
+                "content": {"type": "string", "description": "Message content for add_message"},
+                "text": {"type": "string", "description": "Observation text for add_observation"},
+                "timestamp": {"type": "string", "description": "ISO-8601 timestamp (optional, defaults to now) for add_observation/add_message"},
+                "metadata": {"type": "object", "description": "Optional metadata dict for add_observation/add_episode"},
+                "start": {"type": "string", "description": "Window start ISO-8601 timestamp for search_temporal"},
+                "end": {"type": "string", "description": "Window end ISO-8601 timestamp for search_temporal"},
+                "recency": {"type": "string", "description": "Recency window for search_recent_context: '1h', '6h', '24h', '7d' (default '24h')", "default": "24h", "enum": ["1h", "6h", "24h", "7d"]},
+                "max_results": {"type": "integer", "description": "Max results to return (default varies by action: 10-25)", "minimum": 1, "maximum": 100},
+                "path": {"type": "string", "description": "Optional filesystem path for save/load actions"},
+            },
+            "required": ["action"],
+        },
+        "handler_name": "_tool_knowledge_graph",
     },
 ]
 

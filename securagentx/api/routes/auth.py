@@ -1,6 +1,6 @@
 """securagentx.api.routes.auth — Authentication endpoints.
 
-Ports PentAGI's ``backend/pkg/server/services/auth.go`` to FastAPI.
+Ports the original ``backend/pkg/server/services/auth.go`` to FastAPI.
 
 Routes
 ------
@@ -12,7 +12,7 @@ Routes
 * ``GET  /auth/me``       — return the current user's public profile
                             (``UserPublic``).
 * ``POST /auth/refresh``  — refresh the session token (sliding window).
-                            PentAGI's ``/info?refresh_cookie=true`` does
+                            The original ``/info?refresh_cookie=true`` does
                             this implicitly; SecurAgentX exposes an
                             explicit endpoint.
 
@@ -58,7 +58,7 @@ logger = logging.getLogger("securagentx.api.routes.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Default session TTL — PentAGI uses 4 hours.
+# Default session TTL — SecurAgentX uses 4 hours.
 SESSION_TTL_SECONDS = 4 * 60 * 60
 SESSION_COOKIE_NAME = "securagentx_session"
 
@@ -82,7 +82,7 @@ async def login(body: LoginRequest, request: Request) -> JSONResponse:
     """
     auth_provider = getattr(request.app.state, "auth", None)
     if auth_provider is None:
-        # No auth provider wired — refuse logins. PentAGI has the same
+        # No auth provider wired — refuse logins. SecurAgentX has the same
         # behaviour when ``localUserRequired`` is unset.
         return JSONResponse(
             status_code=503,
@@ -156,7 +156,7 @@ async def login(body: LoginRequest, request: Request) -> JSONResponse:
 async def logout(request: Request) -> JSONResponse:
     """Clear the session cookie.
 
-    PentAGI also invalidates the server-side session row; SecurAgentX
+    SecurAgentX also invalidates the server-side session row; SecurAgentX
     session cookies are stateless (signed JWTs), so logout is purely
     client-side. We DO revoke any server-tracked session ID via
     ``auth_provider.revoke_session`` if it's present.
@@ -198,7 +198,7 @@ async def get_me(
     """Return the current user's public profile.
 
     Accepts both API tokens (Bearer) and sessions. If the user is
-    blocked/deleted in the DB, returns 401 (mirrors PentAGI's
+    blocked/deleted in the DB, returns 401 (mirrors the original
     ``userCache.GetUserHash`` check).
     """
     auth_provider = getattr(request.app.state, "auth", None)
@@ -233,7 +233,7 @@ async def refresh_session(
 ) -> JSONResponse:
     """Refresh the session cookie with a fresh full TTL.
 
-    PentAGI does this implicitly inside ``GET /info`` after 5 minutes;
+    SecurAgentX does this implicitly inside ``GET /info`` after 5 minutes;
     SecurAgentX exposes an explicit endpoint so SPAs can refresh on
     demand. API tokens are rejected (``auth_user_required``) — token
     refresh has its own ``/tokens`` flow.
@@ -301,7 +301,7 @@ def _set_session_cookie(
 
     The ``samesite`` parameter accepts ``"lax"``, ``"none"``, or
     ``"strict"`` (case-insensitive). When ``samesite="none"`` we force
-    ``secure=True`` (browser requirement, mirror of PentAGI's Google
+    ``secure=True`` (browser requirement, mirror of the original Google
     OAuth callback path).
     """
     samesite_norm = (samesite or "lax").lower()

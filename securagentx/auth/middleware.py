@@ -1,7 +1,7 @@
 """securagentx.auth.middleware — FastAPI auth dependencies.
 
 This module exposes FastAPI dependencies / callables that mirror
-PentAGI's three auth-middleware variants plus the privilege-check
+The original three auth-middleware variants plus the privilege-check
 helper:
 
 * :func:`try_auth`             — auth optional: attach identity if a
@@ -19,7 +19,7 @@ helper:
   (ports ``PrivilegesRequired``).
 
 Permission enforcement is a simple ``in`` check on the privilege list
-(``slices.Contains`` in Go), matching the PentAGI convention of dotted
+(``slices.Contains`` in Go), matching the SecurAgentX convention of dotted
 namespaces like ``users.*``, ``roles.*``, ``settings.user.*``,
 ``settings.tokens.*``, ``pentagi.automation``. API tokens automatically
 receive the ``pentagi.automation`` privilege.
@@ -44,7 +44,7 @@ Design constraints:
 * Lazy import of ``fastapi``, ``starlette`` so this module is importable
   for AST inspection in CLI-only environments.
 * All dependencies are async — FastAPI supports both sync and async
-  deps, but the PentAGI middleware performs DB I/O so async is the
+  deps, but the SecurAgentX middleware performs DB I/O so async is the
   natural choice.
 """
 
@@ -71,9 +71,7 @@ logger = logging.getLogger("securagentx.auth.middleware")
 
 # Re-export the privilege string at module scope for callers that want
 # ``from securagentx.auth.middleware import PRIVILEGE_AUTOMATION``.
-# Matches PentAGI's ``const PrivilegeAutomation = "pentagi.automation"``
-# from backend/pkg/server/auth/auth_middleware.go.
-PRIVILEGE_AUTOMATION: str = "pentagi.automation"
+PRIVILEGE_AUTOMATION: str = "pentagi.automation"  # Byte-compat constant — do not change
 
 # Privilege namespaces that API tokens are filtered out from (matches
 # the Go middleware in services/auth.go::Info).
@@ -237,7 +235,7 @@ def _attach_token_identity(
 ) -> AuthIdentity:
     """Build an :class:`AuthIdentity` from validated JWT claims.
 
-    Applies the PentAGI rule: API tokens automatically receive the
+    Applies the SecurAgentX rule: API tokens automatically receive the
     ``pentagi.automation`` privilege and have their privileges filtered
     to remove ``users.*``, ``roles.*``, ``settings.user.*``,
     ``settings.tokens.*`` (cannot self-manage).
@@ -338,7 +336,7 @@ def _raise_http_error(status_code: int, detail: str) -> None:
 async def try_auth(request: Any) -> Optional[AuthIdentity]:
     """Best-effort auth: attach identity if a token/cookie is valid.
 
-    Equivalent to PentAGI's ``TryAuth``. Does **not** raise 401 when
+    Equivalent to the original ``TryAuth``. Does **not** raise 401 when
     no credentials are present — just attaches no identity.
     """
     return await _resolve_identity(request, mandatory=False)
@@ -347,7 +345,7 @@ async def try_auth(request: Any) -> Optional[AuthIdentity]:
 async def auth_token_required(request: Any) -> AuthIdentity:
     """Mandatory auth: 401 if neither a Bearer token nor a session is valid.
 
-    Equivalent to PentAGI's ``AuthTokenRequired`` — accepts both API
+    Equivalent to the original ``AuthTokenRequired`` — accepts both API
     tokens (Bearer) and interactive sessions (cookie).
     """
     return await _resolve_identity(request, mandatory=True)  # type: ignore[return-value]
@@ -356,7 +354,7 @@ async def auth_token_required(request: Any) -> AuthIdentity:
 async def auth_user_required(request: Any) -> AuthIdentity:
     """Mandatory interactive auth: 401 if no valid session (API tokens rejected).
 
-    Equivalent to PentAGI's ``AuthUserRequired``. Used for endpoints
+    Equivalent to the original ``AuthUserRequired``. Used for endpoints
     that manage users, roles, or tokens — API tokens cannot self-
     manage (matches the Go filter in ``services/auth.go::Info``).
     """
@@ -372,7 +370,7 @@ async def auth_user_required(request: Any) -> AuthIdentity:
 async def local_user_required(request: Any) -> AuthIdentity:
     """Reject ``tid != "local"`` (for password change only).
 
-    Equivalent to PentAGI's ``localUserRequired`` middleware. The
+    Equivalent to the original ``localUserRequired`` middleware. The
     request must have already passed through :func:`auth_user_required`.
     """
     identity = await _resolve_identity(request, mandatory=True)
@@ -396,7 +394,7 @@ async def _resolve_identity(
 ) -> Optional[AuthIdentity]:
     """Resolve the identity from Bearer token first, then cookie.
 
-    Mirrors the ordering in PentAGI's ``AuthTokenRequired``:
+    Mirrors the ordering in the original ``AuthTokenRequired``:
 
         tryAuth(c, mandatory, tryProtoTokenAuthentication, tryUserCookieAuthentication)
 
@@ -486,7 +484,7 @@ def privileges_required(
 ) -> Callable[[Any], Awaitable[None]]:
     """Build a FastAPI dependency that enforces the given privileges.
 
-    Equivalent to PentAGI's ``PrivilegesRequired(privs...)`` factory.
+    Equivalent to the original ``PrivilegesRequired(privs...)`` factory.
     The returned dependency:
 
     * Reads ``request.state.prm`` (populated by :func:`try_auth` /

@@ -1,6 +1,6 @@
 """securagentx/agents/memorist.py — long-term memory retrieval specialist.
 
-Ports PentAGI's ``templates/prompts/memorist.tmpl`` system prompt,
+Ports the original ``templates/prompts/memorist.tmpl`` system prompt,
 ``templates/prompts/question_memorist.tmpl`` user prompt, and the
 ``GetMemoristHandler`` factory from ``providers/handlers.go`` into SecurAgentX.
 The Memorist is a *limited* agent (``MAX_LIMITED_ITERATIONS`` = 20) that
@@ -18,12 +18,12 @@ The Memorist terminates by calling the ``memorist_result`` barrier tool;
 its ``result`` field becomes the calling specialist's historical-context
 write-up.
 
-Two-channel language policy (ported verbatim from PentAGI):
+Two-channel language policy (ported verbatim from the Go original):
     * Engagement log (``message`` fields, closing ``message``) -> {{ lang }}
     * Technical channel (queries, stored content, closing ``result``) ->
       English
 
-Data anonymization rule (ported from PentAGI's ``anonymizer.Replacer``):
+Data anonymization rule (ported from the Go original's ``anonymizer.Replacer``):
 ALL content written to long-term memory via the ``store_answer``,
 ``store_guide``, or ``store_code`` tools MUST be anonymized BEFORE storing.
 The :func:`anonymize` helper performs the programmatic replacement:
@@ -68,7 +68,7 @@ from securagentx.agents.base import (
 
 logger = logging.getLogger("securagentx.agents.memorist")
 
-# --- Tool-name constants (ported from pentagi/backend/pkg/tools/registry.go) --
+# --- Tool-name constants (ported from backend/pkg/tools/registry.go) --
 MEMORIST_RESULT_TOOL_NAME = "memorist_result"
 SEARCH_IN_MEMORY_TOOL_NAME = "search_in_memory"
 STORE_ANSWER_TOOL_NAME = "store_answer"
@@ -99,7 +99,7 @@ GRAPHITI_SEARCH_TYPES: tuple[str, ...] = (
 )
 
 
-# --- Data anonymization (ported from PentAGI's anonymizer.Replacer) ----------
+# --- Data anonymization (ported from the Go original's anonymizer.Replacer) ----------
 # IPv4 address (with 0-255 octet validation).
 _IPV4_RE = re.compile(
     r"\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b"
@@ -197,7 +197,7 @@ def anonymize(text: str | None) -> str | None:
 class MemoristResult(BaseModel):
     """Completion-tool payload for the ``memorist_result`` barrier tool.
 
-    Two-channel policy (mirrors PentAGI):
+    Two-channel policy (mirrors the Go original):
 
     - ``result``  — technical channel, English. The historical-context
       write-up consumed by the calling agent. Contains synthesized findings
@@ -827,7 +827,7 @@ class _MemoristToolExecutor:
 class Memorist:
     """Long-term memory retrieval specialist (Archivist; limited agent).
 
-    Mirrors PentAGI's ``flowProvider.GetMemoristHandler`` — runs an LLM
+    Mirrors the original ``flowProvider.GetMemoristHandler`` — runs an LLM
     tool-calling chain with a hard cap of ``MAX_LIMITED_ITERATIONS``
     iterations and the ``memorist_result`` barrier tool as the only exit.
     The vector store (with ``search_in_memory`` / ``store_answer`` /
@@ -869,7 +869,7 @@ class Memorist:
         self.max_iterations = max_iterations or MAX_LIMITED_ITERATIONS
 
         # Engagement-log language — override on the instance if a non-default
-        # language was negotiated at flow-creation time (cf. PentAGI
+        # language was negotiated at flow-creation time (cf. SecurAgentX
         # ``flowProvider.language`` resolved by the language_chooser template).
         self.lang: str = self.LANG_DEFAULT
 
@@ -877,7 +877,7 @@ class Memorist:
         # containers itself.
         self.docker_image: str = self.DEFAULT_DOCKER_IMAGE
 
-        # Graphiti temporal-knowledge-graph toggle (cf. PentAGI
+        # Graphiti temporal-knowledge-graph toggle (cf. SecurAgentX
         # ``flowProvider.graphitiClient``).
         self.graphiti_enabled: bool = bool(getattr(memory, "graphiti_enabled", False))
 
@@ -950,7 +950,7 @@ class Memorist:
         mem = self.memory
         if mem is not None:
             # search_in_memory — accept either ``search_in_memory`` or
-            # ``search_answers`` (PentAGI's ChromaDB-backed helper name).
+            # ``search_answers`` (the original ChromaDB-backed helper name).
             fn = (
                 getattr(mem, "search_in_memory", None)
                 or getattr(mem, "search_answers", None)

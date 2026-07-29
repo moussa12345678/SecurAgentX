@@ -1,6 +1,6 @@
 """securagentx/agents/generator.py — decomposes a user task into an ordered subtask list.
 
-Ported from PentAGI's ``backend/pkg/providers/performers.go::performSubtasksGenerator``
+Ported from the original ``backend/pkg/providers/performers.go::performSubtasksGenerator``
 and the ``generator.tmpl`` / ``subtasks_generator.tmpl`` prompt templates.
 
 The Generator is a *planning* agent: given a user task description and any
@@ -42,7 +42,7 @@ SearchToolName: str = "search"
 #: Name of the completion / barrier tool that ends the Generator's turn.
 SubtaskListToolName: str = "subtask_list"
 
-#: Prefix injected before summarized historical content (mirrors PentAGI).
+#: Prefix injected before summarized historical content (mirrors the Go original).
 SummarizedContentPrefix: str = "[SUMMARIZED_CONTENT]"
 
 #: Name of the (read-only) summarization marker tool the Generator must NOT call.
@@ -364,7 +364,7 @@ class Generator:
     ``subtask_list``, the loop terminates and the parsed ``SubtaskList`` is
     returned to the caller as a list of subtask dicts.
 
-    Ported from PentAGI's ``performSubtasksGenerator`` (performers.go).
+    Ported from the original ``performSubtasksGenerator`` (performers.go).
     """
 
     agent_type: AgentType = AgentType.GENERATOR  # type: ignore[attr-defined]

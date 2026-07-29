@@ -58,7 +58,7 @@ __all__ = [
 # 1. Public constants
 # ---------------------------------------------------------------------------
 
-#: Heading level → font size (pt).  Matches the PentAGI stylesheet.
+#: Heading level → font size (pt).  Matches the SecurAgentX stylesheet.
 HEADING_FONT_SIZES: dict = {
     1: 16,
     2: 14,

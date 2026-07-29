@@ -1,13 +1,13 @@
-"""securagentx/flows/subtask_worker.py — SubtaskWorker asyncio port of PentAGI's subtask.go.
+"""securagentx/flows/subtask_worker.py — SubtaskWorker asyncio port of the original's subtask.go.
 
-This module ports PentAGI's ``backend/pkg/controller/subtask.go::SubtaskWorker``
+This module ports the original ``backend/pkg/controller/subtask.go::SubtaskWorker``
 to Python. The SubtaskWorker is the leaf-tier worker in the 4-tier
 hierarchy (Flow → Task → SubTask → Action). It owns a single Subtask
 row + its primary-agent :class:`Msgchain` ID, and runs one iteration
 of the universal :func:`perform_agent_chain` loop via the
 :class:`FlowProvider`.
 
-Architecture (ported from PentAGI)
+Architecture (ported from the Go original)
 ---------------------------------
 * :meth:`SubtaskWorker.create` — classmethod that calls
   ``provider.prepare_agent_chain(task_id, subtask_id)`` to allocate a
@@ -35,11 +35,11 @@ On each status transition, the :class:`SubtaskStateMachine` calls
 Task (and transitively to the Flow). ``RUNNING`` and ``WAITING``
 propagate; ``FINISHED`` / ``FAILED`` do NOT propagate (the Task's
 status is driven by the TaskWorker's outer loop, not by individual
-subtask completions — mirrors PentAGI's
+subtask completions — mirrors the original
 ``subtaskWorker.SetStatus`` comment).
 
 Agent context propagation uses :class:`contextvars.ContextVar` via
-:func:`AgentContext.put` (mirrors PentAGI's
+:func:`AgentContext.put` (mirrors the original
 ``tools.PutAgentContext(ctx, MsgchainTypePrimaryAgent)``).
 """
 
@@ -101,7 +101,7 @@ class SubtaskWorker:
         self.subtask_ctx: SubtaskContext = subtask_ctx
         self.task_worker: "TaskWorker | None" = task_worker
 
-        # In-memory flags mirroring PentAGI's `completed` / `waiting`.
+        # In-memory flags mirroring the original `completed` / `waiting`.
         self._completed: bool = subtask.status in (
             SubtaskStatus.FINISHED,
             SubtaskStatus.FAILED,
@@ -208,7 +208,7 @@ class SubtaskWorker:
                     status.value,
                 )
 
-            # Update in-memory flags to mirror PentAGI's subtaskWorker.SetStatus switch.
+            # Update in-memory flags to mirror the original subtaskWorker.SetStatus switch.
             if status == SubtaskStatus.RUNNING:
                 self._completed = False
                 self._waiting = False
@@ -251,7 +251,7 @@ class SubtaskWorker:
     ) -> "SubtaskWorker":
         """Create a fresh primary-agent msgchain + return the SubtaskWorker.
 
-        Mirrors PentAGI's ``NewSubtaskWorker``. Calls
+        Mirrors the original ``NewSubtaskWorker``. Calls
         ``provider.prepare_agent_chain(task_id, subtask_id)`` to
         allocate a new msgchain row, then constructs the SubtaskWorker.
         """
@@ -291,7 +291,7 @@ class SubtaskWorker:
     ) -> "SubtaskWorker":
         """Load an existing SubtaskWorker from the DB (used on resume).
 
-        Mirrors PentAGI's ``LoadSubtaskWorker``. Loads the most recent
+        Mirrors the original ``LoadSubtaskWorker``. Loads the most recent
         primary-agent msgchain for the subtask; if the subtask is in
         ``RUNNING`` status (i.e. interrupted mid-run), it's reset to
         ``CREATED`` so the run loop starts fresh on resume.
@@ -335,7 +335,7 @@ class SubtaskWorker:
     async def put_input(self, input: str) -> None:
         """Append user input to the WAITING agent chain (for resume).
 
-        Mirrors PentAGI's ``subtaskWorker.PutInput``. Calls
+        Mirrors the original ``subtaskWorker.PutInput``. Calls
         ``provider.put_input_to_agent_chain(msg_chain_id, input)`` to
         append the user's input as a new ``user`` message in the
         existing chain, logs the input as a message-log entry, and
@@ -374,7 +374,7 @@ class SubtaskWorker:
     async def run(self) -> None:
         """Run one iteration of the universal agent chain for this subtask.
 
-        Mirrors PentAGI's ``subtaskWorker.Run``. Flow:
+        Mirrors the original ``subtaskWorker.Run``. Flow:
 
             1. ``set_status(RUNNING)`` (validates the state-machine
                transition + back-propagates to Task/Flow).
@@ -390,7 +390,7 @@ class SubtaskWorker:
 
         On ``asyncio.CancelledError`` or unexpected errors, sets the
         subtask to ``WAITING`` (best-effort) so it can be resumed later
-        (mirrors PentAGI's ``handleInterrupting``).
+        (mirrors the original ``handleInterrupting``).
         """
         if self.is_completed():
             raise RuntimeError(
@@ -406,7 +406,7 @@ class SubtaskWorker:
         try:
             await self.set_status(SubtaskStatus.RUNNING)
 
-            # Ensure chain consistency on resume (mirrors PentAGI's
+            # Ensure chain consistency on resume (mirrors the original
             # EnsureChainConsistency call before PerformAgentChain).
             try:
                 await self.subtask_ctx.provider.ensure_chain_consistency(
@@ -495,7 +495,7 @@ class SubtaskWorker:
     async def _handle_interrupting(self) -> None:
         """Set the subtask to WAITING on cancellation / deadline (best-effort).
 
-        Mirrors PentAGI's ``subtaskWorker.handleInterrupting``. Skips if
+        Mirrors the original ``subtaskWorker.handleInterrupting``. Skips if
         the subtask is already FINISHED/FAILED.
         """
         if self.is_completed():
@@ -513,7 +513,7 @@ class SubtaskWorker:
     async def finish(self) -> None:
         """Mark the subtask FINISHED (called by TaskWorker.finish).
 
-        Mirrors PentAGI's ``subtaskWorker.Finish``. Raises ``RuntimeError``
+        Mirrors the original ``subtaskWorker.Finish``. Raises ``RuntimeError``
         if the subtask has already completed.
         """
         if self.is_completed():

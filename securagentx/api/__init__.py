@@ -1,6 +1,6 @@
-"""securagentx.api — FastAPI REST API server (port of PentAGI REST surface).
+"""securagentx.api — FastAPI REST API server (port of the original REST surface).
 
-This subpackage ports PentAGI's Gin-based REST API (base path ``/api/v1``,
+This subpackage ports the original Gin-based REST API (base path ``/api/v1``,
 ~85 endpoints across 24 resource groups) to Python/FastAPI. It is
 composed of:
 
@@ -10,7 +10,7 @@ composed of:
   plus the response-envelope helpers (``Envelope``, ``success_response``,
   ``error_response``, ``APIError``).
 * ``_auth``            — Bearer-token (JWT HS256) + session-cookie
-  authentication dependencies. Mirrors PentAGI's
+  authentication dependencies. Mirrors the original
   ``auth_token_required`` / ``auth_user_required`` /
   ``local_user_required`` / ``privileges_required`` middleware.
 * ``routes``           — package containing one ``APIRouter`` per
@@ -28,14 +28,14 @@ Design constraints:
 * All schemas use Pydantic v2 ``BaseModel``.
 * Each module uses ``logging.getLogger("securagentx.api.<module>")``.
 
-The response envelope mirrors PentAGI's ``response.HttpError`` catalog
+The response envelope mirrors the original ``response.HttpError`` catalog
 (``backend/pkg/server/response/http.go``):
 
     {"status": "success", "data": <any>}
     {"status": "error", "code": "<code>", "msg": "<msg>", "error"?: "<orig>"}
 
 The ``error`` field is only present when the server is running in
-``develop`` mode (matches PentAGI's ``develop`` flag).
+``develop`` mode (matches the original ``develop`` flag).
 """
 
 from __future__ import annotations

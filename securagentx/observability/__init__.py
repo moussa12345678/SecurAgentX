@@ -5,7 +5,7 @@ Re-exports the public API of the four observability sub-modules:
 * :mod:`securagentx.observability.otel` — OpenTelemetry tracer / meter /
   logger setup + auto-instrumentation of FastAPI / httpx / asyncpg / redis.
 * :mod:`securagentx.observability.langfuse` — Langfuse LLM observability
-  singleton + ``@observe()`` decorators mapped to PentAGI's observation
+  singleton + ``@observe()`` decorators mapped to the original observation
   types (agent / tool / chain / generation / retriever / evaluator /
   embedding / guardrail / score / log).
 * :mod:`securagentx.observability.logging` — ``structlog`` configuration
@@ -13,7 +13,7 @@ Re-exports the public API of the four observability sub-modules:
   ``langfuse_trace_id``, ``langfuse_observation_id``) and OTel logs
   pipeline bridge.
 * :mod:`securagentx.observability.metrics` — custom metrics mirroring
-  PentAGI's Grafana dashboard contract (token usage, toolcalls duration,
+  The original Grafana dashboard contract (token usage, toolcalls duration,
   flows count, agent iterations, docker containers, search providers,
   knowledge-graph nodes).
 * :mod:`securagentx.observability.chains` — chain summarisation helpers

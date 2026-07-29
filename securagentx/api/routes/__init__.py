@@ -1,6 +1,6 @@
 """securagentx.api.routes — APIRouter-per-resource-group registry.
 
-Mirrors PentAGI's ``setXxxGroup`` helpers (one helper per resource
+Mirrors the original ``setXxxGroup`` helpers (one helper per resource
 group, mounted under the ``/api/v1`` prefix). Each module in this
 package exposes a single ``APIRouter`` named ``router``.
 

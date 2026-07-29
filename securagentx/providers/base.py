@@ -1,8 +1,8 @@
 """securagentx.providers.base — LLM provider abstraction layer.
 
-This module is the Python port of PentAGI's
+This module is the Python port of the original's
 ``backend/pkg/providers/provider/provider.go`` and
-``backend/pkg/providers/pconfig/config.go`` (Go originals by vxcontrol).
+``backend/pkg/providers/pconfig/config.go`` (Go originals by the original).
 It defines the universal ``Provider`` Protocol implemented by every concrete
 adapter (OpenAI, Anthropic, Gemini, Bedrock, Ollama, Custom, DeepSeek, GLM,
 Kimi, Qwen), the Pydantic v2 data models that describe per-agent
@@ -53,9 +53,9 @@ logger = logging.getLogger("securagentx.providers.base")
 
 
 class ProviderType(str, Enum):
-    """The 10 LLM provider types supported by SecurAgentX.
+    """The 10 LLM provider types supported by the original.
 
-    Mirrors PentAGI's ``provider.ProviderType`` enum (``provider.go``).
+    Mirrors the original ``provider.ProviderType`` enum (``provider.go``).
     Values are lowercase short names that match the YAML config keys and the
     GraphQL ``ProviderType`` enum, so they round-trip cleanly through any
     persistence layer.
@@ -74,7 +74,7 @@ class ProviderType(str, Enum):
 
 
 class ProviderOptionsType(str, Enum):
-    """Per-agent slot identifier (mirrors PentAGI's ``ProviderOptionsType``).
+    """Per-agent slot identifier (mirrors the original ``ProviderOptionsType``).
 
     A provider's :class:`ProviderConfig` exposes one optional
     :class:`AgentConfig` per slot; the slot name doubles as the agent role
@@ -191,7 +191,7 @@ class AgentConfig(BaseModel):
     frequency_penalty: float | None = None
     presence_penalty: float | None = None
     # Aliased to ``json`` in the wire format (YAML / JSON) so configs port
-    # verbatim from PentAGI, while avoiding the Pydantic v2 ``BaseModel.json``
+    # verbatim from the Go original, while avoiding the Pydantic v2 ``BaseModel.json``
     # method shadow warning on the Python side.
     json_mode: bool = Field(default=False, alias="json")
     response_mime_type: str | None = None
@@ -234,7 +234,7 @@ class ProviderConfig(BaseModel):
         """Return the :class:`PriceInfo` for ``opt`` or ``None``.
 
         Convenience wrapper used by every provider's ``get_price_info``
-        implementation — mirrors PentAGI's
+        implementation — mirrors the original
         ``ProviderConfig.GetPriceInfoForType``.
         """
         agent = self.get_agent_config(opt)
@@ -332,7 +332,7 @@ MessagePart = Union[TextPart, ToolCall, ToolCallResponse]
 class MessageContent(BaseModel):
     """A single chat message in the agent chain.
 
-    Mirrors PentAGI's ``llms.MessageContent``. ``role`` is one of
+    Mirrors the original ``llms.MessageContent``. ``role`` is one of
     ``"system"``, ``"user"``, ``"assistant"``, ``"tool"``. ``parts`` is a
     heterogeneous list of :data:`MessagePart` — adapters are responsible
     for translating this to their provider-native shape (e.g. OpenAI's

@@ -1,6 +1,6 @@
 """securagentx/search_providers/perplexity.py — Perplexity (Sonar) search provider.
 
-Ports PentAGI's ``backend/pkg/tools/perplexity.go`` (427 lines) to an
+Ports the original ``backend/pkg/tools/perplexity.go`` (427 lines) to an
 async Python client. Perplexity's Sonar model is OpenAI-compatible — the
 provider speaks the chat-completions schema with a handful of
 search-specific extra fields (``search_context_size``,
@@ -13,7 +13,7 @@ Endpoint:
 Auth:
     ``Authorization: Bearer <api_key>`` header.
 
-Request body (port-verbatim from PentAGI):
+Request body (port-verbatim from the Go original):
     .. code-block:: json
 
        {
@@ -54,7 +54,7 @@ Summarization: if the rendered output exceeds 3000 chars and a summarizer
 is configured, the output is LLM-summarised; otherwise it is returned
 as-is (truncation handled by :func:`summarize_if_needed`).
 
-Timeout: 60 seconds (preserved verbatim from PentAGI).
+Timeout: 60 seconds (preserved verbatim from the Go original).
 Availability: ``PERPLEXITY_API_KEY`` env var is non-empty.
 """
 
@@ -75,7 +75,7 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.perplexity")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's perplexity.go.
+# Constants — ported verbatim from the Go original's perplexity.go.
 # ---------------------------------------------------------------------------
 
 PERPLEXITY_ENDPOINT: str = "https://api.perplexity.ai/chat/completions"
@@ -85,7 +85,7 @@ PERPLEXITY_MAX_TOKENS: int = 4000
 PERPLEXITY_TEMPERATURE: float = 0.5
 PERPLEXITY_TOP_P: float = 0.9
 
-#: Allowed values for ``search_context_size`` — mirrors PentAGI's enum.
+#: Allowed values for ``search_context_size`` — mirrors the original enum.
 ContextSize = Literal["low", "medium", "high"]
 
 
@@ -158,7 +158,7 @@ class PerplexitySearchProvider(SearchProvider):
             "return_images": False,
             "return_related_questions": False,
             "search_recency_filter": self.search_recency_filter,
-            "top_k": 0,  # PentAGI hardcodes 0 (Sonar ignores non-zero)
+            "top_k": 0,  # SecurAgentX hardcodes 0 (Sonar ignores non-zero)
             "stream": False,
         }
         # Note: max_results is intentionally NOT forwarded to Perplexity's
@@ -213,7 +213,7 @@ class PerplexitySearchProvider(SearchProvider):
     def _render(self, payload: dict[str, Any]) -> str:
         """Render the Perplexity JSON payload as Markdown.
 
-        Output format (verbatim from PentAGI):
+        Output format (verbatim from the Go original):
 
         .. code-block:: markdown
 
@@ -250,7 +250,7 @@ class PerplexitySearchProvider(SearchProvider):
 
 
 # ---------------------------------------------------------------------------
-# HTTP error mapping — preserved verbatim from PentAGI.
+# HTTP error mapping — preserved verbatim from the Go original.
 # ---------------------------------------------------------------------------
 
 _PERPLEXITY_STATUS_MAP: dict[int, str] = {

@@ -1,8 +1,8 @@
 """securagentx/docker/cleanup.py — startup-time + on-demand container cleanup.
 
-This module ports PentAGI's ``dockerClient.Cleanup()`` method
-(defined in ``backend/pkg/docker/client.go``) to Python. The PentAGI
-original runs at server startup and on graceful shutdown; its job is to
+This module implements the ``dockerClient.Cleanup()`` method
+(defined in ``backend/pkg/docker/client.go``) in Python. The original
+runs at server startup and on graceful shutdown; its job is to
 reconcile the DB's view of containers with what Docker actually has,
 and to fail-fast any flow whose containers are in an inconsistent state.
 
@@ -16,21 +16,23 @@ Algorithm (verbatim port of the Go ``Cleanup`` switch statement):
      container is NOT running -> fall through to the
      ``Created/Finished/Failed`` arm (the flow is broken).
    - If flow status is ``Created``/``Finished``/``Failed`` -> mark the
-     flow ``Failed`` (mirrors PentAGI's ``markFlowAsFailed``) and
+     flow ``Failed`` and
      remove all its ``starting``/``running`` containers concurrently.
 3. Container removal is done via ``asyncio.gather(return_exceptions=True)``
-   (Python equivalent of PentAGI's goroutines + WaitGroup). Errors are
+   (Python equivalent of goroutines + WaitGroup). Errors are
    collected but do NOT abort the sweep — we want to clean up as much
    as possible.
 
-SecurAgentX additions (NOT in PentAGI):
+SecurAgentX additions (NOT in the upstream Go original):
 
 * ``cleanup_all()`` — nuclear option that removes EVERY
   ``pentagi-terminal-*`` container from the Docker daemon, regardless
   of DB state. Useful for developer resets and for recovering from a
   corrupted DB. Identifies SecurAgentX-managed containers by the
-  ``pentagi-terminal-`` name prefix (PentAGI's
-  ``containerPrimaryTypePattern = "-terminal-"``).
+  ``pentagi-terminal-`` name prefix (the
+  ``containerPrimaryTypePattern = "-terminal-"`` filter).
+  Both the prefix literal and the ``-terminal-`` substring filter
+  are byte-compat constants — do not change.
 * ``cleanup_flow(flow_id)`` — single-flow cleanup. Used by the
   orchestrator when a flow completes or fails.
 * ``cleanup_orphan_networks()`` — removes any ``securagentx-flow-*``
@@ -70,7 +72,7 @@ logger = logging.getLogger("securagentx.docker.cleanup")
 class CleanupResult:
     """Structured outcome of a cleanup sweep.
 
-    Fields mirror what PentAGI logs at the end of ``Cleanup()`` plus
+    Fields mirror what SecurAgentX logs at the end of ``Cleanup()`` plus
     SecurAgentX additions (errors list, network count).
     """
 
@@ -97,7 +99,7 @@ class FlowStatusProvider:
     """Abstract interface for looking up flow status.
 
     The cleanup logic needs to know each flow's status to decide whether
-    to mark it ``Failed`` and purge its containers. PentAGI does this
+    to mark it ``Failed`` and purge its containers. The original does this
     via ``db.GetFlows()``; SecurAgentX may store flows in SQLite (same DB
     as containers), Postgres, or elsewhere. We inject a small adapter
     object so the cleanup module stays decoupled from the flows store.
@@ -174,13 +176,13 @@ class ContainerCleanup:
         self.network = network
 
     # ------------------------------------------------------------------
-    # Startup-time cleanup — port of PentAGI's ``Cleanup()``
+    # Startup-time cleanup — port of the original's ``Cleanup()``
     # ------------------------------------------------------------------
 
     async def cleanup_orphan_containers(self) -> dict[str, Any]:
         """Sweep all flows + containers, removing orphans.
 
-        Algorithm (ported from PentAGI's ``Cleanup``):
+        Algorithm (ported from the Go original's ``Cleanup``):
 
         1. Load all flows (statuses) + all containers.
         2. Group containers by flow_id.
@@ -211,7 +213,7 @@ class ContainerCleanup:
         for flow_id, status in flows.items():
             flow_ctrs = flow_containers.get(flow_id, [])
             if status in (FlowStatus.RUNNING, FlowStatus.WAITING):
-                # PentAGI semantics: skip a Running/Waiting flow ONLY
+                # SecurAgentX semantics: skip a Running/Waiting flow ONLY
                 # when it has no active containers (nothing to clean
                 # up). If at least one container is still starting or
                 # running, the flow is considered "orphaned" by the
@@ -245,7 +247,7 @@ class ContainerCleanup:
                 result.errors.append(f"failed to mark flow {flow_id} as failed: {e}")
 
         # Run all container removals concurrently (Python equivalent of
-        # PentAGI's ``sync.WaitGroup``).
+        # the original ``sync.WaitGroup``).
         if removal_tasks:
             logger.info(
                 "cleanup: removing %d containers across %d flows concurrently",
@@ -452,7 +454,7 @@ class ContainerCleanup:
     @staticmethod
     def _all_containers_running(containers: list[ContainerInfo]) -> bool:
         """Return True if ``containers`` is non-empty AND NONE of them are
-        in ``starting``/``running`` status. Mirrors PentAGI's
+        in ``starting``/``running`` status. Mirrors the original
         ``isAllContainersRunning``.
 
         Despite the misleading name (preserved verbatim from the Go

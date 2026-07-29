@@ -1,6 +1,6 @@
 """securagentx/agents/searcher.py — Precision information-retrieval specialist.
 
-Ports PentAGI's ``providers/handlers.go::GetSubtaskSearcherHandler`` and the
+Ports the original ``providers/handlers.go::GetSubtaskSearcherHandler`` and the
 ``templates/prompts/searcher.tmpl`` system prompt into SecurAgentX. The Searcher
 is a *limited* agent (``MAX_LIMITED_ITERATIONS`` = 20) whose mission is to
 deliver relevant information with maximum efficiency: it checks the in-memory
@@ -9,7 +9,7 @@ configured search providers (Tavily, Perplexity, DuckDuckGo, Google, Sploitus,
 Searxng, Traversaal) and the Browser tool, and finally closes with the
 ``search_result`` barrier tool.
 
-Two-channel language policy (ported verbatim from PentAGI):
+Two-channel language policy (ported verbatim from the Go original):
     * Engagement log (``message`` fields, closing ``message``) -> {{ lang }}
     * Technical channel (queries, stored answers, closing ``result``) -> English
 """
@@ -29,7 +29,7 @@ from securagentx.agents.base import (
 
 logger = logging.getLogger("securagentx.agents.searcher")
 
-# --- Tool-name constants (ported from pentagi/backend/pkg/tools/registry.go) --
+# --- Tool-name constants (ported from backend/pkg/tools/registry.go) --
 SEARCH_RESULT_TOOL_NAME = "search_result"
 SEARCH_ANSWER_TOOL_NAME = "search_answer"
 STORE_ANSWER_TOOL_NAME = "store_answer"
@@ -276,7 +276,7 @@ class _DefaultDict(dict):
 class Searcher:
     """Precision information-retrieval specialist (limited agent, 20 iterations).
 
-    Mirrors PentAGI's ``flowProvider.performSearcher`` — runs an LLM tool-calling
+    Mirrors the original ``flowProvider.performSearcher`` — runs an LLM tool-calling
     chain with a hard cap of ``MAX_LIMITED_ITERATIONS`` iterations and the
     ``search_result`` barrier tool as the only exit. All search providers,
     the Browser tool, and the in-memory answer store are exposed to the chain
@@ -305,7 +305,7 @@ class Searcher:
         self.max_iterations = max_iterations or MAX_LIMITED_ITERATIONS
 
         # Engagement-log language — override on the instance if a non-default
-        # language was negotiated at flow-creation time (cf. PentAGI
+        # language was negotiated at flow-creation time (cf. SecurAgentX
         # ``flowProvider.language`` resolved by the language_chooser template).
         self.lang: str = self.LANG_DEFAULT
 

@@ -5,7 +5,7 @@ by the SecurAgentX orchestrator to look up concrete
 :class:`~securagentx.providers.base.Provider` instances by
 :class:`~securagentx.providers.base.ProviderType`.
 
-The registry pattern matches PentAGI's
+The registry pattern matches the original
 ``backend/pkg/providers/providers.go::providerController`` (factory
 registration + ``NewProvider(db.Provider)`` switch), with two
 differences:
@@ -44,7 +44,7 @@ logger = logging.getLogger("securagentx.providers.registry")
 # ---------------------------------------------------------------------------
 # Env-var probe table — maps ProviderType -> list of env vars where at
 # least one must be set for the provider to be considered "available".
-# Mirrors PentAGI's per-provider ``New()`` env-var checks.
+# Mirrors the original per-provider ``New()`` env-var checks.
 # ---------------------------------------------------------------------------
 
 
@@ -476,7 +476,7 @@ def get_default_registry() -> ProviderRegistry:
     """Return the process-wide default :class:`ProviderRegistry`.
 
     Lazily constructed on first call so import-time side effects are
-    minimised. Equivalent to PentAGI's ``providerController`` singleton.
+    minimised. Equivalent to the original ``providerController`` singleton.
     """
     global _DEFAULT_REGISTRY
     if _DEFAULT_REGISTRY is None:

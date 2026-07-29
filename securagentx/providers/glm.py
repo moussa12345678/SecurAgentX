@@ -1,6 +1,6 @@
 """securagentx.providers.glm — GLM (Z.AI) LLM provider adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/glm/glm.go``. The adapter talks
+Port of the original ``backend/pkg/providers/glm/glm.go``. The adapter talks
 to Z.AI's OpenAI-compatible Chat Completions API at
 ``https://api.z.ai/api/paas/v4/`` via the official ``openai`` Python SDK
 (with a custom ``base_url``), and implements the full
@@ -19,13 +19,13 @@ Key features ported from the Go original
   ``extra_body.thinking.clear_thinking = false`` keeps the reasoning
   content across turns. The client additionally re-serializes
   ``reasoning_content`` back into the assistant message when sending
-  the next turn (this is what PentAGI's
+  the next turn (this is what the original
   ``WithPreserveReasoningContent()`` does in langchaingo; in Python it
   is implemented by
   :meth:`OpenAICompatProvider.preserve_reasoning_content`).
 * **Strategy** — ``glm-5.1`` (flagship) for critical reasoning,
   ``glm-5-turbo`` for orchestration, ``glm-4.5-air`` for cheap utility.
-  The fallback model is ``glm-4.7-flashx`` (PentAGI's ``GLMAgentModel``).
+  The fallback model is ``glm-4.7-flashx`` (the original ``GLMAgentModel``).
 * **Provider prefix** — when ``GLM_PROVIDER`` is set (e.g. ``"glm"``),
   :meth:`GLMProvider.model_with_prefix` returns ``glm/<model>`` so
   LiteLLM proxy routing works transparently.
@@ -34,7 +34,7 @@ Key features ported from the Go original
   matches that format so orchestrator-synthesised IDs are
   indistinguishable from server-generated ones.
 * **429 retry** — 10 attempts, 5 s base + 1 s linear increment
-  (mirrors PentAGI's ``MaxTooManyRequestsRetries``).
+  (mirrors the original ``MaxTooManyRequestsRetries``).
 """
 
 from __future__ import annotations
@@ -63,7 +63,7 @@ logger = logging.getLogger("securagentx.providers.glm")
 #: Default Z.AI OpenAI-compatible base URL. Overridable via ``GLM_SERVER_URL``.
 GLM_DEFAULT_SERVER_URL: str = "https://api.z.ai/api/paas/v4/"
 
-#: Default GLM model. PentAGI's ``GLMAgentModel`` constant points at the
+#: Default GLM model. The original ``GLMAgentModel`` constant points at the
 #: same ``glm-4.7-flashx`` ID — a high-speed, paid, priority-GPU variant
 #: of the GLM-4.7 Flash model, best price/performance for batch utility.
 GLM_DEFAULT_MODEL: str = "glm-4.7-flashx"
@@ -73,7 +73,7 @@ GLM_DEFAULT_MODEL: str = "glm-4.7-flashx"
 #: IDs are indistinguishable.
 GLM_TOOL_CALL_ID_TEMPLATE: str = "call_-{r:19:d}"
 
-#: 429 retry policy — mirrors PentAGI's MaxTooManyRequestsRetries /
+#: 429 retry policy — mirrors the original MaxTooManyRequestsRetries /
 #: TooManyRequestsRetryDelay constants.
 GLM_MAX_429_RETRIES: int = 10
 GLM_429_BASE_DELAY: float = 5.0

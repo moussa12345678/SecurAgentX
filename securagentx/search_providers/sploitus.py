@@ -1,6 +1,6 @@
 """securagentx/search_providers/sploitus.py — Sploitus exploit-search provider.
 
-Ports PentAGI's ``backend/pkg/tools/sploitus.go`` (388 lines) to an
+Ports the original ``backend/pkg/tools/sploitus.go`` (388 lines) to an
 async Python client. Sploitus is an exploit/PoC search engine that
 requires **no API key** but is aggressively rate-limited and
 Cloudflare-protected.
@@ -8,7 +8,7 @@ Cloudflare-protected.
 Endpoint:
     ``POST https://sploitus.com/search``
 
-Request body (port-verbatim from PentAGI):
+Request body (port-verbatim from the Go original):
     .. code-block:: json
 
        {"query": "...", "type": "exploits|tools", "sort": "default",
@@ -41,9 +41,9 @@ Field semantics:
 
 Rate-limit handling (preserved verbatim):
     HTTP 499 OR 422 -> "rate limit exceeded, try again later"
-    (Sploitus uses non-standard codes — PentAGI's quirk is preserved).
+    (Sploitus uses non-standard codes — the original quirk is preserved).
 
-Hard size limits (preserved verbatim from PentAGI's sploitus.go):
+Hard size limits (preserved verbatim from the Go original's sploitus.go):
     * ``maxSourceSize = 50 KB`` per source field
     * ``maxTotalResultSize = 80 KB`` total output
     * ``truncationMsgBuffer = 500 bytes`` reserved for truncation notice
@@ -68,7 +68,7 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.sploitus")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's sploitus.go.
+# Constants — ported verbatim from the Go original's sploitus.go.
 # ---------------------------------------------------------------------------
 
 SPLOITUS_ENDPOINT: str = "https://sploitus.com/search"
@@ -112,7 +112,7 @@ class SploitusSearchProvider(SearchProvider):
 
     Implements the hard size limits (50 KB per source, 80 KB total,
     500-byte truncation buffer) and the non-standard HTTP 499/422
-    rate-limit mapping preserved verbatim from PentAGI's
+    rate-limit mapping preserved verbatim from the Go original's
     ``sploitus.go``.
 
     Availability gate: ``SPLOITUS_ENABLED`` env var is ``true`` or
@@ -179,7 +179,7 @@ class SploitusSearchProvider(SearchProvider):
             "offset": self.offset,
         }
 
-        # Anti-Cloudflare headers — preserved verbatim from PentAGI.
+        # Anti-Cloudflare headers — preserved verbatim from the Go original.
         encoded_q = quote_plus(query)
         headers = {
             "User-Agent": SPLOITUS_USER_AGENT,
@@ -245,7 +245,7 @@ def _render_sploitus_results(
 ) -> str:
     """Render Sploitus exploit results as Markdown.
 
-    Enforces the three size limits (ported verbatim from PentAGI):
+    Enforces the three size limits (ported verbatim from the Go original):
 
     * ``SPLOITUS_MAX_SOURCE_SIZE`` (50 KB) — each exploit's ``source``
       field is truncated to this length.

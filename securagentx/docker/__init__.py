@@ -1,6 +1,6 @@
 """securagentx.docker — Docker container lifecycle, cleanup, resource limits, networks.
 
-This subpackage ports PentAGI's Docker sandbox layer
+This subpackage ports the original Docker sandbox layer
 (``backend/pkg/docker/client.go`` + the container portions of
 ``backend/pkg/tools/tools.go``) to Python. It is composed of five
 modules:

@@ -1,6 +1,6 @@
 """securagentx.api._auth — Bearer-token (JWT HS256) + session auth.
 
-Ports PentAGI's ``backend/pkg/server/auth/`` to FastAPI dependencies.
+Ports the original ``backend/pkg/server/auth/`` to FastAPI dependencies.
 
 Key porting decisions (mirrors Task 1-c recommendations §7-§11):
 
@@ -8,20 +8,20 @@ Key porting decisions (mirrors Task 1-c recommendations §7-§11):
   ``algorithms=["HS256"]`` — blocks ``alg:none``).
 * **Key derivation**: PBKDF2-HMAC-SHA512, 210000 iterations, 32-byte
   key (OWASP 2023). Password and salt are constructed exactly as in
-  PentAGI's ``session.go`` so tokens issued by either stack validate
+  The original ``session.go`` so tokens issued by either stack validate
   in both. Keys cached via ``functools.lru_cache(maxsize=128)`` keyed
   by salt.
 * **Token ID**: 10-char base62 generated with ``secrets`` rejection
-  sampling (PentAGI uses ``crypto/rand`` + ``math/big.Int``). Stored
+  sampling (SecurAgentX uses ``crypto/rand`` + ``math/big.Int``). Stored
   in DB ``api_tokens.token_id`` (UNIQUE, length 10).
 * **Claims**: ``{tid, rid, uid, uhash, exp, iat, sub="api_token"}``
-  — same shape as PentAGI's ``APITokenClaims``.
+  — same shape as the original ``APITokenClaims``.
 * **TTL validation**: ``min=60s, max=94608000s`` (~3 years).
 * **Dependencies**:
   - ``try_auth``            — optional; attaches identity if present.
   - ``auth_token_required`` — mandatory; 401 if neither token nor cookie.
   - ``auth_user_required``  — mandatory; 401 if no **session** (API tokens
-                              rejected). PentAGI uses this for
+                              rejected). The original uses this for
                               ``/tokens/*``, ``/users/*``, ``/roles/*``,
                               ``PUT /user/password``.
   - ``local_user_required`` — mandatory; rejects ``tid != "local"``.
@@ -29,7 +29,7 @@ Key porting decisions (mirrors Task 1-c recommendations §7-§11):
 
 * **Cache**: in-memory ``cachetools.TTLCache`` with 5-min TTL + negative
   caching (sentinel value). Multi-process: add Redis fallback later
-  (matches PentAGI's two-tier cache plan).
+  (matches the original two-tier cache plan).
 
 This module imports ``fastapi`` / ``pyjwt`` / ``cachetools`` lazily so
 the package is importable for AST inspection without those deps. The
@@ -116,7 +116,7 @@ except ImportError:  # pragma: no cover
 
 
 # ---------------------------------------------------------------------------
-# Constants (verbatim from PentAGI)
+# Constants (verbatim from the Go original)
 # ---------------------------------------------------------------------------
 
 # PBKDF2 parameters — OWASP 2023.
@@ -130,8 +130,8 @@ PBKDF2_HASH = "sha512"
 #   salt     = "pentagi.jwt.signing|<globalSalt>"
 JWT_PASSWORD_PREFIX = "4c1e9cb77df7f9a58fcc5f52d40af685"
 JWT_PASSWORD_SUFFIX = "09784e190148d13d48885aa47cf8a297"
-JWT_SALT_PREFIX = "pentagi.jwt.signing"
-DEFAULT_GLOBAL_SALT = "salt"  # Dev sentinel — PentAGI refuses to issue
+JWT_SALT_PREFIX = "pentagi.jwt.signing"  # Byte-compat constant — do not change
+DEFAULT_GLOBAL_SALT = "salt"  # Dev sentinel — server refuses to issue
 # tokens while salt is default.
 
 # Token ID
@@ -142,7 +142,7 @@ TOKEN_ID_LENGTH = 10
 MIN_TOKEN_TTL = 60
 MAX_TOKEN_TTL = 94608000  # ~3 years
 
-# Cache TTL — PentAGI uses 5 minutes.
+# Cache TTL — SecurAgentX uses 5 minutes.
 TOKEN_CACHE_TTL = 300
 USER_CACHE_TTL = 300
 
@@ -244,12 +244,12 @@ SESSION_MAX_AGE: int = 3600  # 1 hour — itsdangerous freshness window
 def derive_signing_key(global_salt: str) -> bytes:
     """Derive the JWT HS256 signing key via PBKDF2-HMAC-SHA512.
 
-    Byte-identical to PentAGI's ``deriveSigningKey`` in ``session.go``
+    Byte-identical to the original ``deriveSigningKey`` in ``session.go``
     so tokens issued by either stack validate in both.
 
     Args:
         global_salt: The server's global salt (config ``global_salt``).
-            PentAGI refuses to issue tokens while this equals ``"salt"``.
+            SecurAgentX refuses to issue tokens while this equals ``"salt"``.
 
     Returns:
         32-byte HS256 signing key.
@@ -272,7 +272,7 @@ def generate_token_id() -> str:
     """Generate a 10-char base62 token ID.
 
     Uses ``secrets`` rejection sampling against
-    ``[0-9A-Za-z]`` (62 chars) — Python equivalent of PentAGI's
+    ``[0-9A-Za-z]`` (62 chars) — Python equivalent of the original
     ``crypto/rand`` + ``math/big.Int`` rejection sampling.
     """
     alphabet_len = len(TOKEN_ID_ALPHABET)
@@ -305,7 +305,7 @@ def sign_api_token(
 ) -> str:
     """Sign a new API-token JWT (HS256).
 
-    Claims mirror PentAGI's ``APITokenClaims``:
+    Claims mirror the original ``APITokenClaims``:
     ``{tid, rid, uid, uhash, exp, iat, sub="api_token"}``.
 
     Raises:
@@ -374,14 +374,14 @@ def verify_api_token(token: str, global_salt: str) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# User-hash (PentAGI's MakeUserHash) — installation binding
+# User-hash (the original MakeUserHash) — installation binding
 # ---------------------------------------------------------------------------
 
 
 def make_user_hash(user_id: int, password_hash: str, global_salt: str) -> str:
     """Compute the ``uhash`` claim for an API token.
 
-    PentAGI stores ``user_hash`` in the users table; if the user's
+    SecurAgentX stores ``user_hash`` in the users table; if the user's
     password or role changes, the hash changes and ALL their tokens
     auto-revoke (because ``db_hash != claims.uhash``).
 
@@ -402,7 +402,7 @@ def make_user_hash(user_id: int, password_hash: str, global_salt: str) -> str:
 class Identity:
     """Request-scoped identity attached by auth dependencies.
 
-    Mirrors the fields PentAGI puts in gin context:
+    Mirrors the fields SecurAgentX puts in gin context:
     ``uid, uhash, rid, tid, prm, gtm, exp, uuid, cpt``.
     """
 
@@ -414,7 +414,7 @@ class Identity:
     issued_at: Optional[int] = None
     expires_at: Optional[int] = None
     username: Optional[str] = None
-    client_type: str = "automation"  # PentAGI: "automation" for API tokens
+    client_type: str = "automation"  # SecurAgentX: "automation" for API tokens
 
     @property
     def is_api_token(self) -> bool:
@@ -442,7 +442,7 @@ class Identity:
 class TokenCache:
     """5-min TTL cache for API-token status lookups.
 
-    Mirrors PentAGI's ``api_token_cache.go``. Stores either an
+    Mirrors the original ``api_token_cache.go``. Stores either an
     ``Identity`` (positive) or ``_NEG_CACHE_SENTINEL`` (negative —
     token revoked, deleted, or never existed).
     """
@@ -489,7 +489,7 @@ class TokenCache:
 class UserCache:
     """5-min TTL cache for user status (active / blocked / hash).
 
-    Mirrors PentAGI's ``users_cache.go``.
+    Mirrors the original ``users_cache.go``.
     """
 
     def __init__(self, maxsize: int = 10000, ttl: int = USER_CACHE_TTL) -> None:
@@ -511,7 +511,7 @@ class UserCache:
         self._cache.pop(user_id, None)
 
 
-# Module-level singletons (PentAGI uses sync.Map globals).
+# Module-level singletons (SecurAgentX uses sync.Map globals).
 token_cache = TokenCache()
 user_cache = UserCache()
 
@@ -661,7 +661,7 @@ async def try_auth(request: Request) -> Optional[Identity]:
     """Optional auth — attach identity if a valid token or cookie is
     present, return ``None`` otherwise.
 
-    PentAGI's ``TryAuth`` middleware: public endpoints use this so they
+    The original ``TryAuth`` middleware: public endpoints use this so they
     can customise their response based on whether the caller is logged in.
 
     Raises:
@@ -728,7 +728,7 @@ async def try_auth(request: Request) -> Optional[Identity]:
 async def auth_token_required(request: Request) -> Identity:
     """Mandatory auth — 401 if neither bearer nor cookie is valid.
 
-    PentAGI's ``AuthTokenRequired`` middleware: protects ``/flows/*``,
+    The original ``AuthTokenRequired`` middleware: protects ``/flows/*``,
     ``/knowledge/*``, ``/providers``, ``/resources/*``, etc.
     """
     identity = await try_auth(request)
@@ -740,7 +740,7 @@ async def auth_token_required(request: Request) -> Identity:
 async def auth_user_required(request: Request) -> Identity:
     """Mandatory auth — 401 if no **session** (API tokens rejected).
 
-    PentAGI's ``AuthUserRequired`` middleware: protects ``/tokens/*``,
+    The original ``AuthUserRequired`` middleware: protects ``/tokens/*``,
     ``/users/*``, ``/roles/*``, ``PUT /user/password``.
     """
     identity = await try_auth(request)
@@ -756,7 +756,7 @@ async def auth_user_required(request: Request) -> Identity:
 
 async def local_user_required(request: Request) -> Identity:
     """Mandatory auth — rejects ``tid != "local"`` AND requires active
-    session. Used for password change (PentAGI's
+    session. Used for password change (the original
     ``localUserRequired``).
     """
     identity = await auth_user_required(request)
@@ -771,7 +771,7 @@ async def local_user_required(request: Request) -> Identity:
 def privileges_required(*required_privs: str):
     """Dependency factory — require ALL of ``required_privs``.
 
-    PentAGI's ``PrivilegesRequired`` middleware uses
+    The original ``PrivilegesRequired`` middleware uses
     ``slices.Contains`` (i.e. ALL of the required privs must be
     present). We mirror that with ``has_privilege`` (which also supports
     the ``users.*`` wildcard convention).

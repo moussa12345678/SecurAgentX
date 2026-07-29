@@ -1,8 +1,8 @@
 """securagentx.api.routes.tokens — API token management.
 
-Ports PentAGI's ``backend/pkg/server/services/api_tokens.go`` to
+Ports the original ``backend/pkg/server/services/api_tokens.go`` to
 FastAPI. These routes are **session-protected** (``auth_user_required``)
-— API tokens cannot self-manage (PentAGI filters out
+— API tokens cannot self-manage (SecurAgentX filters out
 ``settings.tokens.*`` privileges from token claims).
 
 Routes
@@ -81,7 +81,7 @@ async def create_token(
     global_salt = str(getattr(request.app.state, "global_salt", "salt"))
     develop = bool(getattr(request.app.state, "develop", False))
 
-    # Refuse to issue while the global salt is the dev default — PentAGI
+    # Refuse to issue while the global salt is the dev default — SecurAgentX
     # behaviour (blocks token creation in dev until ops sets a real salt).
     if global_salt in ("", "salt"):
         return JSONResponse(
@@ -219,7 +219,7 @@ async def list_tokens(
     """Return all API tokens owned by the current user.
 
     The JWT is NEVER returned here — only the metadata (name, status,
-    expiry, last_used_at). PentAGI has the same constraint.
+    expiry, last_used_at). SecurAgentX has the same constraint.
     """
     token_store = getattr(request.app.state, "tokens", None)
     if token_store is None:

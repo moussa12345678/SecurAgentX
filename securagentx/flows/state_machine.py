@@ -1,6 +1,6 @@
 """securagentx/flows/state_machine.py — 5-state machine + back-propagation.
 
-This module ports PentAGI's status-management logic to Python. PentAGI
+This module ports the original status-management logic to Python. SecurAgentX
 uses a shared 5-state machine (``created → running → waiting ⇄ running
 → finished | failed``) for all three of Flow / Task / Subtask, with
 back-propagation: when a subtask transitions to ``running`` / ``waiting``
@@ -22,7 +22,7 @@ Classes
   to the parent Task (which then back-propagates to the Flow).
 
 The transition table is identical across all three machines (mirrors
-PentAGI's Go state machine):
+The original Go state machine):
 
     created  → running                       ✓
     running  → waiting                       ✓
@@ -34,19 +34,19 @@ PentAGI's Go state machine):
 
 All other transitions raise :class:`InvalidStateTransitionError`.
 
-Back-propagation rules (ported from PentAGI's
+Back-propagation rules (ported from the Go original's
 ``subtaskWorker.SetStatus`` / ``taskWorker.SetStatus``):
 
 * Subtask ``running`` → Task ``running``, Flow ``running``.
 * Subtask ``waiting`` → Task ``waiting``, Flow ``waiting``.
 * Subtask ``finished`` / ``failed`` → Task unchanged (the task's status
   is driven by the TaskWorker's outer loop, not by individual subtask
-  completions — mirrors PentAGI's comment "statuses Finished and Failed
+  completions — mirrors the original comment "statuses Finished and Failed
   will be produced by stack from Run function call").
 * Task ``running`` → Flow ``running``.
 * Task ``waiting`` → Flow ``waiting``.
 * Task ``finished`` / ``failed`` → Flow ``waiting`` (the flow returns to
-  ``waiting`` for new user input — mirrors PentAGI's ``taskWorker.SetStatus``).
+  ``waiting`` for new user input — mirrors the original ``taskWorker.SetStatus``).
 """
 
 from __future__ import annotations
@@ -138,7 +138,7 @@ def is_valid_transition(
 
     ``from_status=None`` is treated as ``created`` (i.e. only transitions
     to ``running`` or ``failed`` are allowed). The ``failed`` target is
-    always allowed from any non-terminal source (mirrors PentAGI's "Any
+    always allowed from any non-terminal source (mirrors the original "Any
     → failed ✓ (error)" rule).
     """
     if to_status.value == FlowStatus.FAILED.value and from_status is not None:
@@ -266,7 +266,7 @@ class TaskStateMachine(BaseStateMachine):
 
     On ``running`` / ``waiting`` / ``finished`` / ``failed`` transitions,
     back-propagates to the parent Flow via :func:`back_propagate_status`.
-    Mirrors PentAGI's ``taskWorker.SetStatus``.
+    Mirrors the original ``taskWorker.SetStatus``.
 
     Back-propagation rules (Task → Flow):
         * Task ``running``  → Flow ``running``.
@@ -324,7 +324,7 @@ class SubtaskStateMachine(BaseStateMachine):
     parent Task via :func:`back_propagate_status`. ``finished`` and
     ``failed`` do NOT back-propagate (the Task's status is driven by the
     TaskWorker's outer loop, not by individual subtask completions —
-    mirrors PentAGI's ``subtaskWorker.SetStatus`` comment).
+    mirrors the original ``subtaskWorker.SetStatus`` comment).
 
     Back-propagation rules (Subtask → Task):
         * Subtask ``running`` → Task ``running`` (which then propagates
@@ -422,7 +422,7 @@ async def back_propagate_status(
 
     The propagation is "best-effort": errors are logged and swallowed so
     a single subtask's status change can never deadlock the worker loop.
-    This mirrors PentAGI's behaviour where the parent status update is
+    This mirrors the original behaviour where the parent status update is
     fire-and-forget within ``SetStatus`` (errors are wrapped and returned
     but the child status is already persisted).
     """
@@ -488,7 +488,7 @@ async def back_propagate_status(
                 TaskStatus.FAILED.value,
             ):
                 # The last task was done — flow returns to WAITING for new
-                # user input (mirrors PentAGI's taskWorker.SetStatus).
+                # user input (mirrors the original taskWorker.SetStatus).
                 target_flow_status = FlowStatus.WAITING
             else:
                 return  # CREATED does not propagate.

@@ -130,7 +130,7 @@ def _ensure_project_venv() -> Tuple[Optional[Path], str]:
 
 
 def _check_python(python_executable: Path) -> Tuple[bool, str]:
-    """Check the version of the Python interpreter used by SecurAgentX."""
+    """Check the version of the Python interpreter used by the original."""
     proc = subprocess.run(
         [
             str(python_executable),

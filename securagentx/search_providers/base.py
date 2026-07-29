@@ -1,6 +1,6 @@
 """securagentx/search_providers/base.py — Common base class for all search providers.
 
-This module ports PentAGI's ``backend/pkg/tools/search.go`` ``Tool``-style
+This module ports the original ``backend/pkg/tools/search.go`` ``Tool``-style
 interface to Python. Every concrete search provider (Tavily, Perplexity,
 DuckDuckGo, Google, Sploitus, Traversaal, SearXNG) subclasses
 :class:`SearchProvider` and implements two coroutines:
@@ -15,7 +15,7 @@ DuckDuckGo, Google, Sploitus, Traversaal, SearXNG) subclasses
 The module also provides:
 
 * :class:`SearchAction` — a Pydantic v2 model mirroring the JSON schema
-  PentAGI injects into the LLM's tool definitions (``{"query": str,
+  SecurAgentX injects into the LLM's tool definitions (``{"query": str,
   "max_results": int}``).
 * :func:`summarize_if_needed` — a common helper that invokes an async LLM
   summarizer when the raw output exceeds 3000 characters. This is used by
@@ -42,29 +42,29 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger("securagentx.search_providers.base")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI.
+# Constants — ported verbatim from the Go original.
 # ---------------------------------------------------------------------------
 
 #: Character threshold above which the search provider will hand its raw
-#: output to the LLM summarizer. Mirrors PentAGI's ``3000``-byte cutoff
+#: output to the LLM summarizer. Mirrors the original ``3000``-byte cutoff
 #: applied to Tavily / Perplexity outputs before ``getSummarizePrompt`` is
 #: invoked.
 SUMMARIZE_THRESHOLD: int = 3000
 
-#: Maximum number of results a single search call may return. PentAGI's
+#: Maximum number of results a single search call may return. the original
 #: search tools cap at 10 across the board.
 DEFAULT_MAX_RESULTS: int = 10
 
 
 # ---------------------------------------------------------------------------
-# Pydantic v2 schema — JSON-schema compatible with PentAGI's tool definitions.
+# Pydantic v2 schema — JSON-schema compatible with the original tool definitions.
 # ---------------------------------------------------------------------------
 
 
 class SearchAction(BaseModel):
     """Pydantic model for the JSON arguments every search tool accepts.
 
-    Mirrors the JSON schema PentAGI injects into the LLM's
+    Mirrors the JSON schema SecurAgentX injects into the LLM's
     ``functions`` array for each search tool:
 
     .. code-block:: json
@@ -129,7 +129,7 @@ class SearchSummarizerProtocol(Protocol):
 
 
 # ---------------------------------------------------------------------------
-# Default summarization prompt — ported from PentAGI's
+# Default summarization prompt — ported from the Go original's
 # ``templates/prompts/get_summarize_prompt.tmpl``.
 # ---------------------------------------------------------------------------
 
@@ -152,7 +152,7 @@ SUMMARIZE_SYSTEM_PROMPT: str = (
 def _build_summarize_prompt(query: str, raw_output: str) -> str:
     """Build the user-message prompt for the search-result summarizer.
 
-    Ports the ``getSummarizePrompt`` template from PentAGI. The prompt
+    Ports the ``getSummarizePrompt`` template from the Go original. The prompt
     inlines the original query and the raw output (already truncated to
     a reasonable bound by callers) and instructs the model to preserve
     citation markers like ``[Source #N]``.
@@ -183,7 +183,7 @@ async def summarize_if_needed(
 ) -> str:
     """Return ``raw_output``, LLM-summarised if it exceeds ``threshold``.
 
-    Mirrors PentAGI's pattern in ``tavily.go`` / ``perplexity.go``:
+    Mirrors the original pattern in ``tavily.go`` / ``perplexity.go``:
 
     * If ``len(raw_output) <= threshold``: return ``raw_output`` unchanged.
     * If a ``summarizer`` is provided: invoke it with a summarization

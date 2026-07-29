@@ -1,6 +1,6 @@
 """securagentx.providers.ollama — Ollama local LLM provider adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/ollama/ollama.go``. Drives a
+Port of the original ``backend/pkg/providers/ollama/ollama.go``. Drives a
 local Ollama server via the ``ollama`` Python SDK (or direct HTTP if the
 SDK is unavailable). Ollama is OpenAI-compatible at
 ``http://localhost:11434/v1`` but the official ``ollama`` Python SDK
@@ -10,7 +10,7 @@ exposes a richer native API (``/api/chat``, ``/api/generate``,
 Key features ported from the Go original
 -----------------------------------------
 * **Default model** — config-defined (env: ``OLLAMA_SERVER_MODEL`` /
-  ``OLLAMA_MODEL``). PentAGI's ``OllamaServerModel`` defaults to
+  ``OLLAMA_MODEL``). The original ``OllamaServerModel`` defaults to
   ``llama3.1`` in its ``config.go``.
 * **Auth** — optional. Local Ollama does not require an API key; the
   env var ``OLLAMA_SERVER_API_KEY`` / ``OLLAMA_API_KEY`` is for Ollama
@@ -29,7 +29,7 @@ Key features ported from the Go original
 * **No pricing** — local inference is free. ``PriceInfo`` is ``None``
   for all agent slots.
 * **Default options** — ``n=1``, ``max_tokens=32768`` (matches
-  PentAGI's ``ollama.go`` ``BuildProviderConfig`` defaults).
+  The original ``ollama.go`` ``BuildProviderConfig`` defaults).
 
 The ``ollama`` SDK is imported lazily inside
 :meth:`OllamaProvider._get_client` so that environments without
@@ -79,15 +79,15 @@ OLLAMA_DEFAULT_SERVER_URL: str = "http://localhost:11434"
 #: ``model()`` lookup.
 OLLAMA_DEFAULT_MODEL: str = "llama3.1"
 
-#: Default pull timeout — 10 minutes (matches PentAGI's
+#: Default pull timeout — 10 minutes (matches the original
 #: ``defaultPullTimeout``).
 OLLAMA_DEFAULT_PULL_TIMEOUT: float = 600.0
 
 #: Default API call timeout for /api/list and /api/show — 10 seconds
-#: (matches PentAGI's ``defaultAPICallTimeout``).
+#: (matches the original ``defaultAPICallTimeout``).
 OLLAMA_DEFAULT_API_CALL_TIMEOUT: float = 10.0
 
-#: Default max_tokens — matches PentAGI's ollama.go BuildProviderConfig
+#: Default max_tokens — matches the original ollama.go BuildProviderConfig
 #: default of 32768.
 OLLAMA_DEFAULT_MAX_TOKENS: int = 32_768
 
@@ -100,13 +100,13 @@ OLLAMA_429_BASE_DELAY: float = 5.0
 
 # ---------------------------------------------------------------------------
 # Default provider config — empty (caller supplies via YAML file or
-# env vars). Mirrors PentAGI's DefaultProviderConfig which loads from
+# env vars). Mirrors the original DefaultProviderConfig which loads from
 # configFS / cfg.OllamaServerConfig.
 # ---------------------------------------------------------------------------
 
 
 def _default_agent(model: str = "") -> AgentConfig:
-    """Build the default Ollama :class:`AgentConfig`. Matches PentAGI's
+    """Build the default Ollama :class:`AgentConfig`. Matches the original
     ollama.go ``BuildProviderConfig`` defaults: ``n=1``,
     ``max_tokens=32768``."""
     return AgentConfig(
@@ -124,7 +124,7 @@ def get_default_config(model: str = "") -> ProviderConfig:
     caller's :attr:`OllamaProvider._default_model`-derived default
     applies). When ``model`` is supplied, all 13 slots use that model.
 
-    Mirrors PentAGI's ollama.go ``DefaultProviderConfig`` which loads
+    Mirrors the original ollama.go ``DefaultProviderConfig`` which loads
     from the embedded ``config.yml`` (or ``cfg.OllamaServerConfig`` if
     set).
     """
@@ -316,7 +316,7 @@ class OllamaProvider:
         locally. Called by the caller on startup when
         :attr:`pull_models_enabled` is True.
 
-        Mirrors PentAGI's ``ensureModelsAvailable`` — uses a 10-minute
+        Mirrors the original ``ensureModelsAvailable`` — uses a 10-minute
         default timeout per pull operation.
         """
         if not self._pull_models_enabled:

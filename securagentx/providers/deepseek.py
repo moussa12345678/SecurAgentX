@@ -1,6 +1,6 @@
 """securagentx.providers.deepseek — DeepSeek adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/deepseek/deepseek.go``. The
+Port of the original ``backend/pkg/providers/deepseek/deepseek.go``. The
 adapter talks to DeepSeek's OpenAI-compatible Chat Completions API at
 ``https://api.deepseek.com/v1`` via the official ``openai`` Python SDK
 (with a custom ``base_url``), and implements the full
@@ -26,7 +26,7 @@ Key features ported from the Go original
 * **429 retry** — same ``tenacity`` policy as Bedrock: 10 attempts,
   5 s base + 1 s linear increment per attempt.
 * **Per-agent config** — :func:`get_default_config` returns the
-  PentAGI default agent configuration (``deepseek-v4-flash`` for
+  SecurAgentX default agent configuration (``deepseek-v4-flash`` for
   workhorse agents, ``deepseek-v4-pro`` for reasoning-heavy slots),
   ported verbatim from ``deepseek/config.yml``.
 """
@@ -71,7 +71,7 @@ logger = logging.getLogger("securagentx.providers.deepseek")
 #: for self-hosted / proxy deployments.
 DEEPSEEK_DEFAULT_BASE_URL: str = "https://api.deepseek.com/v1"
 
-#: Default DeepSeek model. PentAGI's ``DeepSeekAgentModel`` constant
+#: Default DeepSeek model. The original ``DeepSeekAgentModel`` constant
 #: points at the same ``deepseek-v4-flash`` ID.
 DEEPSEEK_DEFAULT_MODEL: str = "deepseek-v4-flash"
 
@@ -81,7 +81,7 @@ DEEPSEEK_DEFAULT_MODEL: str = "deepseek-v4-flash"
 #: indistinguishable.
 DEEPSEEK_TOOL_CALL_ID_TEMPLATE: str = "call_{r:2:d}_{r:24:b}"
 
-#: 429 retry policy — mirrors PentAGI's
+#: 429 retry policy — mirrors the original
 #: ``MaxTooManyRequestsRetries`` / ``TooManyRequestsRetryDelay``.
 DEEPSEEK_MAX_429_RETRIES: int = 10
 DEEPSEEK_429_BASE_DELAY: float = 5.0
@@ -142,7 +142,7 @@ def _agent(
 
     The ``extra_body.thinking.type`` knob is set explicitly on every slot
     as a defensive measure against future DeepSeek default changes —
-    PentAGI does the same thing in ``deepseek/config.yml``.
+    SecurAgentX does the same thing in ``deepseek/config.yml``.
     """
     extra_body: dict[str, Any] = {"thinking": {"type": thinking_type}}
     reasoning = None
@@ -394,7 +394,7 @@ class DeepSeekProvider:
         """Resolve the model name for ``opt``.
 
         Falls back to :data:`DEEPSEEK_DEFAULT_MODEL` when the slot is
-        empty — mirrors PentAGI's ``deepseekProvider.Model``.
+        empty — mirrors the original ``deepseekProvider.Model``.
         """
         agent = self._provider_config.get_agent_config(opt)
         if agent is not None and agent.model:
@@ -434,7 +434,7 @@ class DeepSeekProvider:
         """Single-prompt convenience call — wraps :meth:`call_ex`.
 
         Builds a 1-message chain (user role, single text part) and
-        returns the first choice's content. Mirrors PentAGI's
+        returns the first choice's content. Mirrors the original
         ``WrapGenerateFromSinglePrompt``.
         """
         chain = [MessageContent(role="user", parts=[TextPart(text=prompt)])]
@@ -476,7 +476,7 @@ class DeepSeekProvider:
         """Invoke DeepSeek chat completion with 429 retry.
 
         The 429 retry policy uses ``tenacity`` with 10 attempts, 5 s
-        base + 1 s linear increment per attempt — matching PentAGI's
+        base + 1 s linear increment per attempt — matching the original
         ``MaxTooManyRequestsRetries`` / ``TooManyRequestsRetryDelay``
         exactly. ``tenacity`` is imported lazily so the module can be
         imported without it installed.
@@ -692,7 +692,7 @@ class DeepSeekProvider:
 
             # Reasoning — DeepSeek accepts the legacy
             # ``reasoning_effort`` string ("low"|"medium"|"high") rather
-            # than the modern ``reasoning`` object form. PentAGI's Go
+            # than the modern ``reasoning`` object form. The original Go
             # adapter does the same by NOT calling
             # ``WithModernReasoningFormat()``.
             reasoning_effort = (

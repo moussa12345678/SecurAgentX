@@ -1,6 +1,6 @@
 """securagentx.auth.sessions — Signed-cookie sessions.
 
-This module ports PentAGI's cookie-store session logic (Gin
+This module ports the original cookie-store session logic (Gin
 ``sessions.Default`` + ``gorilla/securecookie``) to Python using
 ``itsdangerous.URLSafeTimedSerializer`` for the signed-cookie primitive.
 
@@ -53,13 +53,13 @@ logger = logging.getLogger("securagentx.auth.sessions")
 # Constants
 # ---------------------------------------------------------------------------
 
-DEFAULT_SESSION_TTL_SECONDS: int = 14_400  # 4 hours (matches PentAGI default)
+DEFAULT_SESSION_TTL_SECONDS: int = 14_400  # 4 hours (matches the original default)
 
 # After this many seconds since issuance, the cookie is eligible for a
-# sliding refresh (matches PentAGI's 5-minute threshold in auth.go::Info).
+# sliding refresh (matches the original 5-minute threshold in auth.go::Info).
 SESSION_REFRESH_THRESHOLD_SECONDS: int = 300
 
-# Cookie name (matches PentAGI's gorilla/securecookie default).
+# Cookie name (matches the original gorilla/securecookie default).
 DEFAULT_COOKIE_NAME: str = "session"
 
 # Cookie path — defaults to the API base URL prefix.
@@ -70,13 +70,13 @@ DEFAULT_COOKIE_PATH: str = "/"
 # itsdangerous, so cross-language cookie interop is **not** achievable
 # without re-implementing the gorilla format. The signer salt below is
 # used purely within the Python stack.
-_SIGNER_SALT: str = "pentagi.cookie.auth"
+_SIGNER_SALT: str = "pentagi.cookie.auth"  # Byte-compat constant — do not change
 
 
 class SessionData(TypedDict, total=False):
     """Typed view of the cookie session payload.
 
-    All fields mirror the keys set by PentAGI's Go middleware.
+    All fields mirror the keys set by the original Go middleware.
     """
 
     uid: int           # User ID
@@ -195,7 +195,7 @@ def validate_session_cookie(
 ) -> Optional[dict]:
     """Validate a signed session cookie and return its payload.
 
-    Mirrors PentAGI's ``tryUserCookieAuthentication`` middleware:
+    Mirrors the original ``tryUserCookieAuthentication`` middleware:
 
     1. Verify the cookie signature (``itsdangerous`` HMAC + timestamp).
     2. Check the session ``exp`` field hasn't passed.
@@ -378,7 +378,7 @@ def is_https_request(request: Any) -> bool:
     """Detect HTTPS on a Starlette/FastAPI request.
 
     Considers both the underlying ``url.scheme`` and the
-    ``X-Forwarded-Proto`` header (matches PentAGI's
+    ``X-Forwarded-Proto`` header (matches the original
     ``setCallbackCookie`` logic).
     """
     if request is None:

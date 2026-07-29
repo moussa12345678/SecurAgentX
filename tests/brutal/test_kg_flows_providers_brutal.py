@@ -1,6 +1,6 @@
 """Brutal pytest suite — Knowledge Graph + Flows + LLM Providers + Search Providers.
 
-Task 12-d of the PentAGI→SecurAgentX port.
+Task 12-d of the SecurAgentX→SecurAgentX port.
 
 This file generates **200 brutal tests** covering four subsystems:
 
@@ -178,7 +178,7 @@ class TestKnowledgeGraphEnums:
             assert member.value.isupper()
 
     def test_node_label_enum_contains_ip_and_service(self) -> None:
-        """NodeLabel must include IP_ADDRESS and SERVICE (PentAGI port)."""
+        """NodeLabel must include IP_ADDRESS and SERVICE (SecurAgentX port)."""
         from securagentx.knowledge_graph.graph import NodeLabel
         assert NodeLabel.IP_ADDRESS.value == "IP_ADDRESS"
         assert NodeLabel.SERVICE.value == "SERVICE"
@@ -196,7 +196,7 @@ class TestKnowledgeGraphEnums:
         assert len(list(EdgeType)) == 6
 
     def test_edge_type_enum_values(self) -> None:
-        """EdgeType must contain the 6 PentAGI edge types verbatim."""
+        """EdgeType must contain the 6 SecurAgentX edge types verbatim."""
         from securagentx.knowledge_graph.graph import EdgeType
         expected = {"HAS_PORT", "EXPLOITS", "MENTIONS", "WORKS_ON",
                     "DISCOVERED_BY", "RELATED_TO"}
@@ -1457,7 +1457,7 @@ class TestKnowledgeGraphMmrAndMarkdown:
     """MMR lambdas + Markdown formatting for all 7 search types."""
 
     def test_mmr_lambda_low_is_07(self) -> None:
-        """DIVERSITY_LAMBDA['low'] == 0.7 (per PentAGI port)."""
+        """DIVERSITY_LAMBDA['low'] == 0.7 (per SecurAgentX port)."""
         from securagentx.knowledge_graph.graph import DIVERSITY_LAMBDA
         assert DIVERSITY_LAMBDA["low"] == 0.7
 
@@ -1550,7 +1550,7 @@ class TestFlowEnums:
         assert vals == {"created", "running", "waiting", "finished", "failed"}
 
     def test_msgchain_type_has_fifteen_values(self) -> None:
-        """MsgchainType exposes exactly 15 values matching PentAGI."""
+        """MsgchainType exposes exactly 15 values matching SecurAgentX."""
         from securagentx.flows.models import MsgchainType
         assert len(list(MsgchainType)) == 15
         expected = {
@@ -1774,7 +1774,7 @@ class TestFlowBackPropagation:
         self, tmp_path: Path
     ) -> None:
         """Subtask FINISHED does NOT propagate to the parent task (per
-        PentAGI's SetStatus comment)."""
+        The original SetStatus comment)."""
         from securagentx.flows.db import FlowDB
         from securagentx.flows.models import (
             SubtaskStatus, TaskStatus, FlowStatus,
@@ -2156,7 +2156,7 @@ class TestFlowWorkerAndManager:
             await db.close()
 
     def test_task_worker_tasks_number_limit_is_10(self) -> None:
-        """TASKS_NUMBER_LIMIT equals 10 (PentAGI port)."""
+        """TASKS_NUMBER_LIMIT equals 10 (SecurAgentX port)."""
         from securagentx.flows.task_worker import TASKS_NUMBER_LIMIT
         assert TASKS_NUMBER_LIMIT == 10
 
@@ -3152,7 +3152,7 @@ class TestSearchProviderBase:
             SearchProvider()  # type: ignore[abstract]
 
     def test_summarize_threshold_is_3000(self) -> None:
-        """SUMMARIZE_THRESHOLD == 3000 (PentAGI port)."""
+        """SUMMARIZE_THRESHOLD == 3000 (SecurAgentX port)."""
         from securagentx.search_providers.base import SUMMARIZE_THRESHOLD
         assert SUMMARIZE_THRESHOLD == 3000
 
@@ -3306,7 +3306,7 @@ class TestPerplexityProvider:
             "https://api.perplexity.ai/chat/completions"
 
     def test_perplexity_timeout_is_60(self) -> None:
-        """PERPLEXITY_TIMEOUT == 60.0 (PentAGI port)."""
+        """PERPLEXITY_TIMEOUT == 60.0 (SecurAgentX port)."""
         from securagentx.search_providers.perplexity import PERPLEXITY_TIMEOUT
         assert PERPLEXITY_TIMEOUT == 60.0
 

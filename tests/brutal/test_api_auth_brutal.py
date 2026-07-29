@@ -597,7 +597,7 @@ class TestIssueToken:
         jwt_str, claims = tk.issue_token(
             1, 2, TEST_USER_HASH, 3600, "n", TEST_SALT,
         )
-        # Persisted claims drop the 'sub' field (per PentAGI struct).
+        # Persisted claims drop the 'sub' field (per SecurAgentX struct).
         for key in ("tid", "rid", "uid", "uhash", "exp", "iat"):
             assert key in claims, f"missing claim {key!r}"
         # The raw JWT, however, must contain sub="api_token".
@@ -1309,7 +1309,7 @@ class TestPrivilegesRequired:
         with pytest.raises(Exception):
             asyncio.run(dep_no_match(req))
 
-    def test_pentagi_automation_auto_granted_to_api_tokens(self):
+    def test_automation_auto_granted_to_api_tokens(self):
         """API tokens automatically receive the 'pentagi.automation' priv."""
         _cfg_mw()
         jwt_str, _ = _make_jwt()
@@ -1946,7 +1946,7 @@ class TestFlowsApi:
         assert r.status_code == 201
         body = r.json()
         assert body["status"] == "success"
-        # FlowPublic shape — no 'input' field exposed (PentAGI convention).
+        # FlowPublic shape — no 'input' field exposed (SecurAgentX convention).
         assert "id" in body["data"]
         assert body["data"]["status"] == "created"
 

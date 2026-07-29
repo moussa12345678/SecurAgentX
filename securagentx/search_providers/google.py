@@ -1,6 +1,6 @@
 """securagentx/search_providers/google.py — Google Custom Search provider.
 
-Ports PentAGI's ``backend/pkg/tools/google.go`` (180 lines) to an async
+Ports the original ``backend/pkg/tools/google.go`` (180 lines) to an async
 Python client. Uses Google's official ``google-api-python-client`` SDK
 to call the Custom Search JSON API (``cse.list``).
 
@@ -11,7 +11,7 @@ Auth:
     API key (``developerKey=...``) + Custom Search Engine ID (CX key).
     NOT OAuth.
 
-Call chain (port-verbatim from PentAGI):
+Call chain (port-verbatim from the Go original):
     .. code-block:: python
 
        svc = build("customsearch", "v1", developerKey=api_key)
@@ -29,7 +29,7 @@ Response (Google Custom Search):
          ]
        }
 
-Output format (port-verbatim from PentAGI):
+Output format (port-verbatim from the Go original):
     .. code-block:: markdown
 
        # 1. <title>
@@ -68,7 +68,7 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.google")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's google.go.
+# Constants — ported verbatim from the Go original's google.go.
 # ---------------------------------------------------------------------------
 
 GOOGLE_CSE_API_VERSION: str = "v1"
@@ -115,7 +115,7 @@ class GoogleSearchProvider(SearchProvider):
             cx_key or os.environ.get("GOOGLE_CX_KEY", "")
         ).strip()
         # ``lr`` is the language-restrict parameter, e.g. ``lang_en``.
-        # PentAGI passes it through verbatim — empty string = no filter.
+        # The original passes it through verbatim — empty string = no filter.
         self.lr_key: str = (lr_key or "").strip()
 
     # -- SearchProvider interface -----------------------------------------
@@ -189,7 +189,7 @@ class GoogleSearchProvider(SearchProvider):
             static_discovery=False,
         )
         cse = svc.cse()
-        # Build the list() request — call chain mirrors PentAGI verbatim.
+        # Build the list() request — call chain mirrors the Go original verbatim.
         kwargs: dict[str, Any] = {
             "cx": self._cx_key,
             "q": query,
@@ -202,14 +202,14 @@ class GoogleSearchProvider(SearchProvider):
 
 
 # ---------------------------------------------------------------------------
-# Rendering — Markdown output (port-verbatim from PentAGI).
+# Rendering — Markdown output (port-verbatim from the Go original).
 # ---------------------------------------------------------------------------
 
 
 def _render_google_results(query: str, items: list[dict[str, Any]]) -> str:
     """Render Google Custom Search items as Markdown.
 
-    Output format (preserved verbatim from PentAGI):
+    Output format (preserved verbatim from the Go original):
 
     .. code-block:: markdown
 

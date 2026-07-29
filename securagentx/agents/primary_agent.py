@@ -1,9 +1,9 @@
-"""securagentx/agents/primary_agent.py — PrimaryAgent orchestrator ported from PentAGI.
+"""securagentx/agents/primary_agent.py — PrimaryAgent orchestrator ported from the Go original.
 
 The PrimaryAgent is the root of the SecurAgentX multi-agent hierarchy. It
 receives a subtask description from the (future) FlowWorker, renders its
 system prompt with the XML-delimited ``<team_specialists>`` delegation rules
-ported from PentAGI's ``primary_agent.tmpl``, then drives the universal
+ported from the Go original's ``primary_agent.tmpl``, then drives the universal
 ``perform_agent_chain`` loop with six specialist tools and two barrier tools.
 
 Specialists exposed as tools (delegation targets):
@@ -48,10 +48,10 @@ from securagentx.agents.base import (
 logger = logging.getLogger("securagentx.agents.primary_agent")
 
 # ---------------------------------------------------------------------------
-# Tool-name constants — ported from PentAGI's ``pkg/tools/registry.go``.
-# Specialist tool names are shortened from PentAGI's (``coder`` vs ``code``,
+# Tool-name constants — ported from the Go original's ``pkg/tools/registry.go``.
+# Specialist tool names are shortened from the original (``coder`` vs ``code``,
 # ``pentester`` vs ``pentest``, etc.) to keep LLM prompts concise while
-# remaining self-documenting. Barrier names match PentAGI verbatim
+# remaining self-documenting. Barrier names match SecurAgentX verbatim
 # (``done`` / ``ask``) so persisted msg-chains stay cross-compatible.
 # ---------------------------------------------------------------------------
 DONE_TOOL_NAME = "done"
@@ -304,7 +304,7 @@ def _default_tool_schemas() -> list[dict[str, Any]]:
     """Return the JSON-schema tool definitions exposed to the LLM.
 
     Mirrors the registry entries for the 6 specialist tools + 2 barrier tools
-    in PentAGI's ``pkg/tools/registry.go``. Each specialist takes a
+    in the original ``pkg/tools/registry.go``. Each specialist takes a
     ``question`` (technical channel, English) and a ``message`` (engagement
     log, engagement language). Barrier tools carry their own arg schemas.
     """
@@ -453,7 +453,7 @@ def render_system_prompt(
 ) -> str:
     """Render the PrimaryAgent system prompt.
 
-    Ports the XML-delimited structure from PentAGI's ``primary_agent.tmpl``.
+    Ports the XML-delimited structure from the original ``primary_agent.tmpl``.
     Uses simple ``str.format`` replacement so the module stays Jinja2-free;
     a future iteration may swap to Jinja2 if user-overridable prompts become
     a requirement (lazy-imported inside this function).
@@ -510,7 +510,7 @@ class _PrimaryToolExecutor:
       ``SpecialistHandler`` ``(args_json, ctx) -> str``.
     * A single ``"barrier"`` key whose value is a ``BarrierHandler``
       ``(tool_name, args_json, ctx) -> str`` — the same handler dispatches
-      both ``done`` and ``ask`` (mirrors PentAGI's single ``Barrier`` func
+      both ``done`` and ``ask`` (mirrors the original single ``Barrier`` func
       in ``PrimaryExecutorConfig``).
     """
 
@@ -585,7 +585,7 @@ class PrimaryAgentRunStats:
 
 
 class PrimaryAgent:
-    """Root orchestrator ported from PentAGI's ``flowProvider.PerformAgentChain``.
+    """Root orchestrator ported from the Go original's ``flowProvider.PerformAgentChain``.
 
     The PrimaryAgent renders its system prompt, seeds the message chain with
     ``[system, user(subtask_description)]``, then drives
@@ -647,7 +647,7 @@ class PrimaryAgent:
                 key. Specialist handlers are ``(args_json, ctx) -> str``;
                 the barrier handler is ``(tool_name, args_json, ctx) -> str``.
             max_iterations: Iteration cap for the chain (default 100, the
-                PentAGI general-agent cap).
+                SecurAgentX general-agent cap).
             governance: Optional governance gate (e.g. an
                 ``securagentx.governance.GovernanceGate`` instance) — currently
                 stored for downstream specialists to consult; not invoked
@@ -739,7 +739,7 @@ class PrimaryAgent:
             self._stats.barrier_hit = name
             if name == DONE_TOOL_NAME:
                 # Parse the ``success`` flag (default True on parse failure
-                # to mirror PentAGI's optimistic default).
+                # to mirror the original optimistic default).
                 try:
                     payload = json.loads(args_json) if args_json else {}
                 except json.JSONDecodeError:

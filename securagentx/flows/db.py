@@ -1,8 +1,8 @@
 """securagentx/flows/db.py — SQLite persistence for the Flow management system.
 
-This module ports PentAGI's PostgreSQL-backed ``database`` package
+This module ports the original PostgreSQL-backed ``database`` package
 (``backend/pkg/database/models.go`` + the sqlc-generated query files) to
-async SQLite via :mod:`aiosqlite`. The schema mirrors PentAGI's table
+async SQLite via :mod:`aiosqlite`. The schema mirrors the original table
 layout one-to-one so persisted data remains structurally compatible.
 
 Tables
@@ -103,11 +103,11 @@ def _resolve_db_path(override: str | os.PathLike[str] | Path | None = None) -> P
 
 
 # ---------------------------------------------------------------------------
-# Schema — mirror PentAGI's migrations/*.sql (1:1 table layout).
+# Schema — mirror the original migrations/*.sql (1:1 table layout).
 # ---------------------------------------------------------------------------
 
 _SCHEMA_SQL: str = """
--- Flow management system schema (ports PentAGI's backend/migrations).
+-- Flow management system schema (ports the original backend/migrations).
 
 CREATE TABLE IF NOT EXISTS flows (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS containers (
     FOREIGN KEY (flow_id) REFERENCES flows(id) ON DELETE CASCADE
 );
 
--- Helpful indexes mirroring PentAGI's query patterns.
+-- Helpful indexes mirroring the original query patterns.
 
 CREATE INDEX IF NOT EXISTS idx_flows_user_id        ON flows(user_id);
 CREATE INDEX IF NOT EXISTS idx_flows_status         ON flows(status);
@@ -985,7 +985,7 @@ class FlowDB:
     async def list_planned_subtasks(self, task_id: int) -> list[Subtask]:
         """List all subtasks for a task that are still in ``CREATED`` status.
 
-        Mirrors PentAGI's ``GetTaskPlannedSubtasks`` — used by the
+        Mirrors the original ``GetTaskPlannedSubtasks`` — used by the
         subtask controller's ``PopSubtask`` to find the next subtask to run.
         """
         cur = await self._execute(
@@ -1038,7 +1038,7 @@ class FlowDB:
         """Delete subtasks by ID list. Returns the number of rows deleted.
 
         Used by the Refiner to clear the planned subtask list before
-        re-inserting the refined plan (mirrors PentAGI's
+        re-inserting the refined plan (mirrors the original
         ``DeleteSubtasks`` + ``CreateSubtask`` sequence).
         """
         if not subtask_ids:
@@ -1707,7 +1707,7 @@ class FlowDB:
     ) -> Prompt:
         """Insert or update a user-overridable prompt template.
 
-        Mirrors PentAGI's ``UpsertPrompt`` query: if a row exists for
+        Mirrors the original ``UpsertPrompt`` query: if a row exists for
         ``(type, user_id)``, its ``prompt`` and ``updated_at`` are updated;
         otherwise a new row is inserted.
         """
@@ -1824,7 +1824,7 @@ class FlowDB:
     async def get_flow_usage(self, flow_id: int) -> dict[str, Any]:
         """Return aggregated token / cost usage for a flow.
 
-        Mirrors PentAGI's ``GetFlowUsage`` query: sums
+        Mirrors the original ``GetFlowUsage`` query: sums
         ``usage_in`` / ``usage_out`` / ``usage_cache_in`` /
         ``usage_cache_out`` / ``usage_cost_in`` / ``usage_cost_out`` /
         ``duration_seconds`` over all msgchains in the flow.

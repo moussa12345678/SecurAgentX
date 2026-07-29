@@ -1,6 +1,6 @@
 """securagentx/search_providers/registry.py — Search-provider registry.
 
-This module ports PentAGI's ``backend/pkg/tools/registry.go`` (the
+This module ports the original ``backend/pkg/tools/registry.go`` (the
 search-tool portion) to a Python registry that:
 
 * Instantiates one of each of the 7 search providers (Tavily, Perplexity,
@@ -14,7 +14,7 @@ search-tool portion) to a Python registry that:
 
 The registry is intentionally a thin orchestrator — provider
 configuration is read from environment variables at instantiation time,
-matching PentAGI's ``cfg.*`` env-var resolution pattern. Callers can
+matching the original ``cfg.*`` env-var resolution pattern. Callers can
 override the env-derived configuration by passing explicit kwargs to
 :meth:`SearchProviderRegistry.__init__` or to the individual provider
 constructors.
@@ -169,7 +169,7 @@ class SearchProviderRegistry:
     ) -> dict[str, str]:
         """Fan out ``query`` to every available provider in parallel.
 
-        Mirrors PentAGI's pattern of dispatching the same query to every
+        Mirrors the original pattern of dispatching the same query to every
         configured search engine simultaneously, then collecting results
         into a ``{provider_name: result_string}`` dict. Failures in any
         single provider do NOT propagate — the corresponding dict value

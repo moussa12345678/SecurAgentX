@@ -1,6 +1,6 @@
 """securagentx/docker/network.py — per-flow Docker network isolation.
 
-PentAGI uses a single shared bridge network (``pentagi-network``) for
+The original uses a single shared bridge network (``securagentx-network``) for
 all flow containers, with port-based isolation via the deterministic
 ``28000 + (flow_id * 2 + i) % 2000`` port-allocation formula. It does
 NOT create per-flow networks — it relies on the OS firewall + the
@@ -25,7 +25,7 @@ dependency installed.
 Idempotency: every ``create_*`` method is safe to call multiple times
 with the same arguments — it will inspect the existing network and
 return its ID rather than failing on the second call. This mirrors
-PentAGI's ``ensureDockerNetwork`` helper.
+The original ``ensureDockerNetwork`` helper.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ logger = logging.getLogger("securagentx.docker.network")
 #: SecurAgentX networks via ``docker network ls | grep securagentx-flow-``.
 NETWORK_NAME_PREFIX: str = "securagentx-flow-"
 
-#: Default driver. PentAGI uses ``bridge`` exclusively; we keep that as
+#: Default driver. The original uses ``bridge`` exclusively; we keep that as
 #: the default but allow ``overlay`` for future multi-host setups.
 DEFAULT_DRIVER: str = "bridge"
 
@@ -160,7 +160,7 @@ class DockerNetwork:
             ``docker network inspect``.
 
         Idempotent: if the network already exists, returns its existing
-        ID without raising. Mirrors PentAGI's ``ensureDockerNetwork``.
+        ID without raising. Mirrors the original ``ensureDockerNetwork``.
         """
         client = await self._client()
         name = self.network_name(flow_id)

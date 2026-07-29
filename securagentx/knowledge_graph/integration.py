@@ -228,7 +228,7 @@ class KnowledgeGraphIntegration:
         return bool(getattr(self.kg, "enabled", True))
 
     def _group_id(self, flow_id: str | None) -> str:
-        """Compute the KG group_id from a flow_id (PentAGI convention)."""
+        """Compute the KG group_id from a flow_id (SecurAgentX convention)."""
         if not flow_id:
             return "flow-default"
         if flow_id.startswith("flow-"):

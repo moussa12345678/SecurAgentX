@@ -1,10 +1,10 @@
 """securagentx/docker/image_chooser.py — LLM-driven smart Docker image selection.
 
-Ports PentAGI's ``backend/pkg/templates/prompts/image_chooser.tmpl`` and
+Ports the original ``backend/pkg/templates/prompts/image_chooser.tmpl`` and
 the surrounding ``NewFlowProvider`` logic in
 ``backend/pkg/providers/providers.go``. A single LLM call at flow-creation
 time chooses between the general-purpose image (``debian:latest``) and
-the pentest image (``vxcontrol/kali-linux``); the result is cached in the
+the pentest image (``kalilinux/kali-rolling``); the result is cached in the
 DB and reused on restart. A ``--image`` CLI flag bypasses the LLM call
 entirely.
 """
@@ -18,10 +18,10 @@ from typing import Any, Optional, Protocol, runtime_checkable
 
 logger = logging.getLogger("securagentx.docker.image_chooser")
 
-# ── Defaults (mirrors PentAGI config + providers.go hard-coded constant) ─
+# ── Defaults (mirrors the original config + providers.go hard-coded constant) ─
 DEFAULT_IMAGE = os.environ.get("DOCKER_DEFAULT_IMAGE", "debian:latest")
 DEFAULT_IMAGE_FOR_PENTEST = os.environ.get(
-    "DOCKER_DEFAULT_IMAGE_FOR_PENTEST", "vxcontrol/kali-linux"
+    "DOCKER_DEFAULT_IMAGE_FOR_PENTEST", "kalilinux/kali-rolling"
 )
 
 # ── Verbatim template (port of image_chooser.tmpl as specified) ──────────
@@ -86,7 +86,7 @@ class _NullCache:
 def render_template(default_image: str, default_image_for_pentest: str, user_input: str) -> str:
     """Render the image-chooser template (verbatim port — no Jinja needed).
 
-    The original PentAGI template uses Go ``text/template`` with the three
+    The original SecurAgentX template uses Go ``text/template`` with the three
     well-known variables ``{{ DefaultImage }}``, ``{{ DefaultImageForPentest }}``,
     and ``{{ Input }}``. A simple ``str.replace`` is sufficient and avoids
     pulling in Jinja2 as a hard dependency.
@@ -103,7 +103,7 @@ def _validate_image(image: str) -> str:
     """Lowercase, trim, and validate the LLM-returned image reference.
 
     Falls back to ``DEFAULT_IMAGE`` on any validation failure (mirrors
-    PentAGI's silent fallback at container-creation time, but here we
+    The original silent fallback at container-creation time, but here we
     catch malformed LLM output before it reaches the docker client).
     """
     cleaned = (image or "").strip().lower()
@@ -169,7 +169,7 @@ class ImageChooser:
     ) -> str:
         """Return the chosen Docker image for ``user_input``.
 
-        Resolution order (mirrors PentAGI's NewFlowProvider + LoadFlowProvider):
+        Resolution order (mirrors the original NewFlowProvider + LoadFlowProvider):
           1. If ``flow_id`` and a cache hit → return cached image.
           2. Else render ``IMAGE_CHOOSER_TEMPLATE`` with the three
              template vars and call ``llm_client.complete`` once.
@@ -177,7 +177,7 @@ class ImageChooser:
           4. Persist to cache (if ``flow_id`` provided) for restart reuse.
 
         On any LLM error, fall back to ``self.default_image`` (debian:latest
-        by default) — matching PentAGI's container-create fallback chain.
+        by default) — matching the original container-create fallback chain.
         """
         cache = cache or self.cache
 

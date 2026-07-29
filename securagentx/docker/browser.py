@@ -1,8 +1,8 @@
-"""securagentx/docker/browser.py — Thin async HTTP client to the vxcontrol/scraper service.
+"""securagentx/docker/browser.py — Thin async HTTP client to the securagentx/scraper service.
 
-Port of PentAGI's ``backend/pkg/tools/browser.go`` (521 lines). The
+Port of the original ``backend/pkg/tools/browser.go`` (521 lines). The
 scraper is a self-hosted headless-Chrome sidecar (image
-``vxcontrol/scraper:latest``) that exposes four endpoints: ``/markdown``,
+``securagentx/scraper:latest``) that exposes four endpoints: ``/markdown``,
 ``/html``, ``/links`` (JSON), and ``/screenshot`` (PNG). URL routing
 chooses between a private scraper URL (for LAN/loopback targets) and a
 public scraper URL based on host IP classification + a local-zones
@@ -122,9 +122,9 @@ def _resolve_host_ips(host: str) -> list[str]:
 
 
 class DockerBrowser:
-    """Async client for the external ``vxcontrol/scraper`` sidecar service.
+    """Async client for the external ``securagentx/scraper`` sidecar service.
 
-    Mirrors the PentAGI ``browser`` struct (browser.go §70-78). Three
+    Mirrors the SecurAgentX ``browser`` struct (browser.go §70-78). Three
     public actions (``markdown``, ``html``, ``links``) each fetch
     content + capture a screenshot in parallel. A binary-URL guard
     rejects known non-HTML resources with a hint to use the terminal
@@ -205,7 +205,7 @@ class DockerBrowser:
         """Compute the on-disk path for a new screenshot.
 
         ``{data_dir}/screenshots/flow-{flow_id}/screenshot-{unix_ts}.png``
-        — matches the PentAGI layout exactly. The directory is created
+        — matches the SecurAgentX layout exactly. The directory is created
         lazily on first write.
         """
         flow_dir = os.path.join(self.data_dir, "screenshots", f"flow-{self.flow_id}")

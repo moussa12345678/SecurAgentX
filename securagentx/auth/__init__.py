@@ -1,6 +1,6 @@
 """securagentx.auth — Bearer-token (JWT HS256) + OAuth2 auth subsystem.
 
-This subpackage ports PentAGI's Go auth stack
+This subpackage ports the original Go auth stack
 (``backend/pkg/server/auth/*``, ``backend/pkg/server/oauth/*``, and the
 auth portions of ``backend/pkg/server/services/auth.go``) to Python /
 FastAPI. The port is **byte-compatible** with the upstream Go
@@ -9,7 +9,7 @@ implementation for the critical primitives:
 * **JWT signing-key derivation** — PBKDF2-HMAC-SHA512, 210 000
   iterations, 32-byte output, identical password and salt strings
   (see :func:`securagentx.auth.tokens.derive_jwt_key`). Tokens issued by
-  the Go PentAGI server validate in Python SecurAgentX and vice-versa.
+  the Go original server validate in Python SecurAgentX and vice-versa.
 * **OAuth2 state** — HMAC-SHA256-signed JSON blob with the same wire
   format ``base64url(sig || state_json)`` (see
   :func:`securagentx.auth.oauth.build_signed_state`). Allows Go ↔ Python

@@ -1,6 +1,6 @@
 """securagentx/search_providers/searxng.py — SearXNG self-hosted meta-search provider.
 
-Ports PentAGI's ``backend/pkg/tools/searxng.go`` (289 lines) to an async
+Ports the original ``backend/pkg/tools/searxng.go`` (289 lines) to an async
 Python client. SearXNG is a privacy-respecting meta-search engine
 typically self-hosted; the provider relies on network isolation for
 security (no API key, no auth).
@@ -13,7 +13,7 @@ Auth:
     None (relies on network isolation — SearXNG is self-hosted).
 
 Headers:
-    ``User-Agent: SecurAgentX/2.0`` (PentAGI uses ``PentAGI/1.0``; we bump
+    ``User-Agent: SecurAgentX/2.0`` (SecurAgentX uses ``SecurAgentX/1.0``; we bump
     the version string to match the SecurAgentX project).
 
 Response:
@@ -29,7 +29,7 @@ Response:
                   "engine": "...", "suggestions": [...]}
        }
 
-URL normalization (preserved verbatim from PentAGI):
+URL normalization (preserved verbatim from the Go original):
     If ``SEARXNG_URL`` doesn't end with ``/search``, appends ``/search``.
 
 Defaults (preserved verbatim):
@@ -57,7 +57,7 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.searxng")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's searxng.go.
+# Constants — ported verbatim from the Go original's searxng.go.
 # ---------------------------------------------------------------------------
 
 SEARXNG_TIMEOUT: float = 30.0
@@ -78,7 +78,7 @@ class SearXNGSearchProvider(SearchProvider):
     Calls the ``/search`` JSON endpoint of a user-supplied SearXNG
     instance. No authentication — the provider relies on the operator
     having placed the SearXNG instance on an isolated network (preserved
-    verbatim from PentAGI).
+    verbatim from the Go original).
 
     URL normalization: if ``SEARXNG_URL`` doesn't end with ``/search``,
     appends ``/search`` (preserved verbatim).
@@ -134,7 +134,7 @@ class SearXNGSearchProvider(SearchProvider):
 
         capped = max(1, min(int(max_results), SEARXNG_MAX_RESULTS))
 
-        # Build query parameters (port-verbatim from PentAGI).
+        # Build query parameters (port-verbatim from the Go original).
         params: dict[str, Any] = {
             "q": query,
             "format": "json",
@@ -188,7 +188,7 @@ class SearXNGSearchProvider(SearchProvider):
 
 
 # ---------------------------------------------------------------------------
-# URL normalization — ported verbatim from PentAGI's searxng.go.
+# URL normalization — ported verbatim from the Go original's searxng.go.
 # ---------------------------------------------------------------------------
 
 

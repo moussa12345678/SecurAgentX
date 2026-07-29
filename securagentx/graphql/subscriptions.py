@@ -1,6 +1,6 @@
 """
 securagentx.graphql.subscriptions — WebSocket GraphQL subscriptions ported from
-PentAGI's ``backend/pkg/graph/schema.graphqls`` ``type Subscription`` block
+The original ``backend/pkg/graph/schema.graphqls`` ``type Subscription`` block
 (38 subscriptions) plus the origin validator and Redis pub/sub controller.
 
 This module is intentionally import-safe: ``redis.asyncio`` is imported lazily
@@ -23,19 +23,19 @@ FastAPI router in :mod:`securagentx.api.v1.graphql` mounts the
 
 Origin validation
 -----------------
-PentAGI's origin validator supports:
+The original origin validator supports:
     * The literal ``"*"`` (allow all).
     * Exact matches against the configured allowlist.
     * Single-wildcard rules of the form ``*.example.com`` / ``example.*`` /
-      ``https://*.example.com`` (one ``*`` only). PentAGI splits the rule on
+      ``https://*.example.com`` (one ``*`` only). SecurAgentX splits the rule on
       the ``*`` and checks prefix+suffix; we use :func:`fnmatch.fnmatch` for
       the same effect.
     * Same-host requests (no CORS preflight needed) — recognized by matching
       the origin against ``http(s)://<host>`` / ``ws(s)://<host>``.
 
 References:
-    * PentAGI: backend/pkg/graph/subscriptions/{controller,publisher,subscriber}.go
-    * PentAGI: backend/pkg/server/services/graphql.go (originValidator + WS transport)
+    * SecurAgentX: backend/pkg/graph/subscriptions/{controller,publisher,subscriber}.go
+    * SecurAgentX: backend/pkg/server/services/graphql.go (originValidator + WS transport)
     * graphql-transport-ws protocol: https://github.com/enisdenjo/graphql-ws
 """
 from __future__ import annotations
@@ -74,7 +74,7 @@ from .types import (
 logger = logging.getLogger("securagentx.graphql.subscriptions")
 
 
-# ─── Origin validator (ported from PentAGI's originValidator) ──────────────
+# ─── Origin validator (ported from the Go original's originValidator) ──────────────
 
 _DEFAULT_WRAPPERS: tuple = ("http://", "https://", "ws://", "wss://")
 
@@ -82,7 +82,7 @@ _DEFAULT_WRAPPERS: tuple = ("http://", "https://", "ws://", "wss://")
 class OriginValidator:
     """WebSocket/HTTP ``Origin`` header validator with fnmatch wildcards.
 
-    Mirrors PentAGI's ``originValidator`` (``backend/pkg/server/services/
+    Mirrors the original ``originValidator`` (``backend/pkg/server/services/
     graphql.go``) line-for-line. Supports the same three wildcard shapes
     (prefix-, suffix-, infix-) by delegating to :func:`fnmatch.fnmatchcase`.
     """
@@ -91,7 +91,7 @@ class OriginValidator:
         self.allow_all: bool = "*" in allowed_origins
         self.allowed: List[str] = list(allowed_origins)
         # Wildcard rules are rules containing exactly one ``*``. We split them
-        # into prefix/suffix pairs to mirror PentAGI's behavior; the actual
+        # into prefix/suffix pairs to mirror the original behavior; the actual
         # matching is delegated to ``fnmatch.fnmatchcase`` which already
         # handles the single-``*`` case correctly (and is immune to shell-
         # expansion quirks because it doesn't touch the filesystem).
@@ -100,7 +100,7 @@ class OriginValidator:
             if "*" not in rule:
                 continue
             if rule.count("*") > 1:
-                # PentAGI rejects multi-wildcard rules; we follow the same
+                # SecurAgentX rejects multi-wildcard rules; we follow the same
                 # conservative behavior.
                 continue
             idx = rule.index("*")
@@ -206,7 +206,7 @@ class RedisSubscriptionsController:
     functional — at the cost of cross-process broadcast, which is only
     available with Redis.
 
-    Mirrors PentAGI's ``subscriptions.controller`` Go struct, which wires one
+    Mirrors the original ``subscriptions.controller`` Go struct, which wires one
     ``Channel[T]`` per topic. The Go side uses goroutines + buffered channels
     of length 50 with a 5-second send timeout; we use ``asyncio.Queue`` with
     a 512-item buffer (the larger buffer is fine because Python's per-item
@@ -440,7 +440,7 @@ async def _with_keepalive(
 
 # ─── Subscription root type ────────────────────────────────────────────────
 
-@strawberry.type(description="SecurAgentX GraphQL subscription root (PentAGI port).")
+@strawberry.type(description="SecurAgentX GraphQL subscription root (SecurAgentX port).")
 class Subscription:
     # ── Flow events ───────────────────────────────────────────────────────
 

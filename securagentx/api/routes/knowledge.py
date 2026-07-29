@@ -1,6 +1,6 @@
 """securagentx.api.routes.knowledge — Knowledge-base documents + semantic search.
 
-Ports PentAGI's ``/knowledge/*`` REST endpoints (originally GraphQL
+Ports the original ``/knowledge/*`` REST endpoints (originally GraphQL
 mutations ``createKnowledgeDocument`` / ``deleteKnowledgeDocument`` /
 ``searchKnowledge`` — see Task 1-c recommendation §2).
 
@@ -66,7 +66,7 @@ logger = logging.getLogger("securagentx.api.routes.knowledge")
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
-# Upload size cap — PentAGI uses 32 MB for multipart memory buffer.
+# Upload size cap — SecurAgentX uses 32 MB for multipart memory buffer.
 MAX_UPLOAD_BYTES = 32 * 1024 * 1024
 
 
@@ -332,7 +332,7 @@ async def delete_document(
     """Delete a document AND all its vector chunks.
 
     Idempotent — deleting a non-existent ID returns 404. Deleting an
-    already-deleted document returns 200 (mirrors PentAGI).
+    already-deleted document returns 200 (mirrors the Go original).
     """
     develop = bool(getattr(request.app.state, "develop", False))
     store = getattr(request.app.state, "knowledge", None)

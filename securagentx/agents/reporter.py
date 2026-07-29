@@ -1,6 +1,6 @@
 """securagentx/agents/reporter.py — synthesizes the final task success/failure report.
 
-Ported from PentAGI's
+Ported from the original
 ``backend/pkg/providers/performers.go::performTaskResultReporter`` and the
 ``reporter.tmpl`` / ``task_reporter.tmpl`` prompt templates.
 
@@ -52,7 +52,7 @@ SearchInMemoryToolName: str = "search_in_memory"
 #: Name of the completion / barrier tool that ends the Reporter's turn.
 ReportResultToolName: str = "report_result"
 
-#: Prefix injected before summarized historical content (mirrors PentAGI).
+#: Prefix injected before summarized historical content (mirrors the Go original).
 SummarizedContentPrefix: str = "[SUMMARIZED_CONTENT]"
 
 #: Name of the (read-only) summarization marker tool the Reporter must NOT call.
@@ -384,7 +384,7 @@ class Reporter:
     continue past it. The parsed :class:`TaskResult` is returned to the caller
     as a dict.
 
-    Ported from PentAGI's ``performTaskResultReporter`` (performers.go).
+    Ported from the original ``performTaskResultReporter`` (performers.go).
     """
 
     agent_type: AgentType = AgentType.REPORTER  # type: ignore[attr-defined]

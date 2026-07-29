@@ -201,9 +201,19 @@ class TestAnalyzeSecurity:
 
 
 class TestToolRegistry:
-    def test_all_25_tools_registered(self):
+    def test_at_least_25_tools_registered(self):
+        """The registry must contain at least the original 25 tools.
+
+        New tools (knowledge_graph, browser, ...) may be added on top —
+        this guard catches accidental removals without breaking every
+        time a new tool is registered.
+        """
         names = [t["name"] for t in AVAILABLE_TOOLS]
-        assert len(names) == 25, f"Expected 25, got {len(names)}"
+        assert len(names) >= 25, f"Expected >=25, got {len(names)}"
+
+    def test_browser_tool_registered(self):
+        names = [t["name"] for t in AVAILABLE_TOOLS]
+        assert "browser" in names, "browser tool missing from AVAILABLE_TOOLS"
 
     def test_file_tools_present(self):
         names = [t["name"] for t in AVAILABLE_TOOLS]

@@ -1,6 +1,6 @@
-"""securagentx.search_providers — PentAGI-style multi-provider search layer.
+"""securagentx.search_providers — SecurAgentX-style multi-provider search layer.
 
-This package ports PentAGI's 7 search providers
+This package ports the original 7 search providers
 (``backend/pkg/tools/{tavily,perplexity,duckduckgo,google,sploitus,
 traversaal,searxng}.go``) to async Python clients built on
 ``httpx.AsyncClient``. All providers share a common :class:`SearchProvider`

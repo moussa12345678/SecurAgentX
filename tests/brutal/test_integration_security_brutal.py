@@ -408,10 +408,10 @@ class TestEndToEndIntegration:
         assert any("if [ -e" in c for c in calls)
 
     def test_docker_sandbox_integration_image_selection_kali_for_pentest(self) -> None:
-        """ImageChooser default pentest image is vxcontrol/kali-linux."""
+        """ImageChooser default pentest image is kalilinux/kali-rolling."""
         from securagentx.docker.image_chooser import DEFAULT_IMAGE_FOR_PENTEST
 
-        assert DEFAULT_IMAGE_FOR_PENTEST == "vxcontrol/kali-linux"
+        assert DEFAULT_IMAGE_FOR_PENTEST == "kalilinux/kali-rolling"
 
     def test_docker_sandbox_integration_image_selection_debian_for_general(self) -> None:
         """ImageChooser default general image is debian:latest."""
@@ -544,7 +544,7 @@ class TestEndToEndIntegration:
     # ── 1.5 GraphQL + Auth + Concurrency + Recovery + Persistence (12 tests) ─
 
     def test_graphql_flow_schema_complexity_limit_is_20000(self) -> None:
-        """GraphQL complexity limit is 20 000 (PentAGI parity)."""
+        """GraphQL complexity limit is 20 000 (SecurAgentX parity)."""
         from securagentx.graphql.schema import COMPLEXITY_LIMIT
 
         assert COMPLEXITY_LIMIT == 20000
@@ -722,7 +722,7 @@ class TestEndToEndIntegration:
 
         # The helper exists and is callable (it's a coroutine function).
         assert callable(back_propagate_status)
-        # The valid-transition table enforces the PentAGI mapping.
+        # The valid-transition table enforces the SecurAgentX mapping.
         assert is_valid_transition(TaskStatus.CREATED, TaskStatus.RUNNING)
         assert is_valid_transition(TaskStatus.RUNNING, TaskStatus.WAITING)
         assert is_valid_transition(TaskStatus.WAITING, TaskStatus.RUNNING)
@@ -741,8 +741,8 @@ class TestEndToEndIntegration:
         c2 = get_client()
         assert c1 is c2
 
-    def test_integration_metrics_constants_match_pentagi(self) -> None:
-        """Metric names mirror PentAGI's Grafana dashboard contract."""
+    def test_integration_metrics_constants_match_securagentx(self) -> None:
+        """Metric names mirror the original Grafana dashboard contract."""
         from securagentx.observability.metrics import (
             TOKEN_USAGE_COUNTER,
             TOOLCALLS_DURATION_HISTOGRAM,
@@ -808,8 +808,8 @@ class TestEndToEndIntegration:
 
         assert len(list(AgentType)) == 15
 
-    def test_integration_iteration_caps_match_pentagi(self) -> None:
-        """Iteration caps match PentAGI's performer.go (100 general / 20 limited)."""
+    def test_integration_iteration_caps_match_securagentx(self) -> None:
+        """Iteration caps match the original performer.go (100 general / 20 limited)."""
         from securagentx.agents.base import MAX_GENERAL_ITERATIONS, MAX_LIMITED_ITERATIONS
 
         assert MAX_GENERAL_ITERATIONS == 100
@@ -842,7 +842,7 @@ class TestEndToEndIntegration:
 
         assert {s.value for s in StatusType} == {s.value for s in FlowStatus}
 
-    def test_integration_flow_db_constants_match_pentagi(self) -> None:
+    def test_integration_flow_db_constants_match_securagentx(self) -> None:
         """FlowDB exposes the canonical schema constants."""
         from securagentx.flows.db import FlowDB
 
@@ -871,13 +871,13 @@ class TestObservability:
         otel.shutdown_otel()
 
     def test_setup_otel_export_interval_30s(self) -> None:
-        """Export interval matches PentAGI's 30-second batch processor."""
+        """Export interval matches the original 30-second batch processor."""
         from securagentx.observability.otel import EXPORT_INTERVAL_SECONDS
 
         assert EXPORT_INTERVAL_SECONDS == 30.0
 
     def test_setup_otel_export_timeout_10s(self) -> None:
-        """Export timeout matches PentAGI's 10-second batch timeout."""
+        """Export timeout matches the original 10-second batch timeout."""
         from securagentx.observability.otel import EXPORT_TIMEOUT_SECONDS
 
         assert EXPORT_TIMEOUT_SECONDS == 10.0
@@ -933,7 +933,7 @@ class TestObservability:
         assert asyncio.run(my_async(41)) == 42
 
     def test_langfuse_observation_types_count_is_ten(self) -> None:
-        """Langfuse observation type registry has 10 entries (PentAGI parity)."""
+        """Langfuse observation type registry has 10 entries (SecurAgentX parity)."""
         from securagentx.observability.langfuse import OBSERVATION_TYPES
 
         assert len(OBSERVATION_TYPES) == 10
@@ -1150,13 +1150,13 @@ class TestObservability:
         assert GEMINI_FAKE_THOUGHT_SIGNATURE == "skip_thought_signature_validator"
 
     def test_chain_summarization_summary_tool_name(self) -> None:
-        """SUMMARY_TOOL_NAME constant matches PentAGI's virtual tool name."""
+        """SUMMARY_TOOL_NAME constant matches the original virtual tool name."""
         from securagentx.observability.chains import SUMMARY_TOOL_NAME
 
         assert SUMMARY_TOOL_NAME == "execute_task_and_return_summary"
 
     def test_chain_summarization_summarized_content_prefix(self) -> None:
-        """SUMMARIZED_CONTENT_PREFIX constant matches PentAGI."""
+        """SUMMARIZED_CONTENT_PREFIX constant matches the Go original."""
         from securagentx.observability.chains import SUMMARIZED_CONTENT_PREFIX
 
         assert SUMMARIZED_CONTENT_PREFIX == "Summarized content:"
@@ -1178,7 +1178,7 @@ class TestObservability:
     # ── 2.6 SummarizerConfig + ChainAST (5 tests) ──────────────────────────
 
     def test_summarizer_config_all_nine_defaults(self) -> None:
-        """All 9 SummarizerConfig defaults match PentAGI's zero-value."""
+        """All 9 SummarizerConfig defaults match the original zero-value."""
         from securagentx.observability.chains import SummarizerConfig
 
         c = SummarizerConfig()
@@ -1465,7 +1465,7 @@ class TestReports:
             assert emoji not in out
 
     def test_render_to_pdf_heading_styles_h1_16pt_h2_14pt(self) -> None:
-        """HEADING_FONT_SIZES matches PentAGI's stylesheet (16/14/13/12/11/10)."""
+        """HEADING_FONT_SIZES matches the original stylesheet (16/14/13/12/11/10)."""
         from securagentx.reports.pdf import HEADING_FONT_SIZES
 
         assert HEADING_FONT_SIZES[1] == 16
@@ -2335,7 +2335,7 @@ class TestSecurity:
         assert "NET_ADMIN" not in rl.cap_add
 
     def test_docker_pentest_profile_can_add_net_admin(self) -> None:
-        """Pentest profile can optionally add NET_ADMIN (mirrors PentAGI's flag)."""
+        """Pentest profile can optionally add NET_ADMIN (mirrors the original flag)."""
         from securagentx.docker.resource_limits import ResourceLimits
 
         rl = ResourceLimits.pentest(net_admin=True)
@@ -2381,11 +2381,11 @@ class TestSecurity:
 
     def test_security_no_hardcoded_secrets_in_tokens_module(self) -> None:
         """The auth.tokens module does not hardcode any test secrets beyond the
-        documented PentAGI compatibility constants."""
+        documented SecurAgentX compatibility constants."""
         import securagentx.auth.tokens as t
 
         src = inspect.getsource(t)
-        # The only hard-coded secret-like strings are the PentAGI compatibility
+        # The only hard-coded secret-like strings are the SecurAgentX compatibility
         # fragments (which are intentionally public).
         assert "_JWT_PASSWORD_PREFIX" in src
         # No bare 'password = "xxx"' patterns.
@@ -2743,7 +2743,7 @@ class TestStressPerformance:
 
     @pytest.mark.asyncio
     async def test_report_graphql_complexity_limit_20000(self) -> None:
-        """GraphQL complexity limit is 20 000 (PentAGI parity)."""
+        """GraphQL complexity limit is 20 000 (SecurAgentX parity)."""
         from securagentx.graphql.schema import COMPLEXITY_LIMIT
 
         assert COMPLEXITY_LIMIT == 20000
@@ -2770,7 +2770,7 @@ class TestStressPerformance:
         assert items[500].name == "c-500"
 
     def test_knowledge_graph_seven_search_strategies(self) -> None:
-        """The KG exposes 7 distinct search strategies (PentAGI parity)."""
+        """The KG exposes 7 distinct search strategies (SecurAgentX parity)."""
         from securagentx.knowledge_graph.graph import (
             DEFAULT_TEMPORAL_MAX_RESULTS, DEFAULT_RECENT_MAX_RESULTS,
             DEFAULT_SUCCESSFUL_MAX_RESULTS, DEFAULT_EPISODE_MAX_RESULTS,
@@ -2819,7 +2819,7 @@ class TestStressPerformance:
 
         start = time.perf_counter()
         for _ in range(1000):
-            render_template("debian:latest", "vxcontrol/kali-linux", "scan target")
+            render_template("debian:latest", "kalilinux/kali-rolling", "scan target")
         elapsed = time.perf_counter() - start
         # 1000 renders in <1 s → each <1 ms.
         assert elapsed < 1.0
@@ -2830,7 +2830,7 @@ class TestStressPerformance:
 
         start = time.perf_counter()
         for _ in range(10000):
-            _validate_image("vxcontrol/kali-linux")
+            _validate_image("kalilinux/kali-rolling")
         elapsed = time.perf_counter() - start
         # 10 000 validations in <2 s.
         assert elapsed < 2.0
@@ -2838,13 +2838,13 @@ class TestStressPerformance:
     # ── 5.10 Terminal + Browser + Misc scale (4 tests) ─────────────────────
 
     def test_terminal_max_explicit_timeout_3_hours(self) -> None:
-        """MAX_EXPLICIT_EXEC_COMMAND_TIMEOUT is 10800s (3h, PentAGI parity)."""
+        """MAX_EXPLICIT_EXEC_COMMAND_TIMEOUT is 10800s (3h, SecurAgentX parity)."""
         from securagentx.docker.terminal import MAX_EXPLICIT_EXEC_COMMAND_TIMEOUT
 
         assert MAX_EXPLICIT_EXEC_COMMAND_TIMEOUT == 10800
 
     def test_terminal_max_read_file_size_100mb(self) -> None:
-        """MAX_READ_FILE_SIZE is 100 MB (PentAGI parity)."""
+        """MAX_READ_FILE_SIZE is 100 MB (SecurAgentX parity)."""
         from securagentx.docker.terminal import MAX_READ_FILE_SIZE
 
         assert MAX_READ_FILE_SIZE == 100 * 1024 * 1024

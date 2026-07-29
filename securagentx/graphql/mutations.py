@@ -1,6 +1,6 @@
 """
 securagentx.graphql.mutations — Write-side GraphQL resolvers ported from
-PentAGI's ``backend/pkg/graph/schema.graphqls`` ``type Mutation`` block
+The original ``backend/pkg/graph/schema.graphqls`` ``type Mutation`` block
 (31 mutations).
 
 All resolvers are ``async`` and look up their backing service from the
@@ -10,8 +10,8 @@ the corresponding subscription event via the subscriptions controller (see
 :mod:`securagentx.graphql.subscriptions`).
 
 References:
-    * PentAGI: backend/pkg/graph/schema.graphqls (type Mutation block, 48 lines)
-    * PentAGI: backend/pkg/graph/schema.resolvers.go (mutation resolvers)
+    * SecurAgentX: backend/pkg/graph/schema.graphqls (type Mutation block, 48 lines)
+    * SecurAgentX: backend/pkg/graph/schema.resolvers.go (mutation resolvers)
 """
 from __future__ import annotations
 
@@ -116,7 +116,7 @@ async def _publish(info: Info, topic: str, payload: Any) -> None:
 
 # ─── Mutation root type ────────────────────────────────────────────────────
 
-@strawberry.type(description="SecurAgentX GraphQL write root (PentAGI port).")
+@strawberry.type(description="SecurAgentX GraphQL write root (SecurAgentX port).")
 class Mutation:
     # ── Flow lifecycle ────────────────────────────────────────────────────
 

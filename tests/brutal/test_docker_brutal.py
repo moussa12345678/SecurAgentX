@@ -303,7 +303,7 @@ class TestContainerInfoDataclass:
 
 
 class TestSandboxConstants:
-    """Verify every PentAGI-ported constant."""
+    """Verify every SecurAgentX-ported constant."""
 
     def test_work_folder_path_in_container(self):
         assert WORK_FOLDER_PATH_IN_CONTAINER == "/work"
@@ -321,7 +321,7 @@ class TestSandboxConstants:
         assert DEFAULT_IMAGE == "debian:latest"
 
     def test_pentest_docker_image_constant(self):
-        assert PENTEST_DOCKER_IMAGE == "vxcontrol/kali-linux"
+        assert PENTEST_DOCKER_IMAGE == "kalilinux/kali-rolling"
 
     def test_max_file_size_bytes_is_100_mb(self):
         assert MAX_FILE_SIZE_BYTES == 100 * 1024 * 1024
@@ -416,8 +416,8 @@ class TestRunContainer:
     @pytest.mark.asyncio
     async def test_run_container_with_custom_image(self, sandbox, fake_aiodocker_client):
         sandbox._client = fake_aiodocker_client  # type: ignore[attr-defined]
-        info = await sandbox.run_container(flow_id=2, image="vxcontrol/kali-linux")
-        assert info.image == "vxcontrol/kali-linux"
+        info = await sandbox.run_container(flow_id=2, image="kalilinux/kali-rolling")
+        assert info.image == "kalilinux/kali-rolling"
 
     @pytest.mark.asyncio
     async def test_run_container_lowercases_image(self, sandbox, fake_aiodocker_client):
@@ -525,7 +525,7 @@ class TestRunContainer:
             return MagicMock(id="sha256:abc")
 
         fake_aiodocker_client.images.pull = _flaky_pull
-        info = await sandbox.run_container(flow_id=9, image="vxcontrol/kali-linux")
+        info = await sandbox.run_container(flow_id=9, image="kalilinux/kali-rolling")
         assert info.image == "debian:latest"  # fell back
 
     @pytest.mark.asyncio
@@ -858,7 +858,7 @@ class TestGetDefaultImage:
 
 
 class TestTerminalConstants:
-    """All PentAGI-ported constants."""
+    """All SecurAgentX-ported constants."""
 
     def test_primary_terminal_name_prefix(self):
         assert PRIMARY_TERMINAL_NAME_PREFIX == "pentagi-terminal-"
@@ -1684,7 +1684,7 @@ class TestImageChooserDefaults:
         assert IC_DEFAULT_IMAGE == "debian:latest"
 
     def test_default_image_for_pentest_is_kali(self):
-        assert DEFAULT_IMAGE_FOR_PENTEST == "vxcontrol/kali-linux"
+        assert DEFAULT_IMAGE_FOR_PENTEST == "kalilinux/kali-rolling"
 
     def test_template_has_three_placeholders(self):
         """Template uses the 3 canonical placeholder names."""
@@ -1785,10 +1785,10 @@ class TestImageChooserChoose:
     async def test_choose_security_task_returns_kali(self):
         """LLM returns kali-linux for security tasks."""
         llm = MagicMock()
-        llm.complete = AsyncMock(return_value="vxcontrol/kali-linux")
+        llm.complete = AsyncMock(return_value="kalilinux/kali-rolling")
         chooser = ImageChooser()
         result = await chooser.choose("pentest the target", llm)
-        assert result == "vxcontrol/kali-linux"
+        assert result == "kalilinux/kali-rolling"
 
     @pytest.mark.asyncio
     async def test_choose_general_task_returns_debian(self):
@@ -1886,7 +1886,7 @@ class TestImageChooserCaching:
         cache.get_flow_image = AsyncMock(return_value="debian:latest")
         cache.set_flow_image = AsyncMock()
         llm = MagicMock()
-        llm.complete = AsyncMock(return_value="vxcontrol/kali-linux")  # would-be response
+        llm.complete = AsyncMock(return_value="kalilinux/kali-rolling")  # would-be response
         chooser = ImageChooser(cache=cache)
         result = await chooser.choose("input", llm, flow_id=1)
         assert result == "debian:latest"  # from cache
@@ -1898,10 +1898,10 @@ class TestImageChooserCaching:
         cache.get_flow_image = AsyncMock(return_value=None)
         cache.set_flow_image = AsyncMock()
         llm = MagicMock()
-        llm.complete = AsyncMock(return_value="vxcontrol/kali-linux")
+        llm.complete = AsyncMock(return_value="kalilinux/kali-rolling")
         chooser = ImageChooser(cache=cache)
         result = await chooser.choose("input", llm, flow_id=2)
-        assert result == "vxcontrol/kali-linux"
+        assert result == "kalilinux/kali-rolling"
         llm.complete.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -1912,11 +1912,11 @@ class TestImageChooserCaching:
         cache.set_flow_image = AsyncMock()
         llm = MagicMock()
         # First call returns kali, second returns debian
-        llm.complete = AsyncMock(side_effect=["vxcontrol/kali-linux", "debian:latest"])
+        llm.complete = AsyncMock(side_effect=["kalilinux/kali-rolling", "debian:latest"])
         chooser = ImageChooser(cache=cache)
         r1 = await chooser.choose("pentest", llm, flow_id=10)
         r2 = await chooser.choose("write code", llm, flow_id=11)
-        assert r1 == "vxcontrol/kali-linux"
+        assert r1 == "kalilinux/kali-rolling"
         assert r2 == "debian:latest"
         assert llm.complete.await_count == 2
 
@@ -2910,8 +2910,8 @@ class TestContainerLifecycle:
     def test_container_name_pattern(self):
         assert ContainerLifecycle.container_name(1) == "pentagi-terminal-1"
 
-    def test_container_name_prefix_is_pentagi_compatible(self):
-        """Prefix kept PentAGI-compatible so cleanup filters work."""
+    def test_container_name_prefix_is_securagentx_compatible(self):
+        """Prefix kept SecurAgentX-compatible so cleanup filters work."""
         assert LC_PRIMARY_PREFIX == "pentagi-terminal-"
 
     def test_flow_data_dir_template(self):
@@ -2934,7 +2934,7 @@ class TestContainerLifecycle:
         assert p.name == "flow-42-data"
 
     def test_hostname_uses_crc32(self):
-        """Lifecycle._hostname uses zlib.crc32 (matches PentAGI)."""
+        """Lifecycle._hostname uses zlib.crc32 (matches the Go original)."""
         import zlib
         h = ContainerLifecycle._hostname("pentagi-terminal-1")
         expected = f"{zlib.crc32(b'pentagi-terminal-1') & 0xFFFFFFFF:08x}"
@@ -3041,7 +3041,7 @@ class TestContainerCleanup:
     async def test_cleanup_skips_running_flow_with_running_containers(self, tmp_db, tmp_path):
         """RUNNING flow whose containers are ALL inactive (STOPPED) → skip.
 
-        PentAGI's ``_all_containers_running`` returns True iff NO container is
+        The original ``_all_containers_running`` returns True iff NO container is
         in ``starting``/``running`` status (the name is preserved verbatim from
         the Go source). When the flow is RUNNING/WAITING and all its containers
         are already stopped/deleted/failed, there is nothing to clean → skip.
@@ -3353,7 +3353,7 @@ class TestBrutalPatterns:
             return MagicMock(id="sha256:abc")
 
         fake_aiodocker_client.images.pull = _flaky
-        info = await sandbox.run_container(flow_id=2, image="vxcontrol/kali-linux")
+        info = await sandbox.run_container(flow_id=2, image="kalilinux/kali-rolling")
         assert info.image == "debian:latest"
 
     def test_container_store_isolation_per_db(self, tmp_path):

@@ -1,6 +1,6 @@
 """securagentx.providers.gemini — Google Gemini LLM provider adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/gemini/gemini.go``. The adapter
+Port of the original ``backend/pkg/providers/gemini/gemini.go``. The adapter
 talks to Google's Generative Language API at
 ``https://generativelanguage.googleapis.com`` via the
 ``google-generativeai`` Python SDK, and implements the full
@@ -8,7 +8,7 @@ talks to Google's Generative Language API at
 
 Key features ported from the Go original
 -----------------------------------------
-* **Default model** — ``gemini-2.5-flash`` (PentAGI's
+* **Default model** — ``gemini-2.5-flash`` (the original
   ``GeminiAgentModel``). Also supports ``gemini-2.5-pro``,
   ``gemini-2.0-flash``, ``gemini-1.5-pro``, etc.
 * **Tool-call ID template** — ``{r:8:x}`` (8 random hex chars, no
@@ -78,7 +78,7 @@ logger = logging.getLogger("securagentx.providers.gemini")
 #: Default Gemini API base URL. Overridable via ``GEMINI_SERVER_URL``.
 GEMINI_DEFAULT_SERVER_URL: str = "https://generativelanguage.googleapis.com"
 
-#: Default Gemini model. PentAGI's ``GeminiAgentModel`` constant.
+#: Default Gemini model. The original ``GeminiAgentModel`` constant.
 GEMINI_DEFAULT_MODEL: str = "gemini-2.5-flash"
 
 #: Gemini tool-call ID template. ``{r:8:x}`` = 8 random lowercase hex

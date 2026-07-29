@@ -1,6 +1,6 @@
 """securagentx.api.routes.health — Health, info, and metrics endpoints.
 
-Ports PentAGI's ``GET /info`` and adds SecurAgentX-native ``/health`` and
+Ports the original ``GET /info`` and adds SecurAgentX-native ``/health`` and
 ``/metrics`` (Prometheus-style text format).
 
 Routes
@@ -54,7 +54,7 @@ _START_TIME = time.time()
 
 @router.get("/info", summary="Server information (version, providers, capabilities)")
 async def get_info(request: Request) -> dict[str, Any]:
-    """Public endpoint. Mirrors PentAGI's ``GET /api/v1/info``.
+    """Public endpoint. Mirrors the original ``GET /api/v1/info``.
 
     If a valid session/token is present (via ``try_auth``), the response
     also includes the current user's role + privileges — this lets the
@@ -161,7 +161,7 @@ async def get_metrics(request: Request) -> str:
     caller. We return a ``str`` here and the response is serialised
     as-is.
 
-    Metrics exposed (mirror PentAGI's custom meters):
+    Metrics exposed (mirror the original custom meters):
 
     * ``securagentx_uptime_seconds``           — gauge
     * ``securagentx_requests_total``           — counter (per route)

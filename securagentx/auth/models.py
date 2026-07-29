@@ -1,9 +1,9 @@
 """securagentx.auth.models — Pydantic models for the auth subsystem.
 
-This module ports PentAGI's user/role/api-token GORM models
+This module ports the original user/role/api-token GORM models
 (``backend/pkg/server/models/{users,roles,api_tokens}.go``) to Pydantic v2
 ``BaseModel`` subclasses and provides ``make_user_hash`` — the user-hash
-generator that mirrors PentAGI's ``rdb.MakeUserHash``.
+generator that mirrors the original ``rdb.MakeUserHash``.
 
 Design constraints:
 
@@ -38,25 +38,25 @@ logger = logging.getLogger("securagentx.auth.models")
 # Constants (mirrors backend/pkg/server/models/{users,roles,api_tokens}.go)
 # ---------------------------------------------------------------------------
 
-# Default role ID for OAuth users (matches PentAGI's RoleUser constant).
+# Default role ID for OAuth users (matches the original RoleUser constant).
 ROLE_USER_ID: int = 2
 
-# User types — string enum matching PentAGI's UserType (Go).
+# User types — string enum matching the original UserType (Go).
 USER_TYPE_LOCAL: str = "local"
 USER_TYPE_OAUTH: str = "oauth"
 USER_TYPE_API: str = "api"
 
-# User status — string enum matching PentAGI's UserStatus (Go).
+# User status — string enum matching the original UserStatus (Go).
 USER_STATUS_CREATED: str = "created"
 USER_STATUS_ACTIVE: str = "active"
 USER_STATUS_BLOCKED: str = "blocked"
 
-# API token status — string enum matching PentAGI's TokenStatus (Go).
+# API token status — string enum matching the original TokenStatus (Go).
 TOKEN_STATUS_ACTIVE: str = "active"
 TOKEN_STATUS_REVOKED: str = "revoked"
 TOKEN_STATUS_EXPIRED: str = "expired"
 
-# Salt used by PentAGI's rdb.MakeUserHash (Go source).
+# Salt used by the original rdb.MakeUserHash (Go source).
 _USER_HASH_SALT: str = "248a8bd896595be1319e65c308a903c568afdb9b"
 
 
@@ -80,13 +80,13 @@ def _get_base_model() -> Any:
 
 
 # ---------------------------------------------------------------------------
-# User hash generation — port of PentAGI's rdb.MakeUserHash
+# User hash generation — port of the original's rdb.MakeUserHash
 # ---------------------------------------------------------------------------
 
 def make_user_hash(name: str) -> str:
     """Generate a user hash from a name/email.
 
-    This is a **byte-compatible** port of PentAGI's
+    This is a **byte-compatible** port of the original's
     ``rdb.MakeUserHash(name)`` (Go source:
     ``backend/pkg/server/rdb/table.go:349``)::
 
@@ -107,9 +107,9 @@ def make_user_hash(name: str) -> str:
 
     .. note::
        The task description parenthetically notes "SHA256", but the actual
-       PentAGI Go source uses **MD5** (see ``rdb.MakeMD5Hash``). To stay
+       SecurAgentX Go source uses **MD5** (see ``rdb.MakeMD5Hash``). To stay
        byte-compatible with the upstream Go implementation — which is the
-       hard constraint — we use MD5 here. If/when PentAGI migrates the
+       hard constraint — we use MD5 here. If/when SecurAgentX migrates the
        algorithm, this function must be updated in lockstep.
 
     Args:
@@ -154,7 +154,7 @@ def _build_models() -> dict[str, Any]:
     BaseModel, Field = _get_base_model()
 
     class User(BaseModel):  # type: ignore[misc,valid-type]
-        """Pydantic port of PentAGI's ``models.User`` (Go).
+        """Pydantic port of the original's ``models.User`` (Go).
 
         Mirrors the JSON field names from the Go struct tags.
         """
@@ -177,7 +177,7 @@ def _build_models() -> dict[str, Any]:
         model_config = {"populate_by_name": True, "extra": "ignore"}
 
     class Role(BaseModel):  # type: ignore[misc,valid-type]
-        """Pydantic port of PentAGI's ``models.Role`` (Go)."""
+        """Pydantic port of the original's ``models.Role`` (Go)."""
 
         id: int = Field(default=0, ge=0)
         name: str = Field(..., max_length=50)
@@ -186,7 +186,7 @@ def _build_models() -> dict[str, Any]:
         model_config = {"extra": "ignore"}
 
     class APIToken(BaseModel):  # type: ignore[misc,valid-type]
-        """Pydantic port of PentAGI's ``models.APIToken`` (Go)."""
+        """Pydantic port of the original's ``models.APIToken`` (Go)."""
 
         id: int = Field(default=0, ge=0, description="Token DB primary key")
         user_id: int = Field(..., ge=0)
@@ -202,7 +202,7 @@ def _build_models() -> dict[str, Any]:
         model_config = {"extra": "ignore"}
 
     class APITokenClaims(BaseModel):  # type: ignore[misc,valid-type]
-        """Pydantic port of PentAGI's ``models.APITokenClaims`` (Go).
+        """Pydantic port of the original's ``models.APITokenClaims`` (Go).
 
         Used as JWT claims payload. Field names match the Go struct's
         JSON tags (``tid``, ``rid``, ``uid``, ``uhash``, ``exp``, ``iat``,

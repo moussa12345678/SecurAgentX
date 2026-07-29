@@ -1,6 +1,6 @@
 """securagentx/search_providers/duckduckgo.py — DuckDuckGo HTML search provider.
 
-Ports PentAGI's ``backend/pkg/tools/duckduckgo.go`` (565 lines) to an
+Ports the original ``backend/pkg/tools/duckduckgo.go`` (565 lines) to an
 async Python client. DuckDuckGo is **free** and requires no API key —
 the provider scrapes the ``html.duckduckgo.com/html/`` HTML endpoint
 with a spoofed Chrome 120 user-agent.
@@ -10,7 +10,7 @@ Endpoint:
 
 Content-Type: ``application/x-www-form-urlencoded``
 
-Form data (port-verbatim from PentAGI):
+Form data (port-verbatim from the Go original):
     .. code-block:: text
 
        q=<query> b= df=<time_range> kl=<region> kp=<safesearch>
@@ -38,7 +38,7 @@ Two-tier parsing (preserved verbatim):
        ``a.result__a`` (URL+title) and ``a.result__snippet``
        (description). Falls back to ``selectolax`` when ``lxml`` is not
        available.
-    2. **Fallback (regex):** mirrors PentAGI's
+    2. **Fallback (regex):** mirrors the original
        ``(?s)<div class="result results_links[^"]*">.*?<div class="clear"></div>\\s*</div>\\s*</div>``
        pattern for environments where no HTML parser is installed.
 
@@ -67,7 +67,7 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.duckduckgo")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's duckduckgo.go.
+# Constants — ported verbatim from the Go original's duckduckgo.go.
 # ---------------------------------------------------------------------------
 
 DUCKDUCKGO_ENDPOINT: str = "https://html.duckduckgo.com/html/"
@@ -83,7 +83,7 @@ DUCKDUCKGO_USER_AGENT: str = (
     "Chrome/120.0.0.0 Safari/537.36"
 )
 
-#: Allowed region constants (PentAGI's region list, ported verbatim).
+#: Allowed region constants (the original region list, ported verbatim).
 Region = Literal["us-en", "uk-en", "de-de", "fr-fr", "jp-jp", "cn-zh", "ru-ru"]
 _ALLOWED_REGIONS: frozenset[str] = frozenset(
     {"us-en", "uk-en", "de-de", "fr-fr", "jp-jp", "cn-zh", "ru-ru"}
@@ -112,10 +112,10 @@ class DuckDuckGoSearchProvider(SearchProvider):
 
     Scrapes ``html.duckduckgo.com/html/`` with a spoofed Chrome 120
     user-agent. Implements the two-tier parser (DOM walker + regex
-    fallback) ported from PentAGI's ``duckduckgo.go``.
+    fallback) ported from the Go original's ``duckduckgo.go``.
 
     Availability gate: ``DUCKDUCKGO_ENABLED`` env var is ``true`` or
-    ``1`` (default: enabled, matching PentAGI's
+    ``1`` (default: enabled, matching the original
     ``cfg.DuckDuckGoEnabled`` zero-value semantics).
     """
 
@@ -167,7 +167,7 @@ class DuckDuckGoSearchProvider(SearchProvider):
 
         capped = max(1, min(int(max_results), DUCKDUCKGO_MAX_RESULTS))
 
-        # Build form data (order matters — PentAGI uses ``b=`` as a
+        # Build form data (order matters — SecurAgentX uses ``b=`` as a
         # no-op separator between q and df).
         form_data = {
             "q": query,
@@ -252,13 +252,13 @@ class DuckDuckGoSearchProvider(SearchProvider):
 def _parse_ddg_html(html_text: str, max_results: int) -> list[dict[str, str]]:
     """Parse DuckDuckGo HTML into a list of ``{title, url, snippet}``.
 
-    Two-tier strategy (mirrors PentAGI's ``duckduckgo.go``):
+    Two-tier strategy (mirrors the original ``duckduckgo.go``):
 
       1. **Primary (DOM walker):** ``lxml.html`` (preferred, faster).
          Falls back to ``selectolax`` if available. Walks
          ``div.result.results_links`` containers.
       2. **Fallback (regex):** if no HTML parser is importable, use a
-         regex that mirrors PentAGI's pattern to extract titles / URLs
+         regex that mirrors the original pattern to extract titles / URLs
          / snippets directly from the raw HTML.
 
     Args:
@@ -268,7 +268,7 @@ def _parse_ddg_html(html_text: str, max_results: int) -> list[dict[str, str]]:
     Returns:
         List of ``{"title": str, "url": str, "snippet": str}`` dicts.
     """
-    # Try lxml first (preferred — port of PentAGI's golang.org/x/net/html
+    # Try lxml first (preferred — port of the original's golang.org/x/net/html
     # walker).
     try:
         return _parse_ddg_with_lxml(html_text, max_results)
@@ -300,7 +300,7 @@ def _parse_ddg_html(html_text: str, max_results: int) -> list[dict[str, str]]:
 def _parse_ddg_with_lxml(html_text: str, max_results: int) -> list[dict[str, str]]:
     """Parse DuckDuckGo HTML with ``lxml.html``.
 
-    Mirrors PentAGI's DOM walker that iterates
+    Mirrors the original DOM walker that iterates
     ``div.result.results_links`` containers and extracts:
 
     * ``a.result__a`` — title + URL
@@ -380,7 +380,7 @@ def _parse_ddg_with_selectolax(
     return results
 
 
-# Regex fallback — mirrors PentAGI's pattern. We intentionally keep this
+# Regex fallback — mirrors the original pattern. We intentionally keep this
 # conservative: it captures the title, URL, and snippet from each result
 # div using named groups.
 _RESULT_BLOCK_RE = re.compile(
@@ -405,7 +405,7 @@ def _parse_ddg_with_regex(html_text: str, max_results: int) -> list[dict[str, st
     """Regex fallback for DuckDuckGo HTML parsing.
 
     Used when neither ``lxml`` nor ``selectolax`` is importable. Mirrors
-    PentAGI's regex pattern as closely as Python's ``re`` module allows.
+    The original regex pattern as closely as Python's ``re`` module allows.
     """
     results: list[dict[str, str]] = []
     for match in _RESULT_BLOCK_RE.finditer(html_text):
@@ -429,7 +429,7 @@ def _parse_ddg_with_regex(html_text: str, max_results: int) -> list[dict[str, st
 
 # ---------------------------------------------------------------------------
 # HTML entity decoding — manual table + numeric entity regex, ported
-# verbatim from PentAGI's duckduckgo.go.
+# verbatim from the original duckduckgo.go.
 # ---------------------------------------------------------------------------
 
 _NAMED_ENTITIES: dict[str, str] = {
@@ -451,14 +451,14 @@ _DEC_ENTITY_RE = re.compile(r"^#([0-9]+)$")
 def _decode_entities(text: str) -> str:
     """Decode HTML entities using stdlib ``html.unescape``.
 
-    PentAGI implements its own entity decoder (a manual table + numeric
+    SecurAgentX implements its own entity decoder (a manual table + numeric
     entity regex). Python's stdlib ``html.unescape`` already handles
-    all named entities (including the eight PentAGI special-cases:
+    all named entities (including the eight SecurAgentX special-cases:
     ``&amp; &lt; &gt; &quot; &#39; &#x27; &nbsp; &apos;``) plus the full
     HTML5 entity set, so we delegate to it for both correctness and
     conciseness.
 
-    A tiny manual fast-path is kept for the 8 entities PentAGI
+    A tiny manual fast-path is kept for the 8 entities SecurAgentX
     special-cases — these are by far the most common in DuckDuckGo
     snippets and avoiding the function call improves throughput on
     large result sets.
@@ -489,7 +489,7 @@ def _decode_entities(text: str) -> str:
 
 
 def _strip_tags(text: str) -> str:
-    """Remove all HTML tags from ``text`` (regex-based, mirrors PentAGI)."""
+    """Remove all HTML tags from ``text`` (regex-based, mirrors the Go original)."""
     return _TAG_RE.sub("", text)
 
 
@@ -501,7 +501,7 @@ def _strip_tags(text: str) -> str:
 def _render_ddg_results(query: str, results: list[dict[str, str]]) -> str:
     """Render DuckDuckGo results as Markdown.
 
-    Output format (mirrors PentAGI):
+    Output format (mirrors the Go original):
 
     .. code-block:: markdown
 

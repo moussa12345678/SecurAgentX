@@ -1,6 +1,6 @@
 """securagentx/docker/resource_limits.py — cgroup-backed hardening for sandboxes.
 
-PentAGI's Docker sandbox sets only ``CapAdd=[NET_RAW, NET_ADMIN?]``,
+The original Docker sandbox sets only ``CapAdd=[NET_RAW, NET_ADMIN?]``,
 ``RestartPolicy=on-failure(5)``, json-file log rotation, and port
 bindings. It does NOT set any of the cgroup-based resource limits
 (``Memory``, ``NanoCpus``, ``PidsLimit``, ``Ulimits``) — it relies on
@@ -65,7 +65,7 @@ DEFAULT_READ_ONLY_ROOT: bool = False
 DEFAULT_NETWORK_MODE: str = "bridge"
 
 # Supported network modes — these map 1:1 to Docker's ``--network`` flag
-# values. ``host`` is special-cased in PentAGI (no port bindings); ``none``
+# values. ``host`` is special-cased in SecurAgentX (no port bindings); ``none``
 # is SecurAgentX-specific (full isolation for sensitive flows).
 SUPPORTED_NETWORK_MODES: frozenset[str] = frozenset({"bridge", "host", "none", "container"})
 
@@ -100,7 +100,7 @@ class ResourceLimits:
     network_mode: str = DEFAULT_NETWORK_MODE
     # Optional cap_add / cap_drop lists — kept here (rather than in the
     # lifecycle class) so a single ``ResourceLimits`` instance fully
-    # describes the sandbox's security posture. Defaults match PentAGI.
+    # describes the sandbox's security posture. Defaults match SecurAgentX.
     cap_add: list[str] = field(default_factory=lambda: ["NET_RAW"])
     cap_drop: list[str] = field(default_factory=lambda: [])
 
@@ -116,7 +116,7 @@ class ResourceLimits:
     @classmethod
     def pentest(cls, net_admin: bool = False) -> "ResourceLimits":
         """Pentest profile: keeps ``NET_RAW``, optionally adds ``NET_ADMIN``
-        (mirrors PentAGI's ``cfg.DockerNetAdmin``). Same cgroup limits as
+        (mirrors the original ``cfg.DockerNetAdmin``). Same cgroup limits as
         default — pentest tools rarely need more RAM, just more
         capabilities."""
         caps = ["NET_RAW"]
@@ -145,7 +145,7 @@ class ResourceLimits:
     @classmethod
     def host_network(cls) -> "ResourceLimits":
         """Host-network profile: for raw-packet testing (nmap SYN scan,
-        ARP spoofing, etc). PentAGI's ``--network-host`` equivalent."""
+        ARP spoofing, etc). The original ``--network-host`` equivalent."""
         return cls(
             network_mode="host",
             cap_add=["NET_RAW", "NET_ADMIN"],

@@ -1,6 +1,6 @@
 """securagentx.auth.oauth — OAuth2 + OIDC integration (GitHub + Google).
 
-This module ports PentAGI's ``oauth/`` package (Go) to Python using
+This module ports the original ``oauth/`` package (Go) to Python using
 ``authlib.integrations.starlette_client`` for the Starlette-native OAuth2
 + OIDC primitives. PKCE S256 is enforced automatically by authlib.
 
@@ -55,11 +55,11 @@ logger = logging.getLogger("securagentx.auth.oauth")
 # Constants
 # ---------------------------------------------------------------------------
 
-# Cookie names — match PentAGI's auth.go.
+# Cookie names — match the original auth.go.
 STATE_COOKIE_NAME: str = "state"
 NONCE_COOKIE_NAME: str = "nonce"
 
-# State-request TTL (5 minutes) — matches PentAGI's authStateRequestTTL.
+# State-request TTL (5 minutes) — matches the original authStateRequestTTL.
 STATE_REQUEST_TTL_SECONDS: int = 300
 
 # HMAC-SHA256 signature length (32 bytes). Matches Go's parseState logic.
@@ -113,7 +113,7 @@ class OAuthClient(Protocol):
 
 
 # ---------------------------------------------------------------------------
-# HMAC-signed state (byte-compatible with PentAGI's Go server)
+# HMAC-signed state (byte-compatible with the original Go server)
 # ---------------------------------------------------------------------------
 
 def _b64url_encode(data: bytes) -> str:
@@ -133,7 +133,7 @@ def build_signed_state(
 ) -> str:
     """Build a base64url-encoded signed state blob.
 
-    Mirrors PentAGI's ``AuthAuthorize`` flow in
+    Mirrors the original ``AuthAuthorize`` flow in
     ``services/auth.go``::
 
         stateJSON, _ := json.Marshal(stateData)
@@ -165,7 +165,7 @@ def build_signed_state(
 def parse_signed_state(state: str, signing_key: bytes) -> dict[str, str]:
     """Verify + decode a signed state blob.
 
-    Mirrors PentAGI's ``parseState`` flow in
+    Mirrors the original ``parseState`` flow in
     ``services/auth.go``::
 
         stateJSON, _ := base64.RawURLEncoding.DecodeString(state)
@@ -231,13 +231,13 @@ def parse_signed_state(state: str, signing_key: bytes) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Random helpers (mirror PentAGI's randBase64String)
+# Random helpers (mirror the original randBase64String)
 # ---------------------------------------------------------------------------
 
 def rand_base64_string(n_bytes: int) -> str:
     """Generate a URL-safe base64 string from ``n_bytes`` random bytes.
 
-    Mirrors PentAGI's ``randBase64String(nByte)`` in ``services/auth.go``::
+    Mirrors the original ``randBase64String(nByte)`` in ``services/auth.go``::
 
         b := make([]byte, nByte)
         io.ReadFull(rand.Reader, b)
@@ -253,7 +253,7 @@ def rand_base64_string(n_bytes: int) -> str:
 class OAuthConfig:
     """Configuration for one OAuth provider.
 
-    Matches the constructor args of PentAGI's ``NewGithubOAuthClient`` /
+    Matches the constructor args of the original ``NewGithubOAuthClient`` /
     ``NewGoogleOAuthClient``.
     """
 
@@ -437,7 +437,7 @@ def get_oauth_client(provider: str) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Cookie helpers (mirror PentAGI's setCallbackCookie)
+# Cookie helpers (mirror the original setCallbackCookie)
 # ---------------------------------------------------------------------------
 
 def _is_https(request: Any) -> bool:
@@ -478,7 +478,7 @@ def _set_callback_cookie(
 ) -> None:
     """Set a state/nonce cookie on the response.
 
-    Matches PentAGI's ``setCallbackCookie``:
+    Matches the original ``setCallbackCookie``:
 
     * HttpOnly=True
     * Secure based on request TLS state OR ``X-Forwarded-Proto: https``
@@ -525,7 +525,7 @@ async def authorize(
 ) -> Any:
     """Begin an OAuth2 flow — redirects to the provider's auth URL.
 
-    Mirrors PentAGI's ``AuthAuthorize`` handler in
+    Mirrors the original ``AuthAuthorize`` handler in
     ``services/auth.go``. Steps:
 
     1. Build state data: ``{exp, return_uri, provider, uniq}``
@@ -624,7 +624,7 @@ async def authorize(
 async def login_callback(request: Any, provider: Optional[str] = None) -> Any:
     """Handle the OAuth2 callback (GET for GitHub, POST for Google).
 
-    Mirrors PentAGI's ``AuthLoginGetCallback`` / ``AuthLoginPostCallback``.
+    Mirrors the original ``AuthLoginGetCallback`` / ``AuthLoginPostCallback``.
     Steps:
 
     1. Read ``code`` + ``state`` from query (GET) or form (POST).
@@ -731,7 +731,7 @@ async def login_callback(request: Any, provider: Optional[str] = None) -> Any:
 def _append_status_param(return_uri: str) -> str:
     """Append ``status=success`` to the return URI.
 
-    Matches PentAGI's behaviour in ``authLoginCallback``::
+    Matches the original behaviour in ``authLoginCallback``::
 
         query.Add("status", "success")
     """
@@ -778,7 +778,7 @@ async def resolve_email(provider: str, nonce: str, token: dict) -> str:
 async def _resolve_github_email(nonce: str, token: dict) -> str:
     """Resolve the user email from a GitHub OAuth2 token.
 
-    Mirrors PentAGI's ``githubEmailResolver`` in
+    Mirrors the original ``githubEmailResolver`` in
     ``backend/pkg/server/oauth/github.go``:
 
     1. ``GET https://api.github.com/user/emails`` with
@@ -836,7 +836,7 @@ async def _resolve_github_email(nonce: str, token: dict) -> str:
 async def _resolve_google_email(nonce: str, token: dict) -> str:
     """Resolve the user email from a Google OAuth2 token.
 
-    Mirrors PentAGI's ``newGoogleEmailResolver`` in
+    Mirrors the original ``newGoogleEmailResolver`` in
     ``backend/pkg/server/oauth/google.go``:
 
     1. Verify the ``id_token`` signature + audience (``client_id``) via

@@ -1,7 +1,7 @@
 """
 securagentx.graphql — Strawberry GraphQL schema assembly.
 
-This package ports PentAGI's GraphQL surface (1115-line SDL) to SecurAgentX
+This package ports the original GraphQL surface (1115-line SDL) to SecurAgentX
 using ``strawberry-graphql`` (FastAPI-native, async, supports subscriptions
 via the ``graphql-transport-ws`` WebSocket protocol).
 
@@ -37,8 +37,8 @@ Mount the schema via ``strawberry.fastapi.GraphQLRouter`` in
     )
 
 References:
-    * PentAGI: backend/pkg/server/services/graphql.go (FixedComplexityLimit + APQ + WS)
-    * PentAGI: backend/pkg/graph/schema.graphqls (1115-line SDL)
+    * SecurAgentX: backend/pkg/server/services/graphql.go (FixedComplexityLimit + APQ + WS)
+    * SecurAgentX: backend/pkg/graph/schema.graphqls (1115-line SDL)
 """
 from __future__ import annotations
 
@@ -89,7 +89,7 @@ def get_schema() -> Any:
     """Return the process-wide ``strawberry.Schema`` instance (lazy).
 
     The schema is configured with:
-        * ``complexity_limit = 20000`` (PentAGI's ``FixedComplexityLimit``).
+        * ``complexity_limit = 20000`` (the original ``FixedComplexityLimit``).
         * Strawberry extensions via :func:`get_schema_extensions` (incl.
           ``PydanticIntegration`` when available, so resolvers may return
           Pydantic models directly).

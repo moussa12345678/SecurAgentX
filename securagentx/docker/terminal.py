@@ -1,10 +1,9 @@
-"""securagentx/docker/terminal.py — Docker terminal & file tool ported from PentAGI.
+"""securagentx/docker/terminal.py — Docker terminal & file tool.
 
-Ports `backend/pkg/tools/terminal.go` (462 lines) to Python. Provides the
-`DockerTerminal` class with `execute`, `read_file`, and `write_file` async
-methods. All shell escaping uses `shlex.quote()` (replacing Go's
-`strings.ReplaceAll(path, "'", "'\"'\"'")` pattern). ANSI colour codes are
-preserved verbatim (cyan stdin, green stdout, CRLF line terminator).
+Implements the `DockerTerminal` class with `execute`, `read_file`, and
+`write_file` async methods. All shell escaping uses `shlex.quote()`.
+ANSI colour codes are preserved verbatim (cyan stdin, green stdout,
+CRLF line terminator).
 """
 
 from __future__ import annotations
@@ -20,8 +19,8 @@ from typing import Any, Optional, Protocol, runtime_checkable
 
 logger = logging.getLogger("securagentx.docker.terminal")
 
-# ── Public constants (ported verbatim from terminal.go) ──────────────────
-PRIMARY_TERMINAL_NAME_PREFIX = "pentagi-terminal-"
+# ── Public constants ─────────────────────────────────────────────────────
+PRIMARY_TERMINAL_NAME_PREFIX = "pentagi-terminal-"  # Byte-compat constant — do not change
 MAX_EXPLICIT_EXEC_COMMAND_TIMEOUT = 10800  # 3 hours (seconds)
 DEFAULT_EXTRA_EXEC_TIMEOUT = 5  # extra cleanup slack (seconds)
 DEFAULT_QUICK_CHECK_TIMEOUT = 0.5  # 500 ms quick-check window for detach mode
@@ -29,7 +28,7 @@ DEFAULT_SERVER_EXEC_TIMEOUT = 1200  # 20 min server default (env override)
 WORK_FOLDER_PATH_IN_CONTAINER = "/work"
 MAX_READ_FILE_SIZE = 100 * 1024 * 1024  # 100 MB per file
 
-# ── ANSI terminal colour codes (aligned with PentAGI UI palette) ─────────
+# ── ANSI terminal colour codes (aligned with SecurAgentX UI palette) ─────────
 ANSI_COLOR_INPUT_CMD = "\033[96m"  # Bright Cyan  — matches UI blue accents
 ANSI_COLOR_SYSTEM_MSG = "\033[92m"  # Bright Green — universal success/info
 ANSI_COLOR_RESET = "\033[0m"
@@ -61,7 +60,7 @@ class _ExecResult:
 class DockerClientProtocol(Protocol):
     """Async Docker client protocol (satisfied by aiodocker or a shim).
 
-    Methods mirror the subset of the PentAGI ``DockerClient`` interface that
+    Methods mirror the subset of the SecurAgentX ``DockerClient`` interface that
     the terminal tool exercises. Phase 4-a is expected to ship a concrete
     implementation; this Protocol keeps ``terminal.py`` importable in
     isolation.
@@ -106,7 +105,7 @@ class _NullTermLog:
 
 
 class DockerTerminal:
-    """Port of PentAGI ``terminal`` struct (terminal.go) to Python.
+    """Port of SecurAgentX ``terminal`` struct (terminal.go) to Python.
 
     The class wraps an async Docker client (Protocol-injected) and exposes
     three operations: ``execute`` (shell command, with detach/timeout

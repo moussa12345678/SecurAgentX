@@ -1,6 +1,6 @@
 """
 securagentx.graphql.schema — GraphQL schema configuration and the 16+ enums ported
-from PentAGI's `backend/pkg/graph/schema.graphqls`.
+from the original `backend/pkg/graph/schema.graphqls`.
 
 This module declares all GraphQL enums (Strawberry-flavored) and exposes the
 configuration constants used by the assembled schema in
@@ -8,8 +8,8 @@ configuration constants used by the assembled schema in
 to the upstream SDL so that React/Relay clients and Apollo federation tooling
 keep working without a single change.
 
-Schema knobs (mirroring PentAGI's gqlgen server):
-    * ``COMPLEXITY_LIMIT = 20000`` — equal to PentAGI's ``FixedComplexityLimit``.
+Schema knobs (mirroring the original gqlgen server):
+    * ``COMPLEXITY_LIMIT = 20000`` — equal to the original ``FixedComplexityLimit``.
     * ``APQ_CACHE_SIZE = 1000`` — Automatic Persisted Query LRU size
       (matches ``srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))``).
     * ``KEEPALIVE_PING_INTERVAL_SECONDS = 10`` — WebSocket keepalive ping.
@@ -20,8 +20,8 @@ The actual ``strawberry.Schema`` instance is constructed lazily in
 is only being inspected (e.g. for static analysis).
 
 References:
-    * PentAGI: backend/pkg/graph/schema.graphqls (1115 lines)
-    * PentAGI: backend/pkg/server/services/graphql.go (FixedComplexityLimit + APQ)
+    * SecurAgentX: backend/pkg/graph/schema.graphqls (1115 lines)
+    * SecurAgentX: backend/pkg/server/services/graphql.go (FixedComplexityLimit + APQ)
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("securagentx.graphql.schema")
 
 # ─── Schema configuration knobs ────────────────────────────────────────────
-# Mirrors PentAGI's gqlgen setup (backend/pkg/server/services/graphql.go).
+# Mirrors the original gqlgen setup (backend/pkg/server/services/graphql.go).
 COMPLEXITY_LIMIT: int = 20000
 APQ_CACHE_SIZE: int = 1000
 KEEPALIVE_PING_INTERVAL_SECONDS: float = 10.0
@@ -61,7 +61,7 @@ class StatusType(str, Enum):
     FAILED = "failed"
 
 
-@strawberry_enum(description="LLM provider types supported by SecurAgentX.", graphql_name_from="value")
+@strawberry_enum(description="LLM provider types supported by the original.", graphql_name_from="value")
 class ProviderType(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
@@ -279,7 +279,7 @@ def get_schema_extensions() -> List[Any]:
     """Return the list of Strawberry extension *classes* to instantiate on the
     assembled schema.
 
-    Mirrors PentAGI's gqlgen extensions:
+    Mirrors the original gqlgen extensions:
         * ``extension.Introspection{}``  — Strawberry enables introspection by
           default (see :data:`INTROSPECTION_ENABLED`).
         * ``extension.AutomaticPersistedQuery{Cache: lru.New[string](100)}`` —
@@ -292,7 +292,7 @@ def get_schema_extensions() -> List[Any]:
           not ship a built-in complexity limiter.
 
     We also register:
-        * ``ParserCache(maxsize=1000)`` — equivalent to PentAGI's
+        * ``ParserCache(maxsize=1000)`` — equivalent to the original
           ``srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))``.
     """
     extensions: List[Any] = [ComplexityLimitExtension]
@@ -387,7 +387,7 @@ else:  # pragma: no cover — runtime import for the real base class
 class ComplexityLimitExtension(_ComplexityLimitBase, _ComplexityExtensionBase):  # type: ignore[misc]
     """Strawberry schema extension that rejects queries above the complexity limit.
 
-    Equivalent of PentAGI's ``extension.FixedComplexityLimit(20000)``. Hook
+    Equivalent of the original ``extension.FixedComplexityLimit(20000)``. Hook
     point: ``on_parse`` — we inspect the parsed document and raise
     ``Exception`` if the total complexity exceeds :data:`COMPLEXITY_LIMIT`.
     """

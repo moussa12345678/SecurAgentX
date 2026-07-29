@@ -1,6 +1,6 @@
 """securagentx/agents/installer.py — Infrastructure-maintenance specialist.
 
-Ports PentAGI's ``providers/handlers.go::GetInstallerHandler`` and the
+Ports the original ``providers/handlers.go::GetInstallerHandler`` and the
 ``templates/prompts/installer.tmpl`` system prompt into SecurAgentX. The
 Installer (a.k.a. Maintenance agent) is a *limited* agent
 (``MAX_LIMITED_ITERATIONS`` = 20) that performs environment setup, tool
@@ -12,7 +12,7 @@ emitting the ``maintenance_result`` barrier tool — uniquely, BOTH its
 engagement language (the closing payload returns directly into the engagement
 log rather than into a peer-consumed technical payload).
 
-Two-channel language policy (ported verbatim from PentAGI):
+Two-channel language policy (ported verbatim from the Go original):
     * Engagement log (``message`` fields, closing ``result`` AND ``message``)
       -> {{ lang }}
     * Technical channel (commands, queries, stored guides) -> English
@@ -33,7 +33,7 @@ from securagentx.agents.base import (
 
 logger = logging.getLogger("securagentx.agents.installer")
 
-# --- Tool-name constants (ported from pentagi/backend/pkg/tools/registry.go) --
+# --- Tool-name constants (ported from backend/pkg/tools/registry.go) --
 MAINTENANCE_RESULT_TOOL_NAME = "maintenance_result"
 SEARCH_GUIDE_TOOL_NAME = "search_guide"
 STORE_GUIDE_TOOL_NAME = "store_guide"
@@ -356,14 +356,14 @@ class _DefaultDict(dict):
 class Installer:
     """Infrastructure-maintenance specialist (limited agent, 20 iterations).
 
-    Mirrors PentAGI's ``flowProvider.performInstaller`` — runs an LLM
+    Mirrors the original ``flowProvider.performInstaller`` — runs an LLM
     tool-calling chain with a hard cap of ``MAX_LIMITED_ITERATIONS`` iterations
     and the ``maintenance_result`` barrier tool as the only exit. The Docker
     sandbox (terminal + file ops), the long-term guide vector store, and the
     three peer delegations (searcher, memorist, adviser) are all exposed to
     the chain via the dependencies injected at construction time.
 
-    Note: PentAGI exposes this agent under both the ``maintenance`` (the
+    Note: SecurAgentX exposes this agent under both the ``maintenance`` (the
     delegation entry-point) and ``installer`` (the human-readable role) names;
     SecurAgentX follows the same convention — the class is ``Installer`` and the
     ``AgentType`` is ``INSTALLER``.
@@ -394,7 +394,7 @@ class Installer:
         # language was negotiated at flow-creation time.
         self.lang: str = self.LANG_DEFAULT
 
-        # Docker image is chosen at flow-creation time (cf. PentAGI
+        # Docker image is chosen at flow-creation time (cf. SecurAgentX
         # ``flowProvider.image`` from the ``image_chooser`` template); default
         # to debian:latest for general installation tasks.
         self.docker_image: str = self.DEFAULT_DOCKER_IMAGE

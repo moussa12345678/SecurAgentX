@@ -1,18 +1,18 @@
 """securagentx/docker/db.py — SQLite-backed persistence for container state.
 
-This module ports PentAGI's ``containers`` SQL table
+This module ports the original ``containers`` SQL table
 (``backend/pkg/database/models.go``) to a Python ``aiosqlite`` store. It
 provides:
 
 * ``ContainerType`` — ``primary`` (terminal sandbox) / ``secondary`` (future)
 * ``ContainerStatus`` — five-state machine:
   ``starting -> running -> stopped -> deleted`` (with ``failed`` as a
-  terminal escape hatch). Mirrors PentAGI's ``ContainerStatus`` enum.
+  terminal escape hatch). Mirrors the original ``ContainerStatus`` enum.
 * ``FlowStatus`` — ``created / running / waiting / finished / failed``.
   Used by ``ContainerDB.list_orphan_containers`` to identify stale
   containers whose parent flows are no longer live.
 * ``ContainerInfo`` — dataclass mapping one row of the ``containers``
-  table; the field set matches PentAGI verbatim:
+  table; the field set matches the Go original verbatim:
   ``{id, type, name, image, status, local_id, local_dir, flow_id,
   created_at, updated_at}``.
 * ``ContainerDB`` — async wrapper over an ``aiosqlite`` connection. All
@@ -25,7 +25,7 @@ Docker is not used).
 
 The schema is created idempotently on first ``connect()`` via
 ``CREATE TABLE IF NOT EXISTS``; indexes on ``flow_id`` and ``status``
-are added for the same access patterns PentAGI uses
+are added for the same access patterns SecurAgentX uses
 (``GetFlowPrimaryContainer`` / ``GetContainers`` by status).
 """
 
@@ -42,19 +42,19 @@ logger = logging.getLogger("securagentx.docker.db")
 
 
 # ---------------------------------------------------------------------------
-# Enums — string-valued for direct SQL serialization (mirrors PentAGI).
+# Enums — string-valued for direct SQL serialization (mirrors the Go original).
 # ---------------------------------------------------------------------------
 
 
 class ContainerType(str, Enum):
-    """Mirror of PentAGI's ``database.ContainerType``."""
+    """Mirror of the original ``database.ContainerType``."""
 
     PRIMARY = "primary"
     SECONDARY = "secondary"
 
 
 class ContainerStatus(str, Enum):
-    """Mirror of PentAGI's ``database.ContainerStatus`` state machine.
+    """Mirror of the original ``database.ContainerStatus`` state machine.
 
     Lifecycle: ``starting -> running -> stopped -> deleted``; any state
     can transition to ``failed`` on irrecoverable error.
@@ -68,7 +68,7 @@ class ContainerStatus(str, Enum):
 
 
 class FlowStatus(str, Enum):
-    """Mirror of PentAGI's ``database.FlowStatus``.
+    """Mirror of the original ``database.FlowStatus``.
 
     The cleanup logic in ``ContainerCleanup.cleanup_orphan_containers``
     treats ``FINISHED`` / ``FAILED`` / ``CREATED`` as terminal-or-stale
@@ -83,14 +83,14 @@ class FlowStatus(str, Enum):
 
 
 # Flow states whose containers are considered orphans at startup. Matches
-# PentAGI's ``Cleanup()`` switch (Finished/Failed/Created always; plus
+# the original ``Cleanup()`` switch (Finished/Failed/Created always; plus
 # Running/Waiting only when at least one container is NOT running).
 ORPHAN_FLOW_STATUSES: frozenset[FlowStatus] = frozenset(
     {FlowStatus.CREATED, FlowStatus.FINISHED, FlowStatus.FAILED}
 )
 
 # Container statuses that are still "live" and therefore candidates for
-# force-removal during cleanup. Matches PentAGI's
+# force-removal during cleanup. Matches the original
 # ``ContainerStatusStarting / ContainerStatusRunning`` switch arms.
 ACTIVE_CONTAINER_STATUSES: frozenset[ContainerStatus] = frozenset(
     {ContainerStatus.STARTING, ContainerStatus.RUNNING}
@@ -98,15 +98,15 @@ ACTIVE_CONTAINER_STATUSES: frozenset[ContainerStatus] = frozenset(
 
 
 # ---------------------------------------------------------------------------
-# Row dataclass — one-to-one with PentAGI's ``Container`` struct.
+# Row dataclass — one-to-one with the original ``Container`` struct.
 # ---------------------------------------------------------------------------
 
 
 @dataclass
 class ContainerInfo:
-    """Persistent record of a Docker container managed by SecurAgentX.
+    """Persistent record of a Docker container managed by the original.
 
-    Field names match PentAGI's ``database.Container`` struct so the
+    Field names match the original ``database.Container`` struct so the
     serialized JSON remains wire-compatible across the Go and Python
     implementations.
     """
@@ -255,7 +255,7 @@ class ContainerDB:
     async def create_container(self, info: ContainerInfo) -> int:
         """Insert a new container row; return the assigned primary key.
 
-        The ``status`` defaults to ``starting`` (mirroring PentAGI's
+        The ``status`` defaults to ``starting`` (mirroring the original
         ``RunContainer`` which inserts the row before ``ContainerCreate``
         is even called).
         """
@@ -296,7 +296,7 @@ class ContainerDB:
         return self._row_to_info(row) if row else None
 
     async def get_container_by_flow(self, flow_id: int) -> Optional[ContainerInfo]:
-        """Return the PRIMARY container for ``flow_id`` (mirrors PentAGI's
+        """Return the PRIMARY container for ``flow_id`` (mirrors the original
         ``GetFlowPrimaryContainer``). Returns ``None`` if no such row
         exists.
         """
@@ -330,7 +330,7 @@ class ContainerDB:
     ) -> None:
         """Update both ``local_id`` and ``status`` atomically.
 
-        Ported from PentAGI's ``UpdateContainerStatusLocalID`` — used
+        Ported from the original ``UpdateContainerStatusLocalID`` — used
         after ``ContainerCreate`` returns the real Docker container ID
         and after ``ContainerStart`` flips the status to ``running``.
         """
@@ -344,7 +344,7 @@ class ContainerDB:
         await self._conn.commit()
 
     async def update_container_image(self, id: int, image: str) -> None:
-        """Persist a fallback-image swap (mirrors PentAGI's
+        """Persist a fallback-image swap (mirrors the original
         ``UpdateContainerImage`` used when the requested image fails to
         pull/create and we fall back to ``debian:latest``)."""
         await self.connect()
@@ -382,7 +382,7 @@ class ContainerDB:
         return [self._row_to_info(r) for r in rows]
 
     async def delete_container(self, id: int) -> None:
-        """Hard-delete a row from the DB (mirrors PentAGI's
+        """Hard-delete a row from the DB (mirrors the original
         ``DeleteContainer``). Most callers should use
         ``update_container_status(id, DELETED)`` instead so history is
         preserved."""
@@ -421,7 +421,7 @@ class ContainerDB:
         return out
 
     async def list_all_containers(self) -> list[ContainerInfo]:
-        """Return every row (regardless of status). Mirrors PentAGI's
+        """Return every row (regardless of status). Mirrors the original
         ``GetContainers`` which is used by the ``Cleanup()`` startup
         sweep."""
         return await self.list_containers(status=None)

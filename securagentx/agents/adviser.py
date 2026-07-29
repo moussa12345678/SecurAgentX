@@ -1,6 +1,6 @@
 """securagentx/agents/adviser.py — strategic guidance & mentor specialist with sub-orchestration.
 
-Ported from PentAGI's ``backend/pkg/templates/prompts/adviser.tmpl`` and
+Ported from the original ``backend/pkg/templates/prompts/adviser.tmpl`` and
 ``backend/pkg/templates/prompts/question_adviser.tmpl``, plus the
 ``backend/pkg/providers/handlers.go::getAskAdviceHandler`` factory (the
 ``adviserHandler`` closure that runs after the Enricher sub-chain).
@@ -24,7 +24,7 @@ two-step sub-orchestration:
    summary in the engagement language).
 
 This two-step pattern (Enricher → Adviser) is the most complex specialist
-orchestration in the PentAGI architecture. Ported faithfully from PentAGI's
+orchestration in the SecurAgentX architecture. Ported faithfully from the original
 ``getAskAdviceHandler`` closure which composes ``enricherHandler`` then
 ``adviserHandler``.
 
@@ -42,7 +42,7 @@ The Adviser serves in three operational modes (per adviser.tmpl):
 Communication style is consultative (``"Recommend..."``, ``"Suggest..."``,
 ``"Consider..."``) — never imperative.
 
-Two-channel language policy (mirrors PentAGI): engagement log in engagement
+Two-channel language policy (mirrors the Go original): engagement log in engagement
 language, technical channel (queries, advisory result) in English.
 
 Implementation note: this module wires its tools into the universal
@@ -94,7 +94,7 @@ GraphitiSearchToolName: str = "graphiti_search"
 #: (Read-only) summarization marker tool the Adviser must NOT call.
 SummarizationToolName: str = "summarize"
 
-#: Prefix injected before summarized historical content (mirrors PentAGI).
+#: Prefix injected before summarized historical content (mirrors the Go original).
 SummarizedContentPrefix: str = "[SUMMARIZED_CONTENT]"
 
 #: Default Docker working directory inside the container.
@@ -133,7 +133,7 @@ GRAPHITI_SEARCH_TYPES: tuple[str, ...] = (
 class AdviceResult(BaseModel):
     """Completion-tool payload for the Adviser (barrier tool).
 
-    Two-channel policy (mirrors PentAGI):
+    Two-channel policy (mirrors the Go original):
 
     - ``result``  — technical channel, English. The advisory write-up
       consumed by the calling agent. 200–400 words typical; may extend to
@@ -173,7 +173,7 @@ class AskAdvice(BaseModel):
     :class:`AdviceResult`). Both schemas share the tool name ``advice`` but
     live in different chains.
 
-    Ported from PentAGI's ``tools.AskAdvice`` struct.
+    Ported from the original ``tools.AskAdvice`` struct.
     """
 
     question: str = Field(
@@ -949,7 +949,7 @@ class Adviser:
     The enrichment is folded into the adviser's user prompt as
     ``<enrichment_data>`` per ``question_adviser.tmpl``.
 
-    Ported from PentAGI's ``getAskAdviceHandler`` closure in ``handlers.go``
+    Ported from the original ``getAskAdviceHandler`` closure in ``handlers.go``
     which composes ``enricherHandler`` then ``adviserHandler``.
     """
 
@@ -1108,7 +1108,7 @@ class Adviser:
     async def run(self, question: str, execution_context: str = "") -> str:
         """Deliver strategic guidance via the Enricher → Adviser sub-chain.
 
-        Implements the canonical PentAGI adviser pattern (the task's
+        Implements the canonical SecurAgentX adviser pattern (the task's
         "CRITICAL for Adviser" contract):
 
         1. Invoke :meth:`Enricher.run` with the same ``(question,

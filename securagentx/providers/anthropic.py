@@ -1,7 +1,7 @@
 """securagentx.providers.anthropic — Anthropic (Claude) LLM provider adapter
 (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/anthropic/anthropic.go``. The
+Port of the original ``backend/pkg/providers/anthropic/anthropic.go``. The
 adapter talks to Anthropic's Messages API at
 ``https://api.anthropic.com`` via the official ``anthropic`` Python SDK,
 and implements the full :class:`~securagentx.providers.base.Provider`
@@ -9,7 +9,7 @@ protocol.
 
 Key features ported from the Go original
 -----------------------------------------
-* **Default model** — ``claude-sonnet-4-20250514`` (PentAGI's
+* **Default model** — ``claude-sonnet-4-20250514`` (the original
   ``AnthropicAgentModel``). Also supports ``claude-opus-4-...``,
   ``claude-haiku-4-...``, ``claude-3-7-sonnet-...``, etc.
 * **Tool-call ID template** — ``toolu_{r:24:b}`` (24 random base62
@@ -31,7 +31,7 @@ Key features ported from the Go original
   :meth:`_strip_orphan_thinking_blocks`.
 * **Cache strategy** — inline ``cache_control`` markers on
   ``system``, ``tools``, and the last 1-2 user messages. Anthropic
-  offers 90% savings on cached reads. Per PentAGI's
+  offers 90% savings on cached reads. Per the original
   ``WithDefaultCacheStrategy``, the cache TTL is 5 minutes. Cache
   breakpoints:
 
@@ -86,10 +86,10 @@ logger = logging.getLogger("securagentx.providers.anthropic")
 # ---------------------------------------------------------------------------
 
 #: Default Anthropic API base URL. Overridable via ``ANTHROPIC_BASE_URL``
-#: (or ``ANTHROPIC_SERVER_URL`` for PentAGI compatibility).
+#: (or ``ANTHROPIC_SERVER_URL`` for SecurAgentX compatibility).
 ANTHROPIC_DEFAULT_SERVER_URL: str = "https://api.anthropic.com"
 
-#: Default Anthropic model. PentAGI's ``AnthropicAgentModel`` constant.
+#: Default Anthropic model. The original ``AnthropicAgentModel`` constant.
 ANTHROPIC_DEFAULT_MODEL: str = "claude-sonnet-4-20250514"
 
 #: Anthropic tool-call ID template. ``{r:24:b}`` = 24 random base62 chars.
@@ -329,7 +329,7 @@ class AnthropicProvider:
     it to be installed. The API key is read from ``ANTHROPIC_API_KEY``;
     the base URL defaults to :data:`ANTHROPIC_DEFAULT_SERVER_URL` and is
     overridable via ``ANTHROPIC_BASE_URL`` (or ``ANTHROPIC_SERVER_URL``
-    for PentAGI compatibility).
+    for SecurAgentX compatibility).
 
     Anthropic's extended-thinking contract requires that the thinking
     block (text + signature) from the immediately-preceding assistant

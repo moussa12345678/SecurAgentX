@@ -1,6 +1,6 @@
 """securagentx/agents/enricher.py — sub-agent of Adviser that gathers supplementary context.
 
-Ports PentAGI's ``templates/prompts/enricher.tmpl`` system prompt and the
+Ports the original ``templates/prompts/enricher.tmpl`` system prompt and the
 ``enricherHandler`` closure from ``providers/handlers.go::getAskAdviceHandler``
 into SecurAgentX. The Enricher is a *limited* agent
 (``MAX_LIMITED_ITERATIONS`` = 20) that gathers SUPPLEMENTARY context the
@@ -15,7 +15,7 @@ Adviser is about to reason over, the Enricher retrieves ONLY supplementary
 information and terminates by calling the ``enricher_result`` barrier tool.
 Its ``result`` field becomes the Adviser's ``<enrichment_data>``.
 
-Two-channel language policy (ported verbatim from PentAGI):
+Two-channel language policy (ported verbatim from the Go original):
     * Engagement log (``message`` fields, closing ``message``) -> {{ lang }}
     * Technical channel (queries, stored content, closing ``result``) ->
       English
@@ -50,7 +50,7 @@ from securagentx.agents.base import (
 
 logger = logging.getLogger("securagentx.agents.enricher")
 
-# --- Tool-name constants (ported from pentagi/backend/pkg/tools/registry.go) --
+# --- Tool-name constants (ported from backend/pkg/tools/registry.go) --
 ENRICHER_RESULT_TOOL_NAME = "enricher_result"
 SEARCH_IN_MEMORY_TOOL_NAME = "search_in_memory"
 GRAPHITI_SEARCH_TOOL_NAME = "graphiti_search"
@@ -84,7 +84,7 @@ GRAPHITI_SEARCH_TYPES: tuple[str, ...] = (
 class EnricherResult(BaseModel):
     """Completion-tool payload for the ``enricher_result`` barrier tool.
 
-    Two-channel policy (mirrors PentAGI):
+    Two-channel policy (mirrors the Go original):
 
     - ``result``  — technical channel, English. The supplementary-context
       write-up consumed by the Adviser. May be empty when no additional
@@ -635,7 +635,7 @@ class _EnricherToolExecutor:
 class Enricher:
     """Sub-agent of the Adviser that gathers supplementary context.
 
-    Mirrors PentAGI's ``enricherHandler`` closure in ``handlers.go`` — runs
+    Mirrors the original ``enricherHandler`` closure in ``handlers.go`` — runs
     an LLM tool-calling chain with a hard cap of ``MAX_LIMITED_ITERATIONS``
     iterations and the ``enricher_result`` barrier tool as the only exit.
     The vector store, Graphiti knowledge graph (when enabled), filesystem,
@@ -678,7 +678,7 @@ class Enricher:
         # containers itself; the adviser's container is used.
         self.docker_image: str = self.DEFAULT_DOCKER_IMAGE
 
-        # Graphiti temporal-knowledge-graph toggle (cf. PentAGI
+        # Graphiti temporal-knowledge-graph toggle (cf. SecurAgentX
         # ``flowProvider.graphitiClient``).
         self.graphiti_enabled: bool = bool(getattr(memory, "graphiti_enabled", False))
 

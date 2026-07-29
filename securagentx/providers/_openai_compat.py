@@ -21,7 +21,7 @@ Key design decisions:
   :meth:`_get_client`, not at module load, so that environments without
   ``openai`` installed can still import this module (and the concrete
   provider modules) for their types and helpers.
-* **429 retry via tenacity** — matches PentAGI's
+* **429 retry via tenacity** — matches the original
   ``provider.WrapGenerateContent`` retry policy: 10 attempts, 5 s base
   + 1 s linear increment per attempt.
 * **Preserved Reasoning Content** — Z.AI GLM, Moonshot Kimi, Alibaba
@@ -82,7 +82,7 @@ __all__ = [
 ]
 
 
-# 429 retry policy — mirrors PentAGI's MaxTooManyRequestsRetries /
+# 429 retry policy — mirrors the original MaxTooManyRequestsRetries /
 # TooManyRequestsRetryDelay constants.
 DEFAULT_429_MAX_RETRIES: int = 10
 DEFAULT_429_BASE_DELAY: float = 5.0
@@ -137,7 +137,7 @@ def _render_template(template: str, function_name: Optional[str] = None) -> str:
 
     ``function_name`` is substituted for every ``{f}`` directive. Random
     parts are filled using ``secrets.choice`` (CSPRNG) so IDs are
-    unpredictable — matching PentAGI's use of ``crypto/rand``.
+    unpredictable — matching the original use of ``crypto/rand``.
 
     Raises ``ValueError`` if the template is syntactically invalid.
     """
@@ -268,7 +268,7 @@ class OpenAICompatProvider:
         legacy_reasoning: bool = False,
         request_timeout: float = 120.0,
     ) -> None:
-        # Resolve env-var-driven config (matches PentAGI's New() pattern).
+        # Resolve env-var-driven config (matches the original New() pattern).
         self._api_key = api_key if api_key is not None else (
             __import__("os").environ.get(self.ENV_VAR_API_KEY, "")
             if self.ENV_VAR_API_KEY else ""

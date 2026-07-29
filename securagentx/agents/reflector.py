@@ -6,7 +6,7 @@ produce a *correction prompt* that is appended to the parent agent's chain so
 the next iteration emits a properly-formatted tool call (or a recognised
 barrier tool such as ``done`` / ``ask``).
 
-Ported from PentAGI ``backend/pkg/providers/performer.go::performReflector``.
+Ported from the original ``backend/pkg/providers/performer.go::performReflector``.
 
 Design notes
 ------------
@@ -32,7 +32,7 @@ logger = logging.getLogger("securagentx.agents.reflector")
 
 
 # ---------------------------------------------------------------------------
-# System prompt — ported from pentagi/templates/prompts/reflector.tmpl
+# System prompt — ported from templates/prompts/reflector.tmpl
 # ---------------------------------------------------------------------------
 REFLECTOR_SYSTEM_PROMPT = """\
 You are the Reflector, a meta-agent inside the SecurAgentX multi-agent system.

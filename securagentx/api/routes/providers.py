@@ -1,6 +1,6 @@
 """securagentx.api.routes.providers — LLM provider introspection & testing.
 
-Ports PentAGI's ``GET /providers``, ``POST /providers/test``,
+Ports the original ``GET /providers``, ``POST /providers/test``,
 ``GET /providers/{name}/models`` (originally GraphQL queries — Task 1-c
 recommendation §2 calls for REST-ifying them).
 

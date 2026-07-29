@@ -1,5 +1,5 @@
 """
-securagentx.graphql.queries — Read-side GraphQL resolvers ported from PentAGI's
+securagentx.graphql.queries — Read-side GraphQL resolvers ported from the Go original's
 ``backend/pkg/graph/schema.graphqls`` ``type Query`` block (43 queries).
 
 All resolvers are ``async`` and look up their backing service from the
@@ -19,8 +19,8 @@ the resolver logs a warning and returns an empty default value rather than
 raising — that way the schema is always introspectable.
 
 References:
-    * PentAGI: backend/pkg/graph/schema.graphqls (type Query block, 67 lines)
-    * PentAGI: backend/pkg/graph/schema.resolvers.go (query resolvers)
+    * SecurAgentX: backend/pkg/graph/schema.graphqls (type Query block, 67 lines)
+    * SecurAgentX: backend/pkg/graph/schema.resolvers.go (query resolvers)
 """
 from __future__ import annotations
 
@@ -130,7 +130,7 @@ async def _call(info: Info, service_name: str, method: str, *args: Any, **kwargs
 
 # ─── Query root type ───────────────────────────────────────────────────────
 
-@strawberry.type(description="SecurAgentX GraphQL read root (PentAGI port).")
+@strawberry.type(description="SecurAgentX GraphQL read root (SecurAgentX port).")
 class Query:
     # ── Provider management ────────────────────────────────────────────────
 
@@ -144,7 +144,7 @@ class Query:
         self, info: Info, provider: str  # noqa: A002 — matches SDL arg name
     ) -> List[ModelConfig]:
         # SDL exposes models via ``settingsProviders.models``; kept here as a
-        # convenience shortcut for the upstream PentAGI ``models(provider)``
+        # convenience shortcut for the upstream SecurAgentX ``models(provider)``
         # query described in the worklog (Task 1-c).
         rows = await _call(info, "providers", "list_models", provider) or []
         return [ModelConfig.from_pydantic(r) for r in rows]

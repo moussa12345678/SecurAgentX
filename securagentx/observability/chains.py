@@ -1,6 +1,6 @@
 """Chain summarization helpers — public re-export of ``securagentx.agents.summarizer``.
 
-Ports PentAGI's ``pentagi/pkg/cast`` chain helpers (documented under Task 1-c
+Ports the original ``pkg/cast`` chain helpers (documented under Task 1-c
 of the worklog) into the observability package so callers outside the
 ``securagentx.agents`` namespace can use them without creating a cross-package
 dependency.
@@ -8,7 +8,7 @@ dependency.
 The full ChainAST + 3-phase summarisation algorithm lives in
 ``securagentx.agents.summarizer`` — this module re-exports the public API
 (``ChainAST``, ``summarize_chain``, ``SummarizerConfig``) and adds four
-chain-level helper functions that PentAGI's Go upstream exposes as methods
+chain-level helper functions that the original Go upstream exposes as methods
 on the ``ChainAST`` type but which SecurAgentX callers prefer to invoke on
 raw chain lists:
 
@@ -74,7 +74,7 @@ logger = logging.getLogger("securagentx.observability.chains")
 
 
 # ---------------------------------------------------------------------------
-# Tool-call ID pattern handling (ports PentAGI templates.GenerateFromPattern)
+# Tool-call ID pattern handling (ports the original templates.GenerateFromPattern)
 # ---------------------------------------------------------------------------
 _DEFAULT_TOOL_CALL_TEMPLATE = "call_{r:24:x}"
 
@@ -205,7 +205,7 @@ def _ensure_ast(chain: ChainLike) -> ChainAST:
 def normalize_tool_call_ids(chain: ChainLike, template: str) -> list[dict[str, Any]]:
     """Regenerate tool-call IDs that don't match ``template``.
 
-    Mirrors ``ChainAST.NormalizeToolCallIDs`` from PentAGI:
+    Mirrors ``ChainAST.NormalizeToolCallIDs`` from the Go original:
 
     1. Validate each tool-call ``id`` against ``template``.
     2. If validation fails, generate a fresh ID via :func:`_generate_from_pattern`
@@ -286,7 +286,7 @@ def normalize_tool_call_ids(chain: ChainLike, template: str) -> list[dict[str, A
 def clear_reasoning(chain: ChainLike) -> list[dict[str, Any]]:
     """Strip all reasoning signatures from ``chain``.
 
-    Mirrors ``ChainAST.ClearReasoning`` from PentAGI. Required when migrating
+    Mirrors ``ChainAST.ClearReasoning`` from the Go original. Required when migrating
     a chain across providers — Anthropic extended-thinking cryptographic sigs
     won't validate on Gemini (and vice versa), and Kimi/Moonshot
     ``reasoning_content`` payloads should be discarded when leaving their
@@ -340,7 +340,7 @@ def _strip_thought_signatures(msg: dict[str, Any]) -> None:
 def contains_tool_call_reasoning(body_pair: Union[BodyPair, ChainSection, list[dict[str, Any]]]) -> bool:
     """Return True iff the input has both tool calls and a reasoning payload.
 
-    Mirrors PentAGI's ``ContainsToolCallReasoning``. Accepts:
+    Mirrors the original ``ContainsToolCallReasoning``. Accepts:
 
     * a :class:`BodyPair` (preferred — matches the task spec signature),
     * a :class:`ChainSection` (delegates to the underlying summariser helper),
@@ -397,7 +397,7 @@ def extract_reasoning_message(
 ) -> Optional[str]:
     """Return the first ``reasoning_content`` text found in ``body_pair``.
 
-    Mirrors PentAGI's ``ExtractReasoningMessage``. Returns ``None`` when no
+    Mirrors the original ``ExtractReasoningMessage``. Returns ``None`` when no
     reasoning payload is present (the typical case for non-Kimi/Moonshot
     providers).
 

@@ -1,10 +1,10 @@
 """securagentx/knowledge_graph/graph.py — Local knowledge graph (NetworkX + SQLite)
-mirroring PentAGI's Graphiti integration.
+mirroring the original Graphiti integration.
 
 This module provides a self-contained, dependency-light replacement for
-PentAGI's Graphiti/Neo4j knowledge graph. It implements the same conceptual
+The original Graphiti/Neo4j knowledge graph. It implements the same conceptual
 model — Nodes, Edges, Episodes, Communities — and the same seven search
-strategies exposed by PentAGI's ``graphiti_search`` tool:
+strategies exposed by the original ``graphiti_search`` tool:
 
     1. ``temporal_window_search``        — time-bounded fuzzy retrieval
     2. ``entity_relationships_search``   — BFS from a center node
@@ -18,10 +18,10 @@ Persistence uses SQLite (via ``aiosqlite``) at
 ``~/.securagentx/data/knowledge_graph.db``; the in-memory representation is a
 ``networkx.MultiDiGraph`` (lazy-imported). Every entity is scoped by
 ``group_id = f"flow-{flow_id}"`` for per-engagement isolation, exactly as in
-PentAGI.
+SecurAgentX.
 
 The two ingestion templates (``agent_response.tmpl`` and
-``tool_execution.tmpl`` from ``pentagi/backend/pkg/templates/graphiti/``) are
+``tool_execution.tmpl`` from ``backend/pkg/templates/graphiti/``) are
 ported verbatim as :meth:`KnowledgeGraph.ingest_agent_response` and
 :meth:`KnowledgeGraph.ingest_tool_execution`.
 
@@ -48,7 +48,7 @@ import aiosqlite
 logger = logging.getLogger("securagentx.knowledge_graph.graph")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Defaults & allowed values (ported from PentAGI graphiti_search.go lines 27-55)
+# Defaults & allowed values (ported from the Go original graphiti_search.go lines 27-55)
 # ──────────────────────────────────────────────────────────────────────────────
 
 DEFAULT_TEMPORAL_MAX_RESULTS = 15
@@ -92,7 +92,7 @@ DEFAULT_DB_PATH = Path("~/.securagentx/data/knowledge_graph.db").expanduser()
 
 
 class NodeLabel(str, Enum):
-    """Node type tags. Mirrors PentAGI's entity label vocabulary plus
+    """Node type tags. Mirrors the original entity label vocabulary plus
     ``EPISODE`` and ``COMMUNITY`` for wrapper nodes."""
 
     IP_ADDRESS = "IP_ADDRESS"
@@ -107,7 +107,7 @@ class NodeLabel(str, Enum):
 
 
 class EdgeType(str, Enum):
-    """Edge relationship types. Mirrors PentAGI's edge vocabulary."""
+    """Edge relationship types. Mirrors the original edge vocabulary."""
 
     HAS_PORT = "HAS_PORT"
     EXPLOITS = "EXPLOITS"
@@ -211,7 +211,7 @@ class Edge:
 class Episode:
     """An episodic memory entry — an agent response or tool execution.
 
-    Ported from PentAGI's ``graphiti.EpisodeResult``. ``source`` is either
+    Ported from the original ``graphiti.EpisodeResult``. ``source`` is either
     ``"message"`` (agent response) or ``"tool_execution"``.
     """
 
@@ -441,7 +441,7 @@ def _mmr_rerank(
 
 
 class KnowledgeGraph:
-    """Local knowledge graph (NetworkX + SQLite) mirroring PentAGI's Graphiti.
+    """Local knowledge graph (NetworkX + SQLite) mirroring the original Graphiti.
 
     All public operations are ``async`` and scoped by ``group_id`` for
     per-engagement isolation. Construction is cheap — the heavy work (DB
@@ -883,7 +883,7 @@ class KnowledgeGraph:
         return scored[:max_results]
 
     # ─────────────────────────────────────────────────────────────────────────
-    # The 7 PentAGI search types
+    # The 7 SecurAgentX search types
     # ─────────────────────────────────────────────────────────────────────────
 
     async def temporal_window_search(
@@ -896,7 +896,7 @@ class KnowledgeGraph:
     ) -> dict[str, Any]:
         """Time-bounded fuzzy retrieval over nodes, edges, and episodes.
 
-        Mirrors PentAGI ``TemporalWindowSearch``. Items are filtered by
+        Mirrors SecurAgentX ``TemporalWindowSearch``. Items are filtered by
         ``created_at`` falling within ``[time_start, time_end]`` and then
         fuzzy-ranked against ``query``.
         """
@@ -971,7 +971,7 @@ class KnowledgeGraph:
         max_results: int = DEFAULT_RELATIONSHIP_MAX_RESULTS,
     ) -> dict[str, Any]:
         """BFS from a center node up to ``max_depth`` hops, filtered by
-        optional ``node_labels`` / ``edge_types``. Mirrors PentAGI
+        optional ``node_labels`` / ``edge_types``. Mirrors SecurAgentX
         ``EntityRelationshipsSearch``."""
         await self._ensure_initialized()
         if not center_node_uuid:
@@ -1090,7 +1090,7 @@ class KnowledgeGraph:
     ) -> dict[str, Any]:
         """Diverse, non-redundant retrieval via MMR reranking.
 
-        Mirrors PentAGI ``DiverseResultsSearch``. Candidates are gathered via
+        Mirrors SecurAgentX ``DiverseResultsSearch``. Candidates are gathered via
         fuzzy match over nodes, edges, and episodes, then reranked with
         Maximal Marginal Relevance. Communities are derived from
         connected-component clustering of the matching nodes.
@@ -1185,7 +1185,7 @@ class KnowledgeGraph:
     ) -> dict[str, Any]:
         """Search through agent responses and tool execution records.
 
-        Mirrors PentAGI ``EpisodeContextSearch``. Returns matching episodes
+        Mirrors SecurAgentX ``EpisodeContextSearch``. Returns matching episodes
         plus any nodes whose ``name`` is mentioned in the episode content.
         """
         await self._ensure_initialized()
@@ -1244,7 +1244,7 @@ class KnowledgeGraph:
     ) -> dict[str, Any]:
         """Find successful tool executions and attack patterns.
 
-        Mirrors PentAGI ``SuccessfulToolsSearch``. Filters episodes with
+        Mirrors SecurAgentX ``SuccessfulToolsSearch``. Filters episodes with
         ``source == "tool_execution"`` whose content indicates success
         (status ``success``), then surfaces TOOL nodes mentioned at least
         ``min_mentions`` times along with their DISCOVERED_BY edges.
@@ -1334,7 +1334,7 @@ class KnowledgeGraph:
     ) -> dict[str, Any]:
         """Recency-bounded context retrieval.
 
-        Mirrors PentAGI ``RecentContextSearch``. Allowed windows: ``1h``,
+        Mirrors SecurAgentX ``RecentContextSearch``. Allowed windows: ``1h``,
         ``6h``, ``24h``, ``7d``.
         """
         await self._ensure_initialized()
@@ -1366,7 +1366,7 @@ class KnowledgeGraph:
     ) -> dict[str, Any]:
         """Type-filtered entity inventory search.
 
-        Mirrors PentAGI ``EntityByLabelSearch``. Returns Nodes carrying any of
+        Mirrors SecurAgentX ``EntityByLabelSearch``. Returns Nodes carrying any of
         ``node_labels`` plus their associated edges (optionally filtered by
         ``edge_types``).
         """
@@ -1492,7 +1492,7 @@ class KnowledgeGraph:
         return out
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Ingestion (port of PentAGI's agent_response.tmpl + tool_execution.tmpl)
+    # Ingestion (port of the original's agent_response.tmpl + tool_execution.tmpl)
     # ─────────────────────────────────────────────────────────────────────────
 
     async def ingest_agent_response(
@@ -1505,7 +1505,7 @@ class KnowledgeGraph:
     ) -> Episode:
         """Ingest an agent response as an episodic memory entry.
 
-        Ported from PentAGI ``storeAgentResponseToGraphiti`` +
+        Ported from the original ``storeAgentResponseToGraphiti`` +
         ``templates/graphiti/agent_response.tmpl``. The rendered template
         becomes the episode ``content``; ``source = "message"``.
         """
@@ -1543,7 +1543,7 @@ class KnowledgeGraph:
     ) -> Episode:
         """Ingest a tool execution as an episodic memory entry.
 
-        Ported from PentAGI ``storeToolExecutionToGraphiti`` +
+        Ported from the original ``storeToolExecutionToGraphiti`` +
         ``templates/graphiti/tool_execution.tmpl``. The rendered template
         becomes the episode ``content``; ``source = "tool_execution"``.
         """
@@ -1579,7 +1579,7 @@ class KnowledgeGraph:
         subtask_id: int | None,
     ) -> str:
         """Render the agent_response template (verbatim port from
-        ``pentagi/backend/pkg/templates/graphiti/agent_response.tmpl``)."""
+        ``backend/pkg/templates/graphiti/agent_response.tmpl``)."""
         return (
             f"Agent: {agent_type}\n"
             f"Response: {response}\n"
@@ -1599,7 +1599,7 @@ class KnowledgeGraph:
         subtask_id: int | None,
     ) -> str:
         """Render the tool_execution template (verbatim port from
-        ``pentagi/backend/pkg/templates/graphiti/tool_execution.tmpl``)."""
+        ``backend/pkg/templates/graphiti/tool_execution.tmpl``)."""
         args_str = (
             arguments
             if isinstance(arguments, str)
@@ -1617,12 +1617,12 @@ class KnowledgeGraph:
         )
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Markdown formatters (one per search type — port of PentAGI
+    # Markdown formatters (one per search type — port of the original
     # FormatGraphiti*Results functions)
     # ─────────────────────────────────────────────────────────────────────────
 
     def format_temporal_window_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiTemporalResults``."""
+        """Port of SecurAgentX ``FormatGraphitiTemporalResults``."""
         q = results.get("query", "")
         tw = results.get("time_window") or {}
         start = tw.get("start")
@@ -1701,7 +1701,7 @@ class KnowledgeGraph:
         return "\n".join(out)
 
     def format_entity_relationships_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiEntityRelationshipResults``."""
+        """Port of SecurAgentX ``FormatGraphitiEntityRelationshipResults``."""
         q = results.get("query", "")
         out: list[str] = [
             "# Entity Relationship Search Results",
@@ -1758,7 +1758,7 @@ class KnowledgeGraph:
         return "\n".join(out)
 
     def format_diverse_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiDiverseResults``."""
+        """Port of SecurAgentX ``FormatGraphitiDiverseResults``."""
         q = results.get("query", "")
         out: list[str] = [
             "# Diverse Search Results",
@@ -1816,7 +1816,7 @@ class KnowledgeGraph:
         return "\n".join(out)
 
     def format_episode_context_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiEpisodeContextResults``."""
+        """Port of SecurAgentX ``FormatGraphitiEpisodeContextResults``."""
         q = results.get("query", "")
         out: list[str] = [
             "# Episode Context Results",
@@ -1867,7 +1867,7 @@ class KnowledgeGraph:
         return "\n".join(out)
 
     def format_successful_tools_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiSuccessfulToolsResults``."""
+        """Port of SecurAgentX ``FormatGraphitiSuccessfulToolsResults``."""
         q = results.get("query", "")
         out: list[str] = [
             "# Successful Tools & Techniques",
@@ -1915,7 +1915,7 @@ class KnowledgeGraph:
         return "\n".join(out)
 
     def format_recent_context_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiRecentContextResults``."""
+        """Port of SecurAgentX ``FormatGraphitiRecentContextResults``."""
         q = results.get("query", "")
         tw = results.get("time_window") or {}
         start = tw.get("start")
@@ -1985,7 +1985,7 @@ class KnowledgeGraph:
         return "\n".join(out)
 
     def format_entity_by_label_results(self, results: dict[str, Any]) -> str:
-        """Port of PentAGI ``FormatGraphitiEntityByLabelResults``."""
+        """Port of SecurAgentX ``FormatGraphitiEntityByLabelResults``."""
         q = results.get("query", "")
         out: list[str] = [
             "# Entity Inventory Search",

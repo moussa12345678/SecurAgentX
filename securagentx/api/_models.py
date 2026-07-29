@@ -1,6 +1,6 @@
 """securagentx.api._models — shared Pydantic v2 schemas + response envelope.
 
-Ports PentAGI's request/response DTOs from ``backend/pkg/server/models/*.go``
+Ports the original request/response DTOs from ``backend/pkg/server/models/*.go``
 and the response envelope from ``backend/pkg/server/response/http.go``.
 
 Key porting decisions:
@@ -18,11 +18,11 @@ Key porting decisions:
   ``ErrLocalUserRequired``, ``ErrPrivilegesRequired``, ``ErrBadRequest``,
   ``ErrNotFound``, ``ErrConflict``, ``ErrInternal``, ``ErrValidation``).
   Each entry has an HTTP status code + a human-readable message.
-* **Pagination**: ``Page`` / ``PaginatedList`` mirror PentAGI's
+* **Pagination**: ``Page`` / ``PaginatedList`` mirror the original
   ``?page=N&per_page=M`` convention. ``per_page`` is clamped to [1, 100]
   in the route layer.
 * **TTL constraints** for API tokens: ``min = 60`` seconds, ``max =
-  94608000`` seconds (~3 years) — verbatim port of PentAGI's
+  94608000`` seconds (~3 years) — verbatim port of the original's
   ``api_token.go`` constants.
 * **Token ID**: 10-char base62 (``[0-9A-Za-z]``), generated with
   ``secrets`` rejection sampling (see ``_auth.generate_token_id``).
@@ -65,7 +65,7 @@ class Envelope(BaseModel):
                        "error"?: "<orig>"}``
 
     The ``error`` field is only populated when ``develop=True`` (mirror
-    of PentAGI's ``develop`` flag).
+    of the original ``develop`` flag).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -79,7 +79,7 @@ class Envelope(BaseModel):
     error: Optional[str] = Field(
         default=None,
         description=(
-            "Raw error detail (only when develop=True, mirror of PentAGI)."
+            "Raw error detail (only when develop=True, mirror of SecurAgentX)."
         ),
     )
 
@@ -108,7 +108,7 @@ def error_response(
 
 
 # ---------------------------------------------------------------------------
-# Error catalog — port of PentAGI's response/errors.go
+# Error catalog — port of the original's response/errors.go
 # ---------------------------------------------------------------------------
 
 
@@ -192,7 +192,7 @@ T = TypeVar("T")
 
 
 class PaginatedList(BaseModel, Generic[T]):
-    """Paginated list response. PentAGI wraps list endpoints in this shape."""
+    """Paginated list response. SecurAgentX wraps list endpoints in this shape."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -214,7 +214,7 @@ class PaginatedList(BaseModel, Generic[T]):
 
 
 class LoginRequest(BaseModel):
-    """POST /auth/login body. Mirrors PentAGI's ``models.Login``."""
+    """POST /auth/login body. Mirrors the original ``models.Login``."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -223,7 +223,7 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Successful login response. PentAGI sets a session cookie AND
+    """Successful login response. SecurAgentX sets a session cookie AND
     returns this body."""
 
     model_config = ConfigDict(extra="forbid")
@@ -264,13 +264,13 @@ class RefreshResponse(BaseModel):
 # API Token DTOs (port of models.CreateAPITokenRequest, etc.)
 # ---------------------------------------------------------------------------
 
-# PentAGI constants (api_token.go):
+# SecurAgentX constants (api_token.go):
 #   min TTL = 60 seconds, max TTL = 94608000 seconds (~3 years).
 MIN_TOKEN_TTL_SECONDS = 60
 MAX_TOKEN_TTL_SECONDS = 94608000
-# PentAGI token_id is base62, length 10.
+# SecurAgentX token_id is base62, length 10.
 TOKEN_ID_LENGTH = 10
-# PentAGI name max length = 100.
+# SecurAgentX name max length = 100.
 TOKEN_NAME_MAX_LENGTH = 100
 
 
@@ -472,7 +472,7 @@ class KnowledgeSearchResponse(BaseModel):
 
 
 class ServerInfo(BaseModel):
-    """GET /info response. Mirrors PentAGI's ``info`` endpoint."""
+    """GET /info response. Mirrors the original ``info`` endpoint."""
 
     model_config = ConfigDict(extra="forbid")
 

@@ -1,6 +1,6 @@
 """securagentx.providers.openai — Standard OpenAI LLM provider adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/openai/openai.go``. Drives the
+Port of the original ``backend/pkg/providers/openai/openai.go``. Drives the
 official OpenAI Chat Completions API via the ``openai`` Python SDK.
 
 Unlike the other OpenAI-compatible providers in this package, the OpenAI
@@ -11,7 +11,7 @@ provider:
   ``OPENAI_BASE_URL`` for Azure OpenAI / proxy deployments.
 * Has no LiteLLM provider-prefix passthrough —
   :meth:`OpenAIProvider.model_with_prefix` returns the bare model name
-  (matching PentAGI's ``openaiProvider.ModelWithPrefix`` which is a
+  (matching the original ``openaiProvider.ModelWithPrefix`` which is a
   passthrough).
 * Supports all OpenAI models: ``gpt-4o``, ``gpt-4-turbo``, ``gpt-4.1``,
   ``o1``, ``o3``, ``o4-mini``, etc.
@@ -31,7 +31,7 @@ Reasoning-model specifics (``o1`` / ``o3`` / ``o4`` family):
 Tool-call ID template: ``call_{r:24:b}`` (24 random base62 chars,
 ``call_`` prefix). Matches OpenAI's server-generated format.
 
-Default model: ``o4-mini`` (PentAGI's ``OpenAIAgentModel``).
+Default model: ``o4-mini`` (the original ``OpenAIAgentModel``).
 """
 
 from __future__ import annotations
@@ -60,10 +60,10 @@ logger = logging.getLogger("securagentx.providers.openai")
 # ---------------------------------------------------------------------------
 
 #: Default OpenAI base URL. Overridable via ``OPENAI_BASE_URL`` (or
-#: ``OPENAI_SERVER_URL`` for PentAGI compatibility).
+#: ``OPENAI_SERVER_URL`` for SecurAgentX compatibility).
 OPENAI_DEFAULT_SERVER_URL: str = "https://api.openai.com/v1"
 
-#: Default OpenAI model. PentAGI's ``OpenAIAgentModel`` constant —
+#: Default OpenAI model. The original ``OpenAIAgentModel`` constant —
 #: ``o4-mini`` is OpenAI's latest cost-effective reasoning model.
 OPENAI_DEFAULT_MODEL: str = "o4-mini"
 
@@ -261,7 +261,7 @@ class OpenAIProvider(OpenAICompatProvider):
     :meth:`_get_client`. The API key is read from ``OPENAI_API_KEY``;
     the base URL defaults to :data:`OPENAI_DEFAULT_SERVER_URL` and is
     overridable via ``OPENAI_BASE_URL`` (or ``OPENAI_SERVER_URL`` for
-    PentAGI compatibility).
+    SecurAgentX compatibility).
     """
 
     PROVIDER_TYPE: ProviderType = ProviderType.OPENAI
@@ -283,7 +283,7 @@ class OpenAIProvider(OpenAICompatProvider):
         **kwargs: Any,
     ) -> None:
         # Accept OPENAI_SERVER_URL as an alias for OPENAI_BASE_URL
-        # (PentAGI compatibility).
+        # (SecurAgentX compatibility).
         if base_url is None:
             base_url = (
                 os.environ.get("OPENAI_BASE_URL")
@@ -306,7 +306,7 @@ class OpenAIProvider(OpenAICompatProvider):
 
     def model_with_prefix(self, opt: ProviderOptionsType) -> str:
         """OpenAI provider doesn't need prefix support (passthrough mode
-        in LiteLLM). Returns the bare model name — matches PentAGI's
+        in LiteLLM). Returns the bare model name — matches the original
         ``openaiProvider.ModelWithPrefix``."""
         return self.model(opt)
 

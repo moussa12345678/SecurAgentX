@@ -1,18 +1,18 @@
-"""securagentx/flows/flow_worker.py — FlowWorker asyncio port of PentAGI's flow.go.
+"""securagentx/flows/flow_worker.py — FlowWorker asyncio port of the original's flow.go.
 
-This module ports PentAGI's ``backend/pkg/controller/flow.go::FlowWorker``
+This module ports the original ``backend/pkg/controller/flow.go::FlowWorker``
 to Python. The FlowWorker is the topmost worker in the 4-tier hierarchy
 (Flow → Task → SubTask → Action). It owns an input queue and a single
 background ``worker()`` coroutine that processes user inputs
 sequentially, spawning a :class:`TaskWorker` (from
 :mod:`securagentx.flows.task_worker`) for each input.
 
-Architecture (ported from PentAGI)
+Architecture (ported from the Go original)
 ---------------------------------
 * ``worker()`` reads from an :class:`asyncio.Queue` of :class:`_FlowInput`
   items. Each item carries the user input string + an
   :class:`asyncio.Future` for synchronous error reporting back to the
-  ``PutInput`` caller (mirrors PentAGI's ``flowInput.done`` channel).
+  ``PutInput`` caller (mirrors the original ``flowInput.done`` channel).
 * ``process_input(flin)`` checks whether any existing task is in
   ``WAITING`` status; if so, it calls ``task.put_input(input)`` and runs
   the task. Otherwise, it sets the flow to ``RUNNING``, creates a fresh
@@ -26,15 +26,15 @@ Architecture (ported from PentAGI)
 Concurrency
 -----------
 * An :class:`asyncio.Lock` (``_task_mx``) guards the per-task cancel
-  handle (replaces PentAGI's ``taskMX sync.Mutex``).
+  handle (replaces the original ``taskMX sync.Mutex``).
 * An :class:`asyncio.Lock` (``_assistants_mx``) guards the assistants
-  map (PentAGI's ``awsMX sync.Mutex``).
+  map (the original ``awsMX sync.Mutex``).
 * An :class:`asyncio.Event` (``_task_done``) is re-created on each
-  task boundary to implement ``wait_task_completion`` (PentAGI's
+  task boundary to implement ``wait_task_completion`` (the original
   ``taskCCH`` channel + ``signalTaskComplete``).
 * :class:`contextvars.ContextVar` propagates the active
   :class:`AgentContext` (parent / current agent type) through spawned
-  asyncio tasks — replaces PentAGI's ``tools.PutAgentContext`` /
+  asyncio tasks — replaces the original ``tools.PutAgentContext`` /
   Go's ``context.Value``.
 
 This module also defines the :class:`FlowProvider` Protocol, the
@@ -67,11 +67,11 @@ from securagentx.flows.state_machine import (
 logger = logging.getLogger("securagentx.flows.flow_worker")
 
 # Default timeout for ``PutInput`` to wait for the worker to acknowledge
-# receipt of the input (mirrors PentAGI's ``flowInputTimeout = 1 * time.Second``).
+# receipt of the input (mirrors the original ``flowInputTimeout = 1 * time.Second``).
 FLOW_INPUT_TIMEOUT: float = 1.0
 
 # Timeout for ``Stop`` to wait for the running task to settle (mirrors
-# PentAGI's ``stopTaskTimeout = 5 * time.Second``).
+# the original ``stopTaskTimeout = 5 * time.Second``).
 STOP_TASK_TIMEOUT: float = 5.0
 
 
@@ -85,7 +85,7 @@ class FlowProvider(Protocol):
     """High-level interface that the Flow/Task/Subtask workers use to talk
     to the agent layer.
 
-    Mirrors PentAGI's ``providers.FlowProvider`` interface. Concrete
+    Mirrors the original ``providers.FlowProvider`` interface. Concrete
     implementations wire up the Generator / Refiner / Reporter /
     PrimaryAgent specialists defined in :mod:`securagentx.agents`.
     """
@@ -93,7 +93,7 @@ class FlowProvider(Protocol):
     async def get_task_title(self, input: str) -> str:
         """Derive a short task title from the user input.
 
-        Mirrors PentAGI's ``flowProvider.GetTaskTitle`` — typically
+        Mirrors the original ``flowProvider.GetTaskTitle`` — typically
         implemented as a single LLM call with a tiny prompt template
         (``task_descriptor.tmpl``).
         """
@@ -102,7 +102,7 @@ class FlowProvider(Protocol):
     async def generate_subtasks(self, task_id: int) -> list[SubtaskInfo]:
         """Decompose the task into an ordered subtask plan.
 
-        Mirrors PentAGI's ``flowProvider.GenerateSubtasks`` — delegates
+        Mirrors the original ``flowProvider.GenerateSubtasks`` — delegates
         to the :class:`Generator` agent (see
         :mod:`securagentx.agents.generator`).
         """
@@ -111,7 +111,7 @@ class FlowProvider(Protocol):
     async def refine_subtasks(self, task_id: int) -> list[SubtaskInfo]:
         """Produce a delta-patched subtask plan after each subtask completes.
 
-        Mirrors PentAGI's ``flowProvider.RefineSubtasks`` — delegates to
+        Mirrors the original ``flowProvider.RefineSubtasks`` — delegates to
         the :class:`Refiner` agent (see :mod:`securagentx.agents.refiner`).
         Returns the *new* full plan (the caller deletes the old
         ``CREATED`` subtasks and inserts the new ones).
@@ -123,7 +123,7 @@ class FlowProvider(Protocol):
     ) -> int:
         """Create a fresh primary-agent :class:`Msgchain` for a subtask.
 
-        Mirrors PentAGI's ``flowProvider.PrepareAgentChain`` — inserts a
+        Mirrors the original ``flowProvider.PrepareAgentChain`` — inserts a
         new msgchain row with ``type=primary_agent`` and returns its ID.
         """
         ...
@@ -133,7 +133,7 @@ class FlowProvider(Protocol):
     ) -> PerformResult:
         """Run the universal agent loop for one subtask.
 
-        Mirrors PentAGI's ``flowProvider.PerformAgentChain`` — drives the
+        Mirrors the original ``flowProvider.PerformAgentChain`` — drives the
         :class:`PrimaryAgent` chain (see
         :mod:`securagentx.agents.primary_agent`).
         """
@@ -142,7 +142,7 @@ class FlowProvider(Protocol):
     async def ensure_chain_consistency(self, msg_chain_id: int) -> None:
         """Rewrite stale chain IDs / fix tool-call ID collisions on resume.
 
-        Mirrors PentAGI's ``flowProvider.EnsureChainConsistency`` —
+        Mirrors the original ``flowProvider.EnsureChainConsistency`` —
         invoked before each ``PerformAgentChain`` so a resumed subtask
         doesn't replay stale tool-call IDs that the LLM has already
         forgotten.
@@ -154,7 +154,7 @@ class FlowProvider(Protocol):
     ) -> None:
         """Append user input to a WAITING agent chain (for resume).
 
-        Mirrors PentAGI's ``flowProvider.PutInputToAgentChain`` — invoked
+        Mirrors the original ``flowProvider.PutInputToAgentChain`` — invoked
         by ``SubtaskWorker.PutInput`` when the user supplies new input to
         a paused subtask.
         """
@@ -163,7 +163,7 @@ class FlowProvider(Protocol):
     async def get_task_result(self, task_id: int) -> "TaskResult":
         """Produce the final task report (success flag + write-up).
 
-        Mirrors PentAGI's ``flowProvider.GetTaskResult`` — delegates to
+        Mirrors the original ``flowProvider.GetTaskResult`` — delegates to
         the :class:`Reporter` agent (see :mod:`securagentx.agents.reporter`).
         """
         ...
@@ -197,7 +197,7 @@ class TaskResult:
 class FlowContext:
     """Per-flow context shared by all workers.
 
-    Mirrors PentAGI's ``controller.FlowContext`` struct. Carries the DB
+    Mirrors the original ``controller.FlowContext`` struct. Carries the DB
     handle, the flow / user IDs, the observability trace ID, and the
     :class:`FlowProvider` that talks to the agent layer.
     """
@@ -239,7 +239,7 @@ class FlowContext:
 class TaskContext:
     """Per-task context — extends :class:`FlowContext` with task-scoped fields.
 
-    Mirrors PentAGI's ``controller.TaskContext`` struct (which embeds
+    Mirrors the original ``controller.TaskContext`` struct (which embeds
     ``FlowContext`` by value). Carries the task ID, title, and original
     user input.
     """
@@ -251,7 +251,7 @@ class TaskContext:
 
     # Convenience proxies so callers can use ``task_ctx.db``,
     # ``task_ctx.flow_id``, ``task_ctx.provider`` etc. directly (matches
-    # PentAGI's struct embedding).
+    # the original struct embedding).
     @property
     def db(self) -> FlowDB:
         return self.flow_ctx.db
@@ -277,7 +277,7 @@ class TaskContext:
 class SubtaskContext:
     """Per-subtask context — extends :class:`TaskContext` with subtask fields.
 
-    Mirrors PentAGI's ``controller.SubtaskContext`` struct (which embeds
+    Mirrors the original ``controller.SubtaskContext`` struct (which embeds
     ``TaskContext`` by value). Carries the subtask ID, title,
     description, and the primary-agent msgchain ID for resumability.
     """
@@ -326,7 +326,7 @@ class SubtaskContext:
 
 
 # ---------------------------------------------------------------------------
-# _FlowInput — the queue item (mirrors PentAGI's flowInput struct).
+# _FlowInput — the queue item (mirrors the original flowInput struct).
 # ---------------------------------------------------------------------------
 
 
@@ -336,7 +336,7 @@ class _FlowInput:
 
     ``input`` is the user's text. ``done`` is a Future that the worker
     resolves with ``None`` on successful receipt or an ``Exception`` on
-    failure (mirrors PentAGI's ``flowInput.done chan error``).
+    failure (mirrors the original ``flowInput.done chan error``).
     """
 
     input: str
@@ -387,12 +387,12 @@ class FlowWorker:
         self._input_queue: asyncio.Queue[_FlowInput] = asyncio.Queue()
         self._worker_task: asyncio.Task[None] | None = None
 
-        # Per-task cancellation handle (replaces PentAGI's taskST context.CancelFunc).
+        # Per-task cancellation handle (replaces the original taskST context.CancelFunc).
         # The Event is set when the current task should be cancelled.
         self._task_cancel_event: asyncio.Event = asyncio.Event()
         self._task_mx: asyncio.Lock = asyncio.Lock()
 
-        # Per-task completion signal (replaces PentAGI's taskCCH channel).
+        # Per-task completion signal (replaces the original taskCCH channel).
         self._task_done_event: asyncio.Event = asyncio.Event()
         self._task_done_event.set()  # initially "no task running"
         self._task_done_mx: asyncio.Lock = asyncio.Lock()
@@ -455,7 +455,7 @@ class FlowWorker:
     async def stop(self) -> None:
         """Stop the worker: cancel the current task + signal the loop to exit.
 
-        Mirrors PentAGI's ``flowWorker.Stop``. Cancels the current task
+        Mirrors the original ``flowWorker.Stop``. Cancels the current task
         (via the per-task cancel event), waits up to
         :data:`STOP_TASK_TIMEOUT` seconds for it to settle, then signals
         the background loop to exit.
@@ -504,7 +504,7 @@ class FlowWorker:
                 )
 
         # Transition the flow to WAITING (awaiting new user input) on stop.
-        # Mirrors PentAGI's behaviour where Stop() returns the flow to a
+        # Mirrors the original behaviour where Stop() returns the flow to a
         # resumable state. If the flow is already FINISHED/FAILED, this is
         # a no-op (the state machine rejects terminal → waiting).
         try:
@@ -519,7 +519,7 @@ class FlowWorker:
     async def finish(self) -> None:
         """Finish the flow: complete all child tasks + mark flow FINISHED.
 
-        Mirrors PentAGI's ``flowWorker.Finish``. Iterates over all
+        Mirrors the original ``flowWorker.Finish``. Iterates over all
         :class:`TaskWorker` instances and calls their ``finish()``,
         transitions the flow to :data:`FlowStatus.FINISHED`, then stops
         the worker loop.
@@ -540,7 +540,7 @@ class FlowWorker:
     async def submit_input(self, input: str) -> "Any":
         """Submit a user input to the flow and return the created/resumed Task.
 
-        Mirrors PentAGI's ``flowWorker.PutInput``. Pushes a
+        Mirrors the original ``flowWorker.PutInput``. Pushes a
         :class:`_FlowInput` onto the queue, waits up to
         :data:`FLOW_INPUT_TIMEOUT` seconds for the worker to acknowledge
         receipt, then returns. The actual task execution happens
@@ -586,7 +586,7 @@ class FlowWorker:
     async def wait_task_completion(self, timeout: float | None = None) -> None:
         """Block until the currently running task completes.
 
-        Mirrors PentAGI's ``flowWorker.WaitTaskCompletion``. Multiple
+        Mirrors the original ``flowWorker.WaitTaskCompletion``. Multiple
         concurrent callers are all unblocked at once when the task
         finishes (the ``_task_done_event`` is shared).
 
@@ -608,12 +608,12 @@ class FlowWorker:
     async def _worker(self) -> None:
         """Background worker loop — reads inputs + processes them sequentially.
 
-        Mirrors PentAGI's ``flowWorker.worker()`` goroutine. Exits when
+        Mirrors the original ``flowWorker.worker()`` goroutine. Exits when
         the worker is stopped AND the input queue is drained.
         """
         logger.info("FlowWorker._worker started flow_id=%d", self.flow_id)
 
-        # Put the primary-agent context (mirrors PentAGI's
+        # Put the primary-agent context (mirrors the original
         # ``ctx = tools.PutAgentContext(ctx, MsgchainTypePrimaryAgent)``).
         token = AgentContext.put(AgentType.PRIMARY)
         try:
@@ -642,7 +642,7 @@ class FlowWorker:
                         self.flow_id,
                         exc,
                     )
-                    # Mirrors PentAGI: set flow to WAITING on any error so
+                    # Mirrors SecurAgentX: set flow to WAITING on any error so
                     # the user can submit new input.
                     try:
                         await self.flow_ctx.set_flow_status(FlowStatus.WAITING)
@@ -657,7 +657,7 @@ class FlowWorker:
     async def _process_input(self, flin: _FlowInput) -> None:
         """Process a single user input — create or resume a Task.
 
-        Mirrors PentAGI's ``flowWorker.processInput``. If any existing
+        Mirrors the original ``flowWorker.processInput``. If any existing
         task is in ``WAITING`` status, the input is fed to it and the
         task is resumed. Otherwise, a fresh :class:`TaskWorker` is
         created and run.
@@ -722,7 +722,7 @@ class FlowWorker:
     async def _exec_task(self, task_worker: "Any") -> None:
         """Execute a TaskWorker with per-task cancellation.
 
-        Mirrors PentAGI's ``flowWorker.runTask`` + ``execTask``. The
+        Mirrors the original ``flowWorker.runTask`` + ``execTask``. The
         ``_task_cancel_event`` is checked between iterations of the
         task's run loop (the TaskWorker inspects it via
         :meth:`is_task_cancelled`).
@@ -761,7 +761,7 @@ class FlowWorker:
         """Return ``True`` if the current task should be cancelled.
 
         Called by :class:`TaskWorker` between subtask iterations to
-        check whether :meth:`stop` has been invoked (mirrors PentAGI's
+        check whether :meth:`stop` has been invoked (mirrors the original
         per-task ``ctx.Done()`` check).
         """
         return self._task_cancel_event.is_set() or self._stopped

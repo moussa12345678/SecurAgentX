@@ -1,8 +1,8 @@
 """securagentx.auth.tokens — JWT HS256 API-token management.
 
-This module ports PentAGI's JWT API-token issuance, validation, and
-revocation to Python. The signing-key derivation is **byte-identical**
-to the Go implementation in
+This module implements JWT API-token issuance, validation, and
+revocation in Python. The signing-key derivation is **byte-identical**
+to the original Go implementation in
 ``backend/pkg/server/auth/session.go::MakeJWTSigningKey``::
 
     password := []byte(strings.Join([]string{
@@ -10,13 +10,13 @@ to the Go implementation in
         globalSalt,
         "09784e190148d13d48885aa47cf8a297",
     }, "|"))
-    salt := []byte("pentagi.jwt.signing|" + globalSalt)
+    salt := []byte("pentagi.jwt.signing|" + globalSalt)  # Byte-compat constant — do not change
     return pbkdf2.Key(password, salt, 210000, 32, sha512.New)
 
-This is the OWASP-2023 PBKDF2-HMAC-SHA512 with 210 000 iterations. As a
-result, JWTs issued by the Go PentAGI server and the Python SecurAgentX
-server validate interchangeably when both share the same ``global_salt``
-configuration value (migration-friendly).
+This is the OWASP-2023 PBKDF2-HMAC-SHA512 with 210 000 iterations. The
+byte-compat salt prefix lets tokens issued by an existing deployment
+continue to validate after upgrading to SecurAgentX when both share the
+same ``global_salt`` configuration value (migration-friendly).
 
 The token ID is a 10-character base62 string generated with the
 ``secrets`` module using rejection sampling (mirrors
@@ -55,7 +55,7 @@ from securagentx.auth.models import (
 logger = logging.getLogger("securagentx.auth.tokens")
 
 # ---------------------------------------------------------------------------
-# Constants (mirrors PentAGI's auth/session.go + api_token_id.go)
+# Constants (mirrors the original auth/session.go + api_token_id.go)
 # ---------------------------------------------------------------------------
 
 # PBKDF2 parameters — must NOT be changed (byte-compat with Go).
@@ -63,11 +63,11 @@ _PBKDF2_ITERATIONS: int = 210_000  # OWASP 2023
 _PBKDF2_KEY_LENGTH: int = 32       # 256-bit HS256 key
 _PBKDF2_HASH_NAME: str = "sha512"  # PBKDF2-HMAC-SHA512
 
-# Hard-coded password/salt fragments from PentAGI's session.go.
+# Hard-coded password/salt fragments from the original session.go.
 # DO NOT CHANGE — these are part of the byte-compatibility contract.
 _JWT_PASSWORD_PREFIX: str = "4c1e9cb77df7f9a58fcc5f52d40af685"
 _JWT_PASSWORD_SUFFIX: str = "09784e190148d13d48885aa47cf8a297"
-_JWT_SALT_PREFIX: str = "pentagi.jwt.signing"
+_JWT_SALT_PREFIX: str = "pentagi.jwt.signing"  # Byte-compat constant — do not change
 
 # Base62 alphabet (same order as Go's Base62Chars).
 _BASE62_CHARS: str = (
@@ -78,11 +78,11 @@ _BASE62_CHARS: str = (
 _BASE62_ALPHABET_SIZE: int = len(_BASE62_CHARS)  # 62
 _TOKEN_ID_LENGTH: int = 10
 
-# TTL bounds (seconds) — matches PentAGI's CreateAPITokenRequest validation.
+# TTL bounds (seconds) — matches the original CreateAPITokenRequest validation.
 MIN_TTL_SECONDS: int = 60
 MAX_TTL_SECONDS: int = 94_608_000  # ~3 years
 
-# Cache TTL — matches PentAGI's api_token_cache.go (5 minutes).
+# Cache TTL — matches the original api_token_cache.go (5 minutes).
 _TOKEN_CACHE_TTL_SECONDS: int = 300
 _TOKEN_CACHE_MAXSIZE: int = 10_000
 
@@ -106,7 +106,7 @@ _jwt_key_cache_lock = threading.Lock()
 def derive_jwt_key(global_salt: str) -> bytes:
     """Derive the 32-byte HS256 signing key from the global salt.
 
-    This is a **byte-identical** port of PentAGI's
+    This is a **byte-identical** port of the original's
     ``MakeJWTSigningKey(globalSalt)`` from
     ``backend/pkg/server/auth/session.go``. It uses PBKDF2-HMAC-SHA512
     with 210 000 iterations (OWASP 2023) and 32-byte output.
@@ -157,7 +157,7 @@ def _is_default_salt(global_salt: str) -> bool:
 def generate_token_id() -> str:
     """Generate a 10-character base62 token ID.
 
-    Port of PentAGI's ``GenerateTokenID()`` in
+    Port of the original ``GenerateTokenID()`` in
     ``backend/pkg/server/auth/api_token_id.go``. Uses rejection sampling
     via the ``secrets`` module (cryptographically secure) to avoid modulo
     bias: bytes ≥ the largest multiple of 62 below 256 are discarded.
@@ -186,7 +186,7 @@ def generate_token_id() -> str:
 class TokenStatusCache:
     """5-minute TTL cache for API-token status + privileges.
 
-    Mirrors PentAGI's ``api_token_cache.go``. Supports both positive
+    Mirrors the original ``api_token_cache.go``. Supports both positive
     (token found) and negative (token not found) caching to absorb
     repeated lookups for invalid tokens.
 
@@ -317,7 +317,7 @@ def issue_token(
         )
 
     if _is_default_salt(global_salt):
-        # Matches PentAGI: token creation is blocked with default salt.
+        # Matches SecurAgentX: token creation is blocked with default salt.
         raise ValueError(
             "token issuance refused with default global salt — set a "
             "secure global_salt value before issuing API tokens"
@@ -355,7 +355,7 @@ def issue_token(
         token_id, user_id, role_id, ttl_seconds, name,
     )
     # Strip the JWT-only ``sub`` claim from the persisted dict to keep
-    # the shape consistent with the PentAGI ``APITokenClaims`` Go struct
+    # the shape consistent with the SecurAgentX ``APITokenClaims`` Go struct
     # (which has no ``sub`` field exposed via JSON).
     persisted = {k: v for k, v in claims.items() if k != "sub"}
     return jwt_str, persisted
@@ -367,7 +367,7 @@ def validate_token(
 ) -> Optional[APITokenClaims]:
     """Validate a JWT API token and return its claims.
 
-    Mirrors PentAGI's ``ValidateAPIToken`` (``api_token_jwt.go``) and the
+    Mirrors the original ``ValidateAPIToken`` (``api_token_jwt.go``) and the
     cache + status checks in ``auth_middleware.go::tryProtoTokenAuthentication``.
 
     Args:

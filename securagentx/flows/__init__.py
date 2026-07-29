@@ -1,6 +1,6 @@
 """securagentx.flows — Flow management system (Flow → Task → SubTask → Action).
 
-This package ports PentAGI's 4-tier orchestrator hierarchy
+This package ports the original 4-tier orchestrator hierarchy
 (``backend/pkg/controller/{flow,task,subtask,subtasks}.go``) to Python.
 Each tier owns a 5-state machine
 (created → running → waiting ⇄ running → finished | failed) with
@@ -13,7 +13,7 @@ Modules
   enums (FlowStatus / TaskStatus / SubtaskStatus / MsgchainType +
   supporting log enums).
 * :mod:`securagentx.flows.db`            — async SQLite persistence
-  (aiosqlite) with full schema mirroring PentAGI's
+  (aiosqlite) with full schema mirroring the original
   ``database/models.go``.
 * :mod:`securagentx.flows.state_machine` — 5-state machine +
   :func:`back_propagate_status` helper.

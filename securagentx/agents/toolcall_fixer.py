@@ -37,7 +37,7 @@ logger = logging.getLogger("securagentx.agents.toolcall_fixer")
 
 
 # ---------------------------------------------------------------------------
-# System prompt — ported from pentagi/templates/prompts/toolcall_fixer.tmpl
+# System prompt — ported from templates/prompts/toolcall_fixer.tmpl
 # ---------------------------------------------------------------------------
 TOOLCALL_FIXER_SYSTEM_PROMPT = """\
 You are the ToolCallFixer, a meta-agent inside the SecurAgentX multi-agent system.

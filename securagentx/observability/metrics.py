@@ -1,8 +1,8 @@
-"""Custom SecurAgentX metrics — mirrors PentAGI's Grafana dashboard contract.
+"""Custom SecurAgentX metrics — mirrors the original Grafana dashboard contract.
 
-PentAGI exposes a fixed set of custom metrics under the
+SecurAgentX exposes a fixed set of custom metrics under the
 ``backend/pkg/observability/obs.go`` ``Meter`` interface; the existing
-Grafana dashboards (``pentagi_service.json`` etc.) query Prometheus for
+Grafana dashboards (``securagentx_service.json`` etc.) query Prometheus for
 exactly these names. To keep those dashboards working unchanged after the
 Python port, we mirror the same names + label cardinalities here.
 

@@ -1,6 +1,6 @@
 """securagentx.providers — LLM provider abstraction layer for SecurAgentX.
 
-This package is the Python port of PentAGI's
+This package is the Python port of the original's
 ``backend/pkg/providers/`` (Go). It defines a single
 :class:`~securagentx.providers.base.Provider` Protocol implemented by 10
 concrete adapters, plus the data models, helpers, and registry that

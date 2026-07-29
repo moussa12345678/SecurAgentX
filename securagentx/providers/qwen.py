@@ -1,7 +1,7 @@
 """securagentx.providers.qwen — Qwen (Alibaba Cloud DashScope) LLM provider
 adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/qwen/qwen.go``. The adapter
+Port of the original ``backend/pkg/providers/qwen/qwen.go``. The adapter
 talks to Alibaba Cloud DashScope's OpenAI-compatibility endpoint at
 ``https://dashscope.aliyun.com/compatible-mode/v1`` via the official
 ``openai`` Python SDK (with a custom ``base_url``), and implements the
@@ -19,7 +19,7 @@ Key features ported from the Go original
     ENABLED by default; without disabling it, ``reasoning_content`` is
     returned inline as part of ``content``, corrupting short
     deterministic outputs (e.g. the docker image selector returning the
-    full chain-of-thought instead of just ``vxcontrol/kali-linux``).
+    full chain-of-thought instead of just ``kalilinux/kali-rolling``).
   - ``extra_body.preserve_thinking: true`` — keeps reasoning_content
     from previous assistant turns in subsequent requests. Supported
     ONLY by ``qwen3.7-max`` and ``qwen3.6-plus`` families. Required for
@@ -46,7 +46,7 @@ Key features ported from the Go original
   ``call_`` prefix). Matches Qwen's server-generated format.
 
 * **Default model** — ``qwen-plus`` (DashScope's generic Plus model
-  alias; PentAGI's ``QwenAgentModel`` constant).
+  alias; the original ``QwenAgentModel`` constant).
 """
 
 from __future__ import annotations
@@ -79,7 +79,7 @@ QWEN_DEFAULT_SERVER_URL: str = (
     "https://dashscope.aliyun.com/compatible-mode/v1"
 )
 
-#: Default Qwen model. PentAGI's ``QwenAgentModel`` constant —
+#: Default Qwen model. The original ``QwenAgentModel`` constant —
 #: ``qwen-plus`` is DashScope's generic Plus model alias that resolves
 #: to the latest Plus-tier model.
 QWEN_DEFAULT_MODEL: str = "qwen-plus"
@@ -199,7 +199,7 @@ def _agent(
     hybrid models have thinking ENABLED by default. Without disabling,
     reasoning_content leaks into content and corrupts short deterministic
     outputs (e.g. docker image selector returning chain-of-thought
-    instead of just 'vxcontrol/kali-linux').
+    instead of just 'kalilinux/kali-rolling').
 
     ``preserve_thinking=True`` is supported ONLY by qwen3.7-max and
     qwen3.6-plus families — it keeps reasoning_content from previous

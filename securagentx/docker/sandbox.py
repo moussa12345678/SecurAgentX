@@ -1,6 +1,6 @@
-"""securagentx/docker/sandbox.py — Docker sandbox for isolated tool execution (ported from PentAGI).
+"""securagentx/docker/sandbox.py — Docker sandbox for isolated tool execution (ported from the Go original).
 
-This module is a Python port of PentAGI's `backend/pkg/docker/client.go` (856 lines,
+This module is a Python port of the original's `backend/pkg/docker/client.go` (856 lines,
 15-method interface). It provides a fully-async Docker sandbox that:
 
   * Allocates a deterministic port pair per flow (ports 28000–30000).
@@ -33,7 +33,7 @@ from typing import Any, Optional
 
 logger = logging.getLogger("securagentx.docker.sandbox")
 
-# ─── Constants (ported verbatim from PentAGI's client.go) ─────────────────────
+# ─── Constants (ported verbatim from the Go original's client.go) ─────────────────────
 
 WORK_FOLDER_PATH_IN_CONTAINER = "/work"
 BASE_CONTAINER_PORTS_NUMBER = 28000
@@ -41,7 +41,7 @@ CONTAINER_PORTS_NUMBER = 2
 LIMIT_CONTAINER_PORTS_NUMBER = 2000  # port range 28000–30000
 CONTAINER_LIST_WORKERS = 20
 DEFAULT_IMAGE = "debian:latest"
-PENTEST_DOCKER_IMAGE = "vxcontrol/kali-linux"
+PENTEST_DOCKER_IMAGE = "kalilinux/kali-rolling"
 
 DEFAULT_DOCKER_SOCKET_PATH = "/var/run/docker.sock"
 CONTAINER_PRIMARY_TYPE_PATTERN = "-terminal-"
@@ -66,7 +66,7 @@ DEFAULT_DB_PATH = Path("~/.securagentx/data/containers.db").expanduser()
 
 
 class ContainerStatus(str, Enum):
-    """Container lifecycle states (mirrors PentAGI ``database.ContainerStatus``)."""
+    """Container lifecycle states (mirrors the original ``database.ContainerStatus``)."""
 
     STARTING = "starting"
     RUNNING = "running"
@@ -76,7 +76,7 @@ class ContainerStatus(str, Enum):
 
 
 class ContainerType(str, Enum):
-    """Container role (mirrors PentAGI ``database.ContainerType``)."""
+    """Container role (mirrors the original ``database.ContainerType``)."""
 
     PRIMARY = "primary"  # terminal sandbox
     SECONDARY = "secondary"  # reserved for future use
@@ -84,7 +84,7 @@ class ContainerType(str, Enum):
 
 @dataclass
 class ContainerInfo:
-    """Persisted container record (ports the PentAGI ``containers`` table schema)."""
+    """Persisted container record (ports the SecurAgentX ``containers`` table schema)."""
 
     id: Optional[int] = None
     type: ContainerType = ContainerType.PRIMARY
@@ -115,7 +115,7 @@ class ContainerInfo:
 
 
 def _allocate_ports(flow_id: int) -> list[int]:
-    """Deterministic port allocation — ported verbatim from PentAGI's
+    """Deterministic port allocation — ported verbatim from the Go original's
     ``GetPrimaryContainerPorts``.
 
     Formula: ``28000 + (flow_id * 2 + i) % 2000`` for i in [0, 2).
@@ -137,9 +137,9 @@ def _hostname_from_name(container_name: str) -> str:
 
 
 class _ContainerStore:
-    """Tiny SQLite DAO mirroring PentAGI's ``containers`` table schema.
+    """Tiny SQLite DAO mirroring the original ``containers`` table schema.
 
-    Schema (from PentAGI ``backend/pkg/database/models.go``):
+    Schema (from the original ``backend/pkg/database/models.go``):
         {id, type, name, image, status, local_id, local_dir, flow_id,
          created_at, updated_at}
     """
@@ -278,7 +278,7 @@ class _ContainerStore:
         return [self._row_to_info(r) for r in rows]
 
 
-# ─── Flow status enum (mirror PentAGI FlowStatus for cleanup) ─────────────────
+# ─── Flow status enum (mirror the original FlowStatus for cleanup) ─────────────────
 
 
 class _FlowStatus(str, Enum):
@@ -295,7 +295,7 @@ class _FlowStatus(str, Enum):
 class DockerSandbox:
     """Async Docker sandbox wrapper.
 
-    Ports PentAGI's 15-method ``DockerClient`` Go interface plus the
+    Ports the original 15-method ``DockerClient`` Go interface plus the
     ``Prepare`` / ``Release`` high-level helpers from ``tools.go``.
 
     The underlying client is ``aiodocker`` (preferred). When unavailable, the
@@ -475,7 +475,7 @@ class DockerSandbox:
     ) -> ContainerInfo:
         """Create + start a container.
 
-        Ports PentAGI's ``RunContainer`` flow:
+        Ports the original ``RunContainer`` flow:
           1. Create ``{data_dir}/flow-{flow_id}/`` directory.
           2. Insert DB row with STARTING + tmp local_id.
           3. Pull image (fallback to DEFAULT_IMAGE on failure).
@@ -714,7 +714,7 @@ class DockerSandbox:
     # ─── 2) Stop container ────────────────────────────────────────────────
 
     async def stop_container(self, container_id: str) -> None:
-        """Stop a running container (ports PentAGI ``StopContainer``).
+        """Stop a running container (ports the original ``StopContainer``).
 
         Missing containers are logged but not treated as errors.
         """
@@ -747,7 +747,7 @@ class DockerSandbox:
         force: bool = False,
         remove_volumes: bool = True,
     ) -> None:
-        """Stop + remove a container (ports PentAGI ``RemoveContainer``)."""
+        """Stop + remove a container (ports the original ``RemoveContainer``)."""
         logger.info("removing container and associated resources: %s", container_id)
         try:
             await self.stop_container(container_id)
@@ -782,7 +782,7 @@ class DockerSandbox:
 
     async def is_container_running(self, container_id: str) -> bool:
         """Return True iff the container is running AND (if it has a healthcheck)
-        not ``unhealthy``. Ports PentAGI ``IsContainerRunning``.
+        not ``unhealthy``. Ports SecurAgentX ``IsContainerRunning``.
         """
         client = await self._get_client()
         try:
@@ -919,7 +919,7 @@ class DockerSandbox:
     async def list_container_dir(self, container_id: str, path: str) -> list[str]:
         """Return the list of entry names in ``path`` inside the container.
 
-        Ports PentAGI ``ListContainerDir`` but returns a flat list of names
+        Ports SecurAgentX ``ListContainerDir`` but returns a flat list of names
         instead of full ``PathStat`` dicts (sufficient for tool execution).
         """
         if not path or not path.strip():
@@ -964,7 +964,7 @@ class DockerSandbox:
         is derived from the basename of ``path`` if it has no slashes, otherwise
         ``data`` is written to ``path`` itself with basename ``path``.
 
-        Ports PentAGI ``CopyToContainer`` semantics. We always pack the data as
+        Ports SecurAgentX ``CopyToContainer`` semantics. We always pack the data as
         a single-entry TAR (mode 0600) and stream it to the Docker API.
         """
         if len(data) > MAX_FILE_SIZE_BYTES:
@@ -1012,7 +1012,7 @@ class DockerSandbox:
         """Copy a file (or single entry of a directory) out of the container.
 
         Returns the raw file contents as bytes. For directories, the first
-        regular file entry is returned. Ports PentAGI ``CopyFromContainer``.
+        regular file entry is returned. Ports SecurAgentX ``CopyFromContainer``.
         """
         client = await self._get_client()
         if self._use_aiodocker:
@@ -1067,7 +1067,7 @@ class DockerSandbox:
     async def cleanup(self) -> None:
         """Concurrent orphan-container cleanup.
 
-        Ports PentAGI's ``Cleanup`` method:
+        Ports the original ``Cleanup`` method:
           * For each flow in status ``Finished/Failed/Created`` (or
             ``Running/Waiting`` with non-running containers), mark the flow
             ``Failed`` and remove all ``Starting/Running`` containers
@@ -1247,7 +1247,7 @@ class DockerSandbox:
     async def release(self, flow_id: int) -> None:
         """High-level release: stop + remove the primary container for ``flow_id``.
 
-        Ports PentAGI ``Release``: ``RemoveContainer(primaryLID, primaryID)``
+        Ports SecurAgentX ``Release``: ``RemoveContainer(primaryLID, primaryID)``
         with ``force=True`` and ``remove_volumes=True``.
         """
         primary = self.store.get_primary_for_flow(flow_id)

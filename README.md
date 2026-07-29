@@ -115,7 +115,7 @@ securagentx hunt example.com
 
 ### Autonomous AI Agent Architecture
 
-SecurAgentX uses **VulnAgent** — an autonomous AI agent with **tool-selection autonomy** over tool selection and execution flow:
+The original uses **VulnAgent** — an autonomous AI agent with **tool-selection autonomy** over tool selection and execution flow:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -388,7 +388,7 @@ SecurAgentX builds on ideas and tooling from the broader security-research commu
 - The **Model Context Protocol** spec — `securagentx` ships an auto-starting MCP server on every run.
 - **ChromaDB** for the cross-session vector memory that powers `securagentx` recall.
 - **Textual** for the `securagentx tui` chat interface.
-- **PentAGI / vxcontrol** — original autonomous security agent framework that inspired SecurAgentX
+- The open-source security research community for inspiration and tooling
 - Every contributor who has filed an issue or PR against `moussa12345678/SecurAgentX`.
 
 Want to be listed here? Send a PR — see [Contributing](#contributing) above.

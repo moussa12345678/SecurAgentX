@@ -1,6 +1,6 @@
 """securagentx/search_providers/traversaal.py — Traversaal ARES search provider.
 
-Ports PentAGI's ``backend/pkg/tools/traversaal.go`` (175 lines) to an
+Ports the original ``backend/pkg/tools/traversaal.go`` (175 lines) to an
 async Python client. Traversaal's ARES API is an LLM-grounded web search
 that returns a synthesized answer plus a list of supporting URLs.
 
@@ -10,7 +10,7 @@ Endpoint:
 Auth:
     ``x-api-key: <api_key>`` header.
 
-Request body (port-verbatim from PentAGI):
+Request body (port-verbatim from the Go original):
     .. code-block:: json
 
        {"query": "<query>"}
@@ -25,7 +25,7 @@ Response:
          }
        }
 
-Output format (port-verbatim from PentAGI):
+Output format (port-verbatim from the Go original):
     .. code-block:: markdown
 
        # Answer
@@ -55,7 +55,7 @@ from securagentx.search_providers.base import (
 logger = logging.getLogger("securagentx.search_providers.traversaal")
 
 # ---------------------------------------------------------------------------
-# Constants — ported verbatim from PentAGI's traversaal.go.
+# Constants — ported verbatim from the Go original's traversaal.go.
 # ---------------------------------------------------------------------------
 
 TRAVERSAAL_ENDPOINT: str = "https://api-ares.traversaal.ai/live/predict"
@@ -154,14 +154,14 @@ class TraversaalSearchProvider(SearchProvider):
 
 
 # ---------------------------------------------------------------------------
-# Rendering — Markdown output (port-verbatim from PentAGI).
+# Rendering — Markdown output (port-verbatim from the Go original).
 # ---------------------------------------------------------------------------
 
 
 def _render_traversaal(payload: dict[str, Any], max_results: int) -> str:
     """Render the Traversaal JSON payload as Markdown.
 
-    Output format (preserved verbatim from PentAGI):
+    Output format (preserved verbatim from the Go original):
 
     .. code-block:: markdown
 

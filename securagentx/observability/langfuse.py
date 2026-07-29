@@ -1,8 +1,8 @@
 """Langfuse LLM observability integration for SecurAgentX.
 
-Ports PentAGI's ``backend/pkg/observability/lfclient.go`` and
+Ports the original ``backend/pkg/observability/lfclient.go`` and
 ``backend/pkg/observability/langfuse/observation.go`` to the official
-Langfuse Python SDK. PentAGI's Go upstream implements its own Langfuse
+Langfuse Python SDK. The original Go upstream implements its own Langfuse
 REST client because no Go SDK existed; in Python we can lean on the
 official ``langfuse`` package which natively supports:
 
@@ -10,7 +10,7 @@ official ``langfuse`` package which natively supports:
 * the ``@observe()`` decorator for automatic span creation,
 * the W3C ``traceparent`` propagator for OpenTelemetry bridge mode.
 
-Mapping of PentAGI observation types to Langfuse Python SDK ``@observe``
+Mapping of SecurAgentX observation types to Langfuse Python SDK ``@observe``
 calls (all carry ``TraceID + ParentObservationID`` so the trace tree is
 preserved):
 
@@ -28,7 +28,7 @@ preserved):
 OTel bridge: set ``LANGFUSE_OTEL_EXPORTER_OTLP_ENDPOINT`` to the OTel
 collector's OTLP endpoint so Langfuse traces flow through the same
 pipeline as the rest of SecurAgentX's spans — unifying the Jaeger view
-(matching PentAGI's ``Opentelemetry.Exporttraces`` sub-client).
+(matching the original ``Opentelemetry.Exporttraces`` sub-client).
 
 All imports of ``langfuse`` are **lazy** so this module degrades to
 no-op decorators when the SDK is not installed.
@@ -51,7 +51,7 @@ AsyncF = TypeVar("AsyncF", bound=Callable[..., Awaitable[Any]])
 
 
 # ---------------------------------------------------------------------------
-# Langfuse observation type registry (mirrors PentAGI's Observation interface)
+# Langfuse observation type registry (mirrors the original Observation interface)
 # ---------------------------------------------------------------------------
 OBSERVATION_TYPES: dict[str, str] = {
     "agent": "agent",
@@ -71,7 +71,7 @@ class LangfuseClient:
     """Process-wide singleton Langfuse client.
 
     Initialised lazily from ``LANGFUSE_HOST``, ``LANGFUSE_PUBLIC_KEY`` and
-    ``LANGFUSE_SECRET_KEY`` (matches PentAGI's ``cfg.LangfuseBaseURL`` /
+    ``LANGFUSE_SECRET_KEY`` (matches the original ``cfg.LangfuseBaseURL`` /
     ``cfg.LangfusePublicKey`` / ``cfg.LangfuseSecretKey``).
 
     When the Langfuse SDK is not installed — or when the env vars are
@@ -125,7 +125,7 @@ class LangfuseClient:
             return
 
         # Bridge Langfuse traces through the same OTel collector pipeline —
-        # matches PentAGI's ``Opentelemetry.Exporttraces`` sub-client.
+        # matches the original ``Opentelemetry.Exporttraces`` sub-client.
         kwargs: dict[str, Any] = {
             "host": host,
             "public_key": public_key,
@@ -191,7 +191,7 @@ class LangfuseClient:
         self._initialized = False
         logger.info("Langfuse client shut down")
 
-    # -- trace context (mirror PentAGI TraceID + ParentObservationID) ------
+    # -- trace context (mirror the original TraceID + ParentObservationID) ------
     def get_current_trace_id(self) -> Optional[str]:
         """Return the active Langfuse trace id (or ``None`` when degraded)."""
         if self._client is None:
@@ -232,7 +232,7 @@ def get_client() -> LangfuseClient:
 
 
 # ---------------------------------------------------------------------------
-# @observe decorator factory (mirrors PentAGI's per-type observation factories)
+# @observe decorator factory (mirrors the original per-type observation factories)
 # ---------------------------------------------------------------------------
 def _passthrough_decorator(
     func: Callable[..., Any], name: str, obs_type: str
@@ -273,7 +273,7 @@ def observe(
         One of :data:`OBSERVATION_TYPES` (``agent``, ``tool``, ``chain``,
         ``generation``, ``retriever``, ``evaluator``, ``embedding``,
         ``guardrail``, ``score``, ``log``). When provided, the Langfuse SDK
-        records the observation under this type — the same set PentAGI's
+        records the observation under this type — the same set the original
         ``Observation`` interface exposes.
     **observe_kwargs:
         Extra kwargs forwarded to the SDK's ``@observe`` decorator (e.g.
@@ -323,7 +323,7 @@ def observe(
 
 
 # ---------------------------------------------------------------------------
-# Convenience aliases — mirror PentAGI's Observation interface factories.
+# Convenience aliases — mirror the original Observation interface factories.
 # ---------------------------------------------------------------------------
 @overload
 def agent(func: AsyncF) -> AsyncF: ...

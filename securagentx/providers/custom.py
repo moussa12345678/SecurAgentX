@@ -1,7 +1,7 @@
 """securagentx.providers.custom — Custom / vLLM / OpenAI-compatible endpoint
 LLM provider adapter (Python port).
 
-Port of PentAGI's ``backend/pkg/providers/custom/custom.go``. This is the
+Port of the original ``backend/pkg/providers/custom/custom.go``. This is the
 catch-all adapter for ANY OpenAI-compatible endpoint: vLLM, LiteLLM
 proxy, OpenRouter, Together AI, Groq, Anyscale, local ``llama.cpp``
 server, etc. Configuration is entirely env-driven:
@@ -37,7 +37,7 @@ Dynamic model discovery:
   ``supported_parameters`` without ``tools`` or ``structured_outputs``
   are skipped — they can't be used for agent tool-calling.
 * Default options: ``temperature=1.0``, ``top_p=1.0``, ``n=1``,
-  ``max_tokens=16384`` (matches PentAGI's ``custom.go``
+  ``max_tokens=16384`` (matches the original ``custom.go``
   ``BuildProviderConfig`` defaults).
 """
 
@@ -64,12 +64,12 @@ logger = logging.getLogger("securagentx.providers.custom")
 # Constants
 # ---------------------------------------------------------------------------
 
-#: Default request timeout for upstream API calls. Mirrors PentAGI's
+#: Default request timeout for upstream API calls. Mirrors the original
 #: system.GetHTTPClient default (120s).
 CUSTOM_DEFAULT_TIMEOUT: float = 120.0
 
 #: Default max_tokens when no per-agent config is set. Matches
-#: PentAGI's custom.go ``BuildProviderConfig`` default.
+#: the original custom.go ``BuildProviderConfig`` default.
 CUSTOM_DEFAULT_MAX_TOKENS: int = 16384
 
 #: 429 retry policy.
@@ -79,14 +79,14 @@ CUSTOM_429_BASE_DELAY: float = 5.0
 
 # ---------------------------------------------------------------------------
 # Default provider config — empty (caller supplies via YAML file or
-# env vars). Mirrors PentAGI's DefaultProviderConfig which falls back to
+# env vars). Mirrors the original DefaultProviderConfig which falls back to
 # EmptyProviderConfigRaw when cfg.LLMServerConfig is empty.
 # ---------------------------------------------------------------------------
 
 
 def _default_agent(model: str = "") -> AgentConfig:
     """Build the default Custom :class:`AgentConfig` when no YAML config
-    is supplied. Matches PentAGI's custom.go ``BuildProviderConfig``
+    is supplied. Matches the original custom.go ``BuildProviderConfig``
     defaults: ``temperature=1.0``, ``top_p=1.0``, ``n=1``,
     ``max_tokens=16384``."""
     return AgentConfig(
@@ -106,7 +106,7 @@ def get_default_config(model: str = "") -> ProviderConfig:
     caller's :attr:`CustomProvider._api_key`-derived default applies).
     When ``model`` is supplied, all 13 slots use that model.
 
-    Mirrors PentAGI's custom.go ``DefaultProviderConfig`` which loads
+    Mirrors the original custom.go ``DefaultProviderConfig`` which loads
     from ``cfg.LLMServerConfig`` YAML file if set, else falls back to
     :data:`pconfig.EmptyProviderConfigRaw`. The caller is responsible
     for loading the YAML file (via :func:`securagentx.providers.yaml.load`)
@@ -144,7 +144,7 @@ class CustomProvider(OpenAICompatProvider):
 
     The Custom provider is unique in that it has no fixed default model
     or URL — both come from the caller's configuration (env vars in
-    PentAGI, constructor kwargs here). It also exposes
+    SecurAgentX, constructor kwargs here). It also exposes
     :meth:`discover_models` for dynamic model catalog discovery via the
     upstream ``/models`` endpoint.
 
@@ -160,7 +160,7 @@ class CustomProvider(OpenAICompatProvider):
     TOOL_CALL_ID_TEMPLATE: str = ""
     DEFAULT_MODEL: str = ""
     DEFAULT_BASE_URL: str = ""
-    # Custom uses a constellation of env-var aliases (PentAGI uses
+    # Custom uses a constellation of env-var aliases (SecurAgentX uses
     # LLMServerURL/LLMServerKey/LLMServerModel; the SecurAgentX CLI uses
     # CUSTOM_BASE_URL/CUSTOM_API_KEY). The _resolve_env helper below
     # handles all of them.
@@ -185,7 +185,7 @@ class CustomProvider(OpenAICompatProvider):
         request_timeout: float = CUSTOM_DEFAULT_TIMEOUT,
         default_model: Optional[str] = None,
     ) -> None:
-        # Resolve env-var aliases — Custom accepts both PentAGI's
+        # Resolve env-var aliases — Custom accepts both the original
         # LLMServer* names and the SecurAgentX CUSTOM_* names.
         if api_key is None:
             api_key = (
@@ -311,7 +311,7 @@ class CustomProvider(OpenAICompatProvider):
         and logs a warning. The caller is expected to fall back to the
         configured default model.
 
-        Mirrors PentAGI's ``provider.LoadModelsFromHTTP`` invocation in
+        Mirrors the original ``provider.LoadModelsFromHTTP`` invocation in
         ``custom.go::New`` — on error, ``custom.go`` falls back to an
         empty ``ModelsConfig`` (``pconfig.ModelsConfig{}``).
         """

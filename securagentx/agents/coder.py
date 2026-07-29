@@ -1,6 +1,6 @@
 """securagentx/agents/coder.py — Code-development specialist.
 
-Ports PentAGI's ``providers/handlers.go::GetCoderHandler`` and the
+Ports the original ``providers/handlers.go::GetCoderHandler`` and the
 ``templates/prompts/coder.tmpl`` system prompt into SecurAgentX. The Coder is a
 *limited* agent (``MAX_LIMITED_ITERATIONS`` = 20) that writes efficient,
 high-quality code (exploits, scripts, custom tools) inside a Docker sandbox: it
@@ -12,7 +12,7 @@ technical-channel code-development write-up (English — including every line of
 source code, every comment, every identifier) and whose ``message`` field is
 the engagement-log summary (engagement language).
 
-Two-channel language policy (ported verbatim from PentAGI):
+Two-channel language policy (ported verbatim from the Go original):
     * Engagement log (``message`` fields, closing ``message``) -> {{ lang }}
     * Technical channel (commands, queries, stored code, source code, closing
       ``result``) -> English
@@ -33,7 +33,7 @@ from securagentx.agents.base import (
 
 logger = logging.getLogger("securagentx.agents.coder")
 
-# --- Tool-name constants (ported from pentagi/backend/pkg/tools/registry.go) --
+# --- Tool-name constants (ported from backend/pkg/tools/registry.go) --
 CODE_RESULT_TOOL_NAME = "code_result"
 SEARCH_CODE_TOOL_NAME = "search_code"
 STORE_CODE_TOOL_NAME = "store_code"
@@ -366,7 +366,7 @@ class _DefaultDict(dict):
 class Coder:
     """Code-development specialist (limited agent, 20 iterations).
 
-    Mirrors PentAGI's ``flowProvider.performCoder`` — runs an LLM tool-calling
+    Mirrors the original ``flowProvider.performCoder`` — runs an LLM tool-calling
     chain with a hard cap of ``MAX_LIMITED_ITERATIONS`` iterations and the
     ``code_result`` barrier tool as the only exit. The Docker sandbox
     (terminal + file ops), the long-term code vector store, the optional
@@ -400,12 +400,12 @@ class Coder:
         # language was negotiated at flow-creation time.
         self.lang: str = self.LANG_DEFAULT
 
-        # Docker image is chosen at flow-creation time (cf. PentAGI
+        # Docker image is chosen at flow-creation time (cf. SecurAgentX
         # ``flowProvider.image`` from the ``image_chooser`` template); default
         # to debian:latest for general coding tasks.
         self.docker_image: str = self.DEFAULT_DOCKER_IMAGE
 
-        # Graphiti temporal-knowledge-graph toggle (cf. PentAGI
+        # Graphiti temporal-knowledge-graph toggle (cf. SecurAgentX
         # ``flowProvider.graphitiClient``).
         self.graphiti_enabled: bool = bool(getattr(memory, "graphiti_enabled", False))
 

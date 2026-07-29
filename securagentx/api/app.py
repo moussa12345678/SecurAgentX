@@ -1,9 +1,9 @@
 """securagentx.api.app — FastAPI application factory.
 
-Ports PentAGI's ``router.go`` (Gin) to FastAPI. The ``create_app()``
+Ports the original ``router.go`` (Gin) to FastAPI. The ``create_app()``
 factory builds the FastAPI application, wires middleware (CORS,
 TrustedHost, GZip), registers custom exception handlers for the
-PentAGI error catalog, mounts all routers under ``/api/v1``, and sets
+SecurAgentX error catalog, mounts all routers under ``/api/v1``, and sets
 up the lifespan hooks (startup: DB init + Docker cleanup; shutdown:
 graceful close).
 
@@ -11,7 +11,7 @@ Design constraints (per Task 6-a):
 
 * **Lazy import** of FastAPI inside the factory — so the CLI works
   without ``fastapi`` installed.
-* **OpenAPI at ``/api/v1/docs``** (replaces PentAGI's Swagger).
+* **OpenAPI at ``/api/v1/docs``** (replaces the original Swagger).
 * **CORS middleware** with configurable ``allowed_origins`` (default
   ``["http://localhost:3000", "http://127.0.0.1:3000"]``; auto-add
   ``https://accounts.google.com`` when Google OAuth is enabled — Task 1-c
@@ -20,7 +20,7 @@ Design constraints (per Task 6-a):
 * **TrustedHostMiddleware** with configurable allowed hosts.
 * **GZipMiddleware** for response compression.
 * **Custom exception handlers** for 400, 401, 403, 404, 409, 422, 500 —
-  each returns the PentAGI envelope shape
+  each returns the SecurAgentX envelope shape
   ``{"status": "error", "code": ..., "msg": ..., "error"?: ...}``.
 * **Response envelope**: ``success_response(data)`` /
   ``error_response(code, msg)`` from ``_models``.
@@ -90,7 +90,7 @@ def create_app(
             ``["http://localhost:3000", "http://127.0.0.1:3000"]`` (explicit
             origins only — never ``["*"]`` with credentials). If Google OAuth
             is enabled, ``https://accounts.google.com`` is appended
-            automatically (mirror of PentAGI's CORS wiring).
+            automatically (mirror of the original CORS wiring).
         allowed_hosts: TrustedHostMiddleware allow-list. Defaults to
             ``["*"]`` (all hosts). In production, set this to the
             server's hostname(s).
@@ -98,7 +98,7 @@ def create_app(
             derivation. MUST be set to a unique value (not ``"salt"``)
             before issuing API tokens — see ``_auth.sign_api_token``.
         develop: When True, error responses include the raw exception
-            text in the ``error`` field (mirror of PentAGI's
+            text in the ``error`` field (mirror of the original
             ``develop`` flag). Also surfaces in ``GET /info``.
         cookie_secure: When True, the ``securagentx_session`` cookie is
             marked ``Secure`` (HTTPS-only). Set based on
@@ -174,7 +174,7 @@ def create_app(
         list(allowed_origins) if allowed_origins is not None else list(_DEFAULT_CORS_ORIGINS)
     )
     if oauth_google_enabled:
-        # PentAGI auto-adds accounts.google.com when Google OAuth is on
+        # SecurAgentX auto-adds accounts.google.com when Google OAuth is on
         # (see Task 1-c recommendation §11).
         if "https://accounts.google.com" not in cors_origins:
             cors_origins.append("https://accounts.google.com")
@@ -213,7 +213,7 @@ def create_app(
                     logger.exception("db.%s failed", method_name)
                 break
 
-        # Docker cleanup — best-effort. Mirror of PentAGI's
+        # Docker cleanup — best-effort. Mirror of the original
         # ``dockerClient.Cleanup()`` at startup.
         if docker is not None and hasattr(docker, "cleanup"):
             try:
@@ -269,7 +269,7 @@ def create_app(
         title="SecurAgentX API",
         version=version,
         description=(
-            "SecurAgentX REST API — FastAPI port of PentAGI's REST surface "
+            "SecurAgentX REST API — FastAPI port of the original's REST surface "
             "(/api/v1/*). All responses use the envelope "
             '{"status": "success", "data": <any>} or '
             '{"status": "error", "code": ..., "msg": ...}.'
@@ -339,7 +339,7 @@ def create_app(
         status: Optional[int] = None,
         error: Optional[str] = None,
     ) -> JSONResponse:
-        """Build a JSONResponse with the PentAGI error envelope."""
+        """Build a JSONResponse with the SecurAgentX error envelope."""
         actual_status = status or models.error_http_status(code)
         actual_msg = msg or models.error_default_msg(code)
         return JSONResponse(

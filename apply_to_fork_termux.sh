@@ -5,10 +5,10 @@
 set -e
 
 ARCHIVE="securagentx-integration.tar.gz"
-BRANCH_NAME="feat/pentagi-integration"
+BRANCH_NAME="feat/securagentx-integration"
 TMP_DIR="$HOME/.tmp-securagentx-integration"
 
-COMMIT_MSG="feat: integrate PentAGI features into SecurAgentX
+COMMIT_MSG="feat: integrate SecurAgentX features
 
 - Multi-agent system (15 agents): PrimaryAgent, Searcher, Pentester,
   Coder, Installer, Memorist, Adviser, Enricher, Generator, Refiner,
@@ -16,8 +16,8 @@ COMMIT_MSG="feat: integrate PentAGI features into SecurAgentX
 - Docker sandbox isolation (11 modules)
 - Local Knowledge Graph (NetworkX + SQLite): 9 node labels, 6 edge types,
   7 search types, MMR reranking, entity extraction, community detection
-- REST API (FastAPI): ~50 endpoints, JWT HS256 auth (byte-compatible
-  with PentAGI), cookie sessions, OAuth2 PKCE (GitHub + Google)
+- REST API (FastAPI): ~50 endpoints, JWT HS256 auth, cookie sessions,
+  OAuth2 PKCE (GitHub + Google)
 - GraphQL API (strawberry): 19 enums, 46 queries, 31 mutations,
   38 subscriptions, WebSocket transport
 - 10 LLM providers: OpenAI, Anthropic, Gemini, Bedrock, Ollama,

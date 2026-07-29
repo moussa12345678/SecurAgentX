@@ -1,7 +1,7 @@
-"""securagentx.agents — PentAGI-style multi-agent system ported to SecurAgentX.
+"""securagentx.agents — SecurAgentX-style multi-agent system ported to SecurAgentX.
 
 This package contains the hierarchical orchestrator pattern with 15 agent types
-ported from PentAGI's Go implementation:
+ported from the Go original's Go implementation:
     PrimaryAgent (Orchestrator) — root, delegates to 6 specialists
     Searcher (Researcher)       — information gathering
     Pentester                   — hands-on security testing
@@ -18,7 +18,7 @@ ported from PentAGI's Go implementation:
     ToolCallFixer               — repairs malformed tool calls
     Assistant                   — interactive conversational
 
-Architecture (ported from PentAGI backend/pkg/providers/performer.go):
+Architecture (ported from the Go original backend/pkg/providers/performer.go):
     Universal perform_agent_chain() loop with:
       - Iteration caps (100 for general agents, 20 for limited)
       - Reflector injection on no-tool-call
