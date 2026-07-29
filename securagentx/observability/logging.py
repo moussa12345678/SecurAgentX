@@ -137,7 +137,7 @@ def _build_processors(json_logs: bool) -> list[Any]:
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso", utc=True),
-        _TraceContextProcessor(),
+        _TraceContextProcessor(),  # type: ignore[list-item]
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
     ]
@@ -247,7 +247,7 @@ def setup_logging(level: str = "INFO", json_logs: bool = False) -> None:
             foreign_pre_chain=[
                 structlog.stdlib.add_log_level,
                 structlog.processors.TimeStamper(fmt="iso", utc=True),
-                _TraceContextProcessor(),
+                _TraceContextProcessor(),  # type: ignore[list-item]
             ],
             processor=_final_processor,
         )

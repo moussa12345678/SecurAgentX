@@ -471,7 +471,7 @@ class PythonRecon:
         try:
             if self._session is not None:
                 self._session.close()
-                self._session = None
+                self._session = None  # type: ignore[assignment]
         except Exception as e:  # pragma: no cover - best effort
             logger.debug("Suppressed Exception: %s", e)
 
