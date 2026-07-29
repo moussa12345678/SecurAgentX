@@ -76,7 +76,7 @@ async def test_sql_injection(
         async with session.post(ep.url, data={"username": "nonexistent_xyz", "password": "x"}) as r:
             baseline_status = r.status
             baseline_body = await r.text()
-    except Exception:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
         return findings
 
     # Try payloads
@@ -136,7 +136,7 @@ async def test_sql_injection(
                         )
                     )
                     break
-        except Exception:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
             continue
     return findings
 
@@ -182,7 +182,7 @@ async def test_xss(session: aiohttp.ClientSession, ep: Endpoint) -> List[Confirm
                         )
                     )
                     break
-        except Exception:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
             continue
     return findings
 
@@ -228,7 +228,7 @@ async def test_ssti(session: aiohttp.ClientSession, ep: Endpoint) -> List[Confir
                         )
                     )
                     break
-        except Exception:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
             continue
     return findings
 
@@ -270,7 +270,7 @@ async def test_idor(session: aiohttp.ClientSession, ep: Endpoint) -> List[Confir
                                 )
                             )
                             return findings
-            except Exception:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
                 continue
     return findings
 
@@ -320,9 +320,9 @@ async def test_mass_assignment(
                                 detector="TargetedMassAssignmentDetector",
                             )
                         )
-                except Exception as e:
+                except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                     logger.debug("Suppressed Exception: %s", e)
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
         logger.debug("Suppressed Exception: %s", e)
     return findings
 
@@ -372,9 +372,9 @@ async def test_jwt_alg_none(session: aiohttp.ClientSession, ep: Endpoint) -> Lis
                             detector="TargetedJWTDetector",
                         )
                     )
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                 logger.debug("Suppressed Exception: %s", e)
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
         logger.debug("Suppressed Exception: %s", e)
     return findings
 
@@ -411,7 +411,7 @@ async def test_proto_pollution(
                         detector="TargetedProtoPollutionDetector",
                     )
                 )
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
         logger.debug("Suppressed Exception: %s", e)
     return findings
 
@@ -452,7 +452,7 @@ async def test_path_traversal(
                             )
                         )
                         return findings
-            except Exception:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
                 continue
     return findings
 
@@ -475,7 +475,7 @@ async def test_race_condition(
         try:
             async with session.post(ep.url, json={"code": f"TEST{idx}", "value": 10.0}) as r:
                 return r.status, await r.text()
-        except Exception:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
             return 0, ""
 
     results = await asyncio.gather(*[single_req(i) for i in range(8)])
@@ -534,7 +534,7 @@ async def test_idor_with_template(
                             )
                         )
                         return findings
-        except Exception:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
             continue
     return findings
 
@@ -565,7 +565,7 @@ async def test_stored_xss(session: aiohttp.ClientSession, ep: Endpoint) -> List[
                         detector="TargetedStoredXSSDetector",
                     )
                 )
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
         logger.debug("Suppressed Exception: %s", e)
     return findings
 
@@ -631,7 +631,7 @@ async def run_targeted_attacks(
                     try:
                         results = await test_fn(session, ep)
                         ep_findings.extend(results)
-                    except Exception as e:
+                    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                         logger.debug("test %s on %s failed: %s", test_fn.__name__, ep.url, e)
             return ep_findings
 
@@ -649,7 +649,7 @@ async def run_targeted_attacks(
             try:
                 bola_findings = await run_authenticated_bola(session, endpoints, auth_sessions)
                 all_findings.extend(bola_findings)
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                 logger.warning("authenticated BOLA failed: %s", e)
 
     # Deduplicate by (url, category, payload)
@@ -712,7 +712,7 @@ async def run_authenticated_bola(
                         if data.get("id") == uid:
                             auth_user_ids[idx] = uid
                             break
-            except Exception:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError):
                 continue
 
     if len(auth_user_ids) < 2:
@@ -761,7 +761,7 @@ async def run_authenticated_bola(
                             )
                         )
                         return findings
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                 logger.debug("BOLA test on %s: %s", victim_url, e)
                 continue
 

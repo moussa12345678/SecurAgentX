@@ -95,7 +95,7 @@ class AnalysisPipeline:
                     tags=h.tags,
                     evidence={"suggested_tests": h.suggested_tests, "tool": tool_name},
                 )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"BusinessLogicAnalyzer failed: {e}")
 
     def _run_bola(
@@ -158,7 +158,7 @@ class AnalysisPipeline:
                 display_in_chat_mode(
                     f"BOLA test complete: {summary.get('findings_count', 0)} findings", "result"
                 )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"BOLA bridge integration failed: {e}")
 
     def _run_bola_surface_probe(
@@ -226,7 +226,7 @@ class AnalysisPipeline:
                     )
             else:
                 logger.debug(f"[BOLA] No unauthenticated surfaces on {probe_target}")
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"BOLA surface probe failed: {e}")
 
     def _run_payload_mutation(
@@ -264,7 +264,7 @@ class AnalysisPipeline:
                             {"payload": p, "techniques": ["smart_generator"]}
                             for p in smart_payloads
                         ]
-                    except Exception as e:
+                    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                         logger.debug(f"SmartPayloadGenerator failed: {e}, falling back")
                         legacy = self.payload_mutator.mutate(base_payload, max_variants=15)
                         muts = [{"payload": m.payload, "techniques": m.techniques} for m in legacy]
@@ -294,7 +294,7 @@ class AnalysisPipeline:
                     },
                 )
                 break
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Payload mutation suggestion failed: {e}")
 
     def _run_waf_evasion(
@@ -360,7 +360,7 @@ class AnalysisPipeline:
                             "result",
                         )
                 break
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"WAF evasion integration failed: {e}")
 
     def _run_smart_recon(
@@ -384,7 +384,7 @@ class AnalysisPipeline:
                         if parsed.netloc:
                             domains_found.add(parsed.netloc)
                         endpoints_found.add(url)
-                    except Exception as e:
+                    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                         logger.debug("Suppressed Exception: %s", e)
 
             for domain in domains_found:
@@ -430,7 +430,7 @@ class AnalysisPipeline:
                         f"[Recon] Deep asset correlation available for {len(domains_found)} domains",
                         "info",
                     )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Smart recon integration failed: {e}")
 
     def _run_cors(
@@ -459,7 +459,7 @@ class AnalysisPipeline:
                         tags=["cors", "misconfiguration", issue.get("severity", "medium")],
                         evidence=issue,
                     )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"CORS check integration failed: {e}")
 
     def _run_ssrf(
@@ -489,7 +489,7 @@ class AnalysisPipeline:
                         evidence=sf,
                     )
                 break
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"SSRF scan integration failed: {e}")
 
     def _persist_vector_memory(
@@ -524,7 +524,7 @@ class AnalysisPipeline:
                     finding_type=finding.get("type", "unknown"),
                     url=finding.get("url", ""),
                 )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Vector memory persist failed: {e}")
 
     def _run_soc_analysis(
@@ -589,7 +589,7 @@ class AnalysisPipeline:
                             f"[SOC] Detection rule generated for {finding.get('type')} finding",
                             "info",
                         )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"SOC analyzer integration failed: {e}")
 
     def _run_sast(
@@ -642,7 +642,7 @@ class AnalysisPipeline:
                         f"[SAST] Found {sast_report['total_vulnerabilities']} code vulnerabilities",
                         "warning",
                     )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"SAST integration failed: {e}")
 
     def _run_cloud_scan(
@@ -696,7 +696,7 @@ class AnalysisPipeline:
                         f"[Cloud] Found {cloud_report['total_findings']} misconfigurations",
                         "warning",
                     )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Cloud scanner integration failed: {e}")
 
     def _run_protocol_analysis(
@@ -749,7 +749,7 @@ class AnalysisPipeline:
                         tags=["iot", "ics", "mqtt", "modbus", "protocol"],
                         evidence={"detected_ports": list(iot_ports), "source": tool_name},
                     )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Protocol analyzer integration failed: {e}")
 
     def _run_exploit_chain(
@@ -818,7 +818,7 @@ class AnalysisPipeline:
                                 " High-value chain detected! Consider submitting as combined impact for increased bounty.",
                                 "result",
                             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Exploit chain analysis failed: {e}")
 
     def _run_bounty_predictor(
@@ -883,7 +883,7 @@ class AnalysisPipeline:
                             "similar_cves": top.similar_cves,
                         },
                     )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Bounty prediction failed: {e}")
 
     # ── Helpers ───────────────────────────────────────────────────────────
@@ -898,6 +898,6 @@ class AnalysisPipeline:
                 return tgt
             if tgt:
                 return f"https://{tgt}"
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug("Suppressed Exception: %s", e)
         return "http://localhost"

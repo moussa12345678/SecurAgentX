@@ -660,7 +660,7 @@ def process_universal(
     intent = "security_chat"
     try:
         intent = analyze_intent(client, user_input)
-    except Exception as e:
+    except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
         logger.debug(f"Universal intent classification failed: {e}")
         intent = "security_chat"
     if callback:
@@ -672,7 +672,7 @@ def process_universal(
             reflection_caution = reflection_tracker.retrieve_caution(user_input)
         else:
             reflection_caution = ""
-    except Exception:
+    except (AttributeError, ValueError, KeyError, TypeError):
         reflection_caution = ""
 
     # Initialize universal executor
@@ -686,88 +686,13 @@ def process_universal(
 
     # ── Casual / chat without target ─────────────────────────────────────
     if intent in ["casual", "security_chat"] and not target:
-        past_memories = get_context_for_ai(
-            user_input,
-            target=target or "universal",
-            max_memories=12,
+        return _handle_casual_chat(
+            user_input=user_input,
+            intent=intent,
+            target=target,
             conversation_history=conversation_history,
-        )
-        logger.info(f"Retrieved {len(past_memories.splitlines())} memories from the cloud.")
-
-        now_context = _get_now_context()
-        profile_context = _get_memory_profile_context()
-
-        available_tools = registry.list_available_tools()
-        tool_names = [name for name, info in available_tools.items() if info.get("available")]
-        tool_list = ", ".join(tool_names[:10]) + ("..." if len(tool_names) > 10 else "")
-
-        has_thai = bool(re.search(r"[฀-๿]", user_input))
-        detected_lang = "Thai" if has_thai else "English"
-
-        chat_prompt = f"""You are SecurAgentX AI — A Universal AI Agent specialized for Bug Bounty and Security Research.
-Intent category: {intent}
-Detected user language: {detected_lang}
-
-{now_context}
-
-### [PROFILE] LONG-TERM PROFILE:
-{profile_context}
-
-### [MEMORY] PAST CONVERSATIONS (RELEVANT CONTEXT):
-{past_memories}
-
-{reflection_caution}
-
-### YOUR IDENTITY & CAPABILITIES:
-- Name: SecurAgentX AI (SecurAgentX AI)
-- Version:
-- Primary role: Security researcher and penetration testing assistant
-
-### WHAT YOU CAN DO:
-
-[LIVE INTERNET ACCESS - Real-time data:]
-- Search Google for current news, sports scores, weather, stock prices
-- Get TODAY's information - no knowledge cutoff!
-- Research CVEs, exploits, and security advisories
-
-[SECURITY TOOLS:]
-{tool_list}
-Plus: Built-in Python scanners for SSRF, SSTI, XXE, Deserialization,
-GraphQL, CORS, JWT, Race Conditions, Business Logic, Supply Chain
-
-[GENERAL CAPABILITIES:]
-- File editing, shell commands, package installation
-- Code review and script generation
-- Web research and OSINT
-
-### LANGUAGE RULE:
-- Detect the language of the user's input
-- If user wrote Thai → respond in Thai
-- If user wrote English → respond in English
-- Respond naturally in the detected language
-
-### OTHER RULES:
-1. Do not use emojis.
-2. Do not attempt to run scans or use tools for this casual query.
-3. Answer directly based on your knowledge above.
-4. If asked what you can do, explain your capabilities including LIVE WEB SEARCH."""
-
-        messages = _build_chat_messages(conversation_history, chat_prompt, user_input)
-        direct = (client.chat(messages).content or "").strip()
-
-        if direct:
-            _append_history(conversation_history, "user", user_input)
-            _append_history(conversation_history, "assistant", direct)
-            remember(
-                content=f"User interaction: {user_input} | AI Response: {direct[:150]}...",
-                target=target or "universal",
-                category="conversation",
-            )
-            return direct
-        if has_thai:
-            return "สวัสดีครับ! ผมคือ SecurAgentX AI ผู้ช่วยวิจัยความปลอดภัย มีอะไรให้ช่วยไหมครับ?"
-        return (
-            "Hello! I'm SecurAgentX AI, your security research assistant. How can I help you today?"
+            reflection_caution=reflection_caution,
+            client=client,
         )
 
     # ── Research mode (no target) ────────────────────────────────────────
@@ -775,89 +700,8 @@ GraphQL, CORS, JWT, Race Conditions, Business Logic, Supply Chain
         pass  # falls through to main loop
 
     # ── Simple greeting fast-path (deterministic, no AI call) ────────────
-    simple_greetings = [
-        "hi",
-        "hello",
-        "hey",
-        "hiya",
-        "yo",
-        "สวัสดี",
-        "สวัสดีครับ",
-        "สวัสดีค่ะ",
-        "หวัดดี",
-        "หวัดดีครับ",
-        "หวัดดีค่ะ",
-        "สัวสดี",
-        "สวัส",
-        "สวัดดี",
-        "สวัสดีจ้า",
-        "ไง",
-        "ไงครับ",
-        "ไงค่ะ",
-        "ไงจ้า",
-        "ว่าไง",
-        "sawasdee",
-        "sawasdee krub",
-        "sawasdee krap",
-    ]
-    simple_questions = ["how are you", "what can you do", "help", "?", "who are you"]
-    normalized = user_input.lower().strip()
-
-    starts_with_thai_greeting = any(
-        normalized.replace(" ", "").startswith(g.replace(" ", ""))
-        for g in simple_greetings
-        if re.search(r"[฀-๿]", g)
-    )
-    thai_only = bool(re.fullmatch(r"[\s฀-๿\.!?]+", user_input.strip()))
-    is_thai_greeting = starts_with_thai_greeting or (
-        thai_only and any(g in user_input.strip() for g in ["สวั", "หวัด", "ดี"])
-    )
-    is_short_thai_chat = thai_only and 0 < len(user_input.strip()) <= 8
-    is_simple_query = (
-        (
-            any(normalized.startswith(g) for g in simple_greetings)
-            or any(q in normalized for q in simple_questions)
-            or is_thai_greeting
-            or is_short_thai_chat
-        )
-        and not is_security_task
-        and not target
-        and intent not in ("research", "scan")
-    )
-
-    if is_simple_query:
-        wants_thai = bool(re.search(r"[฀-๿]", user_input))
-        if wants_thai:
-            return "Hello! How can I help you?"
-        lang_rule = "Respond in Thai ONLY." if wants_thai else "Respond in English ONLY."
-        simple_prompt = f"""You are SecurAgentX AI 1.0.0.
-User input: "{user_input}"
-Contains Thai characters: {wants_thai}
-
-### LANGUAGE RULE (STRICT):
-{lang_rule}
-- If Thai detected in input → respond in Thai language
-- If English detected → respond in English language
-- ABSOLUTELY NO other languages (no Turkish, Spanish, French, etc.)
-- This is a HARD requirement
-
-### RESPONSE:
-Keep it short and conversational. No tools. No emojis."""
-
-        response = (
-            client.chat(
-                [
-                    AIMessage(role="system", content=simple_prompt),
-                    AIMessage(role="user", content="Greeting"),
-                ]
-            ).content
-            or ""
-        )
-        if not response.strip():
-            return (
-                "Hello! How can I help you?" if wants_thai else "Hello! How can I help you today?"
-            )
-        return response.strip()
+    if _detect_simple_greeting(user_input, intent, target, is_security_task):
+        return _handle_simple_greeting(user_input, client)
 
     # ── Build mode-specific prompt ──────────────────────────────────────
     now_context = _get_now_context()
@@ -910,45 +754,13 @@ Keep it short and conversational. No tools. No emojis."""
     _brain_plan = None
 
     if use_brain and is_security_task and client:
-        try:
-            from securagentx.brain import PlanningEngine, DecisionEngine, ReasoningEngine
-            from securagentx.memory import CognitiveMemoryManager
-            from securagentx.constitution_engine import ConstitutionalAIEngine
-
-            _memory = CognitiveMemoryManager(backends=[])
-            _reasoning = ReasoningEngine(client, _memory)
-            _brain_decision = DecisionEngine(client, _reasoning, ConstitutionalAIEngine(), governance)
-            _brain_planner = PlanningEngine(client, _reasoning, _memory)
-            _brain_loop = True
-
-            if callback:
-                callback("[Brain Loop] Initializing planning engine...")
-
-            # Generate initial plan
-            try:
-                import asyncio as _ai
-                loop = _ai.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        _plan = pool.submit(
-                            _ai.run,
-                            _brain_planner.plan(user_input, _create_mission_context(target, user_input))
-                        ).result(timeout=30)
-                else:
-                    _plan = loop.run_until_complete(
-                        _brain_planner.plan(user_input, _create_mission_context(target, user_input))
-                    )
-                _brain_plan = _plan
-                if callback and _brain_plan:
-                    callback(f"[Brain Loop] Plan: {len(_brain_plan.phases)} phases")
-            except Exception as e:
-                logger.debug(f"Brain planning failed, falling back to legacy: {e}")
-                _brain_loop = False
-
-        except Exception as e:
-            logger.debug(f"Brain components not available: {e}")
-            _brain_loop = False
+        _brain_loop, _brain_planner, _brain_decision, _brain_plan = _init_brain_loop(
+            user_input=user_input,
+            target=target,
+            client=client,
+            governance=governance,
+            callback=callback,
+        )
 
     for step in range(max_steps):
         # Build conversation context
@@ -995,7 +807,7 @@ Respond with JSON:
             else:
                 response_text = _resp.content or ""
             consecutive_ai_failures = 0  # reset on success
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
             consecutive_ai_failures += 1
             logger.error(f"AI decision failed (consecutive={consecutive_ai_failures}): {e}")
             if consecutive_ai_failures >= 2:
@@ -1052,7 +864,7 @@ Respond with JSON:
 
                 if callback and thought:
                     callback(f"thought:{thought}")
-            except Exception as e:
+            except (RuntimeError, asyncio.TimeoutError, concurrent.futures.TimeoutError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
                 logger.debug(f"Brain decision failed: {e}")
                 _brain_loop = False  # fall through to legacy
 
@@ -1083,7 +895,7 @@ Respond with JSON:
                 else:
                     response_text = _resp.content or ""
                 consecutive_ai_failures = 0  # reset on success
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError) as e:
                 consecutive_ai_failures += 1
                 logger.error(f"AI decision failed (consecutive={consecutive_ai_failures}): {e}")
                 if consecutive_ai_failures >= 2:
@@ -1143,7 +955,7 @@ Respond with JSON:
 
                 try:
                     approved = confirm(f"Run: {cmd[:80]}?", default=False)
-                except Exception:
+                except (EOFError, KeyboardInterrupt, OSError, ValueError):
                     approved = False
                 if not approved:
                     result = "Command rejected by user."
@@ -1175,7 +987,7 @@ Respond with JSON:
                         "source": "ai_reasoning",  # produced by the agent's own scoring loop
                     }
                 )
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError, TypeError) as e:
                 logger.debug("Suppressed Exception: %s", e)
 
         # Finish condition
@@ -1184,25 +996,7 @@ Respond with JSON:
 
     # ── Generate summary ───────────────────────────────────────────────
     if is_security_task and all_findings:
-        scored = all_findings
-        sev_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3, "Info": 4}
-        scored.sort(key=lambda s: sev_order.get(s["severity"], 5))
-
-        lines = ["## Universal Agent Summary", ""]
-        if target:
-            lines.append(f"**Target**: {target}")
-        lines.append(f"**Steps**: {step + 1}")
-        lines.append(f"**Findings**: {len(scored)}")
-        lines.append("")
-        if scored:
-            lines.append("| Severity | Type | CVSS |")
-            lines.append("|----------|------|------|")
-            for s in scored:
-                lines.append(f"| {s['severity']} | {s['type']} | {s['cvss']:.1f} |")
-
-        summary = "\n".join(lines)
-        _append_history(history, "assistant", summary)
-        return summary
+        return _build_security_summary(target, step, all_findings, history)
 
     # P2.4: If loop exited with 0 actions, AI is likely unavailable
     if len(history) <= 1 and not all_findings:
@@ -1305,7 +1099,7 @@ def _build_bug_bounty_prompt(
         try:
             available_skills = skill_registry.list_available_skills()
             missing_skills = skill_registry.get_missing_skills()
-        except Exception as e:
+        except (AttributeError, ValueError, KeyError, TypeError) as e:
             logger.debug("Suppressed Exception: %s", e)
 
     tools_list_str = "\n".join(tool_descriptions)

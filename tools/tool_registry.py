@@ -211,7 +211,7 @@ class ToolRegistry:
                     sys.modules[module_name] = module
                     spec.loader.exec_module(module)
                     logger.info(f"Dynamically loaded AI tool module: {py_file.name}")
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                 logger.error(f"Failed to load dynamic tool {py_file.name}: {e}")
 
     def get_tool(self, name: str) -> Optional[BaseTool]:
@@ -302,7 +302,7 @@ class ToolRegistry:
                     if progress_callback:
                         progress_callback(result)
 
-                except Exception as e:
+                except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
                     logger.error(f"Tool {tool.metadata.name} failed: {e}")
                     results.append(
                         ToolResult(
@@ -401,7 +401,7 @@ class WAFDetectorTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -466,7 +466,7 @@ class ActiveFuzzerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -529,7 +529,7 @@ class PythonReconTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -600,7 +600,7 @@ class SSRFScannerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -667,7 +667,7 @@ class SSTIScannerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -733,7 +733,7 @@ class XXEScannerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -800,7 +800,7 @@ class DeserializationScannerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -866,7 +866,7 @@ class GraphQLScannerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -931,7 +931,7 @@ class RaceConditionTesterTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -1011,7 +1011,7 @@ class APISchemaDiffTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -1090,7 +1090,7 @@ class SupplyChainAnalyzerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -1156,7 +1156,7 @@ class LogicFlawEngineTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -1221,7 +1221,7 @@ class CORSCheckerTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -1291,7 +1291,7 @@ class JWTTesterTool(BaseTool):
                 findings=findings,
                 execution_time=time.time() - start_time,
             )
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             return ToolResult(
                 success=False,
                 tool_name=self.metadata.name,
@@ -1326,7 +1326,7 @@ def auto_discover_tools() -> List[str]:
         try:
             __import__(module_name)
             discovered.append(module_name)
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError, KeyError, AttributeError, TypeError, ImportError) as e:
             logger.debug(f"Skipped {stem}: {e}")
 
     return discovered

@@ -1020,7 +1020,7 @@ class DockerSandbox:
             stream = await container.get_archive(path)
             # aiodocker returns (stream, stat) — stream is a generator of bytes
             tar_bytes = b""
-            stat = None
+            _stat = None
             if isinstance(stream, tuple) and len(stream) >= 2:
                 _stat = stream[1]
                 stream = stream[0]

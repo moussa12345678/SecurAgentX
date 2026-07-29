@@ -447,7 +447,7 @@ class TestProcessUniversal:
             with patch("securagentx.scanning.universal.registry") as mock_reg:
                 mock_reg.list_available_tools.return_value = {}
                 mock_client = Mock()
-                mock_client.chat.side_effect = Exception("API down")
+                mock_client.chat.side_effect = RuntimeError("API down")
                 with patch("securagentx.scanning.universal.get_universal_executor"):
                     result = process_universal(
                         user_input="scan example.com",

@@ -1233,7 +1233,7 @@ class Adviser:
             max_iterations=self.max_iterations,
             execution_context=full_context,
             on_barrier=_on_barrier,
-        )  # type: ignore[call-arg]
+        )
 
         result: AdviceResult | None = captured["result"]
         if result is None:

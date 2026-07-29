@@ -193,7 +193,7 @@ Provide a brief summary (2-3 sentences):"""
             return
 
         last_assistant = None
-        last_user_query = None
+        _last_user_query = None
         for turn in reversed(self.conversation_history):
             if turn["role"] == "assistant":
                 last_assistant = turn["content"]

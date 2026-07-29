@@ -206,15 +206,15 @@ class PDFReportGenerator:
         # Build findings sections
         findings_html = []
         for i, f in enumerate(findings, 1):
-            color = severity_colors.get(f.severity, "#6b7280")
+            _color = severity_colors.get(f.severity, "#6b7280")
             _cwe_section = f"<p><strong>CWE:</strong> {f.cwe_id}</p>" if f.cwe_id else ""
             _cve_section = f"<p><strong>CVE:</strong> {f.cve_id}</p>" if f.cve_id else ""
-            urls_section = ""
+            _urls_section = ""
             if f.affected_urls:
                 urls_html = "\n".join([f"<li>{url}</li>" for url in f.affected_urls[:5]])
                 _urls_section = f"<h4>Affected URLs:</h4><ul>{urls_html}</ul>"
 
-            refs_section = ""
+            _refs_section = ""
             if f.references:
                 refs_html = "\n".join(
                     [f'<li><a href="{ref}">{ref}</a></li>' for ref in f.references]

@@ -278,7 +278,7 @@ class HybridAgent:
                 self._log(f"[Strategist] {len(tasks)} tasks planned")
         except (ValueError, json.JSONDecodeError) as e:
             self._log(f"[Strategist] Parse error: {e}")
-        except Exception as e:
+        except (RuntimeError, OSError, AttributeError, TypeError, KeyError) as e:
             self._log(f"[Strategist] Error: {e}")
 
     # ── Specialist ─────────────────────────────────────────────────────
@@ -391,10 +391,10 @@ class HybridAgent:
                     or ""
                 )
                 return _extract_json(response)
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError, AttributeError, TypeError, KeyError) as e:
                 logger.debug("Retry specialist AI call failed: %s", e)
                 return None
-        except Exception as e:
+        except (RuntimeError, OSError, AttributeError, TypeError, KeyError) as e:
             self._log(f"[Specialist] AI error: {e}")
             return None
 
