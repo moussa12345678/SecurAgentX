@@ -680,7 +680,10 @@ class PrototypePollutionDetector:
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-MASS_ASSIGN_FIELDS = [
+# Frozen tuple of (field, attacker value, expected echo, severity) tuples —
+# only iterated in ``MassAssignmentDetector.detect``. Never appended to or
+# modified at runtime.
+MASS_ASSIGN_FIELDS = (
     # (field, attacker value, expected echo, severity)
     ("isAdmin", True, "true", SeverityLevel.CRITICAL),
     ("is_admin", True, "true", SeverityLevel.CRITICAL),
@@ -699,7 +702,7 @@ MASS_ASSIGN_FIELDS = [
     ("ownerId", 1, '"1"', SeverityLevel.HIGH),
     ("accessLevel", "root", "root", SeverityLevel.HIGH),
     ("permissions", '["*"]', "*", SeverityLevel.HIGH),
-]
+)
 
 
 class MassAssignmentDetector:
@@ -848,6 +851,10 @@ class MassAssignmentDetector:
 # Language-specific detection patterns applied to *response bodies* (and any
 # encoded variant of them) to surface serialized objects that the server
 # accepted and is now reflecting.
+#
+# Module-level constant dict — never mutated at runtime; only iterated via
+# ``.items()`` and ``.get()`` in ``InsecureDeserializationDetector``. Kept
+# as a plain dict (nested lists inside are part of the static spec).
 DESER_SIGNATURES = {
     "java": {
         "magic_hex": "ACED0005",  # Java ObjectInputStream
@@ -894,6 +901,9 @@ DESER_SIGNATURES = {
 
 # Harmless probe payloads — these should NOT execute server-side code on a
 # patched system, but they expose class names if deserialized eagerly.
+#
+# Module-level constant dict — never mutated at runtime; only read via
+# ``HARMLESS_PROBE_PAYLOADS[...]`` in ``InsecureDeserializationDetector``.
 HARMLESS_PROBE_PAYLOADS = {
     "java_hex": "ACED0005",  # Magic bytes alone
     "python_b64": base64.b64encode(b"\x80\x04\x95").decode(),  # pickle proto 4 header
@@ -1080,6 +1090,10 @@ class InsecureDeserializationDetector:
 # Raw HTTP requests crafted to expose CL.TE / TE.CL parsing differences.
 # They are sent on a *raw socket* (no HTTP library) to keep the bytes
 # exactly as we want them.
+#
+# Module-level constant dict — never mutated at runtime; only iterated via
+# ``.items()`` in ``HTTPSmugglingDetector.detect``. Values are already
+# string literals (immutable); the dict itself is read-only by convention.
 SMUGGLING_PROBES = {
     "cl_te_smuggle": (
         "POST / HTTP/1.1\r\n"
@@ -1145,13 +1159,15 @@ class HTTPSmugglingDetector:
 
     name = "http_smuggling"
 
-    SMUGGLING_EVIDENCE = [
+    # Frozen tuple — class-level constant, only iterated for regex
+    # matching in ``_analyze``. Never mutated at runtime.
+    SMUGGLING_EVIDENCE = (
         r"400 Bad Request",
         r"invalid request",
         r"ambiguous",
         r"conflicting",
         r"chunked encoding",
-    ]
+    )
 
     def __init__(self, timeout: float = 5.0):
         self.timeout = timeout
@@ -1520,7 +1536,9 @@ class RaceConditionDetector:
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-SSTI_PROBES = [
+# Frozen tuple of (payload, expected reflection) tuples — only iterated in
+# ``SSTIDetector.detect``. Never appended to or modified at runtime.
+SSTI_PROBES = (
     # (payload, expected reflection)
     ("{{7*7}}", "49"),
     ("${7*7}", "49"),
@@ -1530,9 +1548,11 @@ SSTI_PROBES = [
     ("${7*'7'}", "7777777"),
     ("{{config}}", "Config"),
     ("{{self}}", "TemplateReference"),
-]
+)
 
-SSTI_ERROR_SIGNATURES = [
+# Frozen tuple of template-engine error regexes — only iterated in
+# ``SSTIDetector._analyze``. Never mutated at runtime.
+SSTI_ERROR_SIGNATURES = (
     r"jinja2\.exceptions\.(TemplateSyntaxError|UndefinedError|SecurityError)",
     r"Twig.{0,5}Error.{0,5}(Syntax|Runtime)",
     r"Freemarker.{0,5}template",
@@ -1541,7 +1561,7 @@ SSTI_ERROR_SIGNATURES = [
     r"Mustache.{0,5}Exception",
     r"Smarty.{0,5}",
     r"ERB.{0,5}SyntaxError",
-]
+)
 
 
 class SSTIDetector:
@@ -1721,11 +1741,14 @@ GRAPHQL_MUTATION_PROBE = """
 mutation { __typename }
 """.strip()
 
-GRAPHQL_BATCH_PROBE = [
+# Frozen tuple of GraphQL batch query dicts — only passed as ``json_body``
+# to ``HTTPClient.async_request`` (aiohttp serializes tuples as JSON
+# arrays via ``json.dumps``). Never appended to or modified at runtime.
+GRAPHQL_BATCH_PROBE = (
     {"query": "{__typename}"},
     {"query": "{__typename}"},
     {"query": "{__typename}"},
-]
+)
 
 GRAPHQL_SUBSCRIPTION_PROBE = """
 subscription { __typename }
@@ -1744,7 +1767,9 @@ class GraphQLIntrospectionDetector:
 
     name = "graphql_introspection"
 
-    GRAPHQL_PATHS = [
+    # Frozen tuple — class-level constant, only iterated in
+    # ``_discover_endpoint``. Never mutated at runtime.
+    GRAPHQL_PATHS = (
         "/graphql",
         "/v1/graphql",
         "/v2/graphql",
@@ -1753,9 +1778,11 @@ class GraphQLIntrospectionDetector:
         "/gql",
         "/graphiql",
         "/graphql/console",
-    ]
+    )
 
-    SENSITIVE_KEYWORDS = [
+    # Frozen tuple — class-level constant, only iterated for membership
+    # testing in ``_analyze_schema``. Never mutated at runtime.
+    SENSITIVE_KEYWORDS = (
         "password",
         "secret",
         "token",
@@ -1777,7 +1804,7 @@ class GraphQLIntrospectionDetector:
         "internal",
         "user_id",
         "apikey",
-    ]
+    )
 
     def __init__(self, http: Optional[HTTPClient] = None):
         self.http = http or HTTPClient()
@@ -2089,6 +2116,13 @@ class JWTAlgorithmDetector:
 
     name = "jwt_algorithm_confusion"
 
+    # Class-level constant dict — never mutated at runtime; only copied via
+    # ``dict(self.CONFUSION_PAYLOAD)`` in ``forge_tokens``. The ``iat`` and
+    # ``exp`` timestamps are evaluated once at class-definition time (so
+    # they reflect the time the module was imported, not per-call time);
+    # this is a pre-existing quirk, not a race condition. Kept as a dict
+    # because callers do ``dict(self.CONFUSION_PAYLOAD)`` then ``.update()``
+    # on the copy (never on the original).
     CONFUSION_PAYLOAD: Dict[str, Any] = {
         "user": "admin",
         "role": "admin",

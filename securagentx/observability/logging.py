@@ -28,7 +28,7 @@ from __future__ import annotations
 import logging
 import sys
 import threading
-from typing import Any, Optional
+from typing import Any, MutableMapping, Optional
 
 logger = logging.getLogger("securagentx.observability.logging")
 
@@ -148,6 +148,27 @@ def _build_processors(json_logs: bool) -> list[Any]:
     return processors
 
 
+def _safe_remove_processors_meta(
+    logger: Any, name: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
+    """Defensive variant of ``structlog.stdlib.ProcessorFormatter.remove_processors_meta``.
+
+    The upstream static method calls ``del event_dict["_record"]`` and
+    ``del event_dict["_from_structlog"]`` unconditionally. For some foreign
+    log records (e.g. ``markdown_it``'s stdlib ``LOGGER.debug`` calls),
+    structlog v26 does not populate ``_record`` before invoking the
+    formatter's processor chain, which raises ``KeyError: '_record'`` and
+    floods stderr with tracebacks. Under load this slows rendering enough
+    to break ``test_stress_500_render_html_calls_under_3s`` on CI runners.
+
+    Using ``pop(..., None)`` instead of ``del`` makes the processor
+    idempotent and safe to invoke on any event_dict.
+    """
+    event_dict.pop("_record", None)
+    event_dict.pop("_from_structlog", None)
+    return event_dict
+
+
 def setup_logging(level: str = "INFO", json_logs: bool = False) -> None:
     """Configure structlog + Python ``logging`` for the whole process.
 
@@ -194,13 +215,41 @@ def setup_logging(level: str = "INFO", json_logs: bool = False) -> None:
 
         # Bridge stdlib ``logging`` into structlog so any module using
         # ``logging.getLogger`` gets the same renderer + trace context.
+        #
+        # The final ``processor`` must be a renderer that returns a ``str``.
+        # The stock ``ProcessorFormatter.remove_processors_meta`` only strips
+        # internal keys (``_record``/``_from_structlog``) and returns a dict,
+        # so using it as ``processor`` leaves a dict as the formatted
+        # message AND raises ``KeyError: '_record'`` for foreign records
+        # (structlog v26 only sets ``_record`` for foreign records, not
+        # structlog-bound ones). That floods stderr with tracebacks under
+        # markdown_it's DEBUG logging and inflates render_html timings on
+        # CI runners (see test_stress_500_render_html_calls_under_3s).
+        #
+        # We wrap the real renderer with a defensive meta-cleanup that uses
+        # ``pop(..., None)`` so it is safe for both structlog and foreign
+        # records.
+        if json_logs:
+            _terminal_renderer: Any = structlog.processors.JSONRenderer()
+        else:
+            _terminal_renderer = structlog.dev.ConsoleRenderer(
+                colors=sys.stderr.isatty()
+            )
+
+        def _final_processor(
+            logger: Any, name: str, event_dict: MutableMapping[str, Any]
+        ) -> Any:
+            event_dict.pop("_record", None)
+            event_dict.pop("_from_structlog", None)
+            return _terminal_renderer(logger, name, event_dict)
+
         formatter = structlog.stdlib.ProcessorFormatter(
-            processor=structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             foreign_pre_chain=[
                 structlog.stdlib.add_log_level,
                 structlog.processors.TimeStamper(fmt="iso", utc=True),
                 _TraceContextProcessor(),
             ],
+            processor=_final_processor,
         )
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(formatter)
