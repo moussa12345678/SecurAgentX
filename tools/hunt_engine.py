@@ -379,8 +379,8 @@ def _detect_target_dependencies(target: str) -> List[Tuple[str, str]]:
                     m = re.match(r"^([A-Za-z0-9_.\-]+)\s*([<>=!~]+)\s*([A-Za-z0-9_.\-+]+)", line)
                     if m:
                         deps.append((m.group(1), m.group(3)))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return deps
 
 

@@ -32,7 +32,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from securagentx.scanning.scan_context import ScanContext
+    pass
 
 logger = logging.getLogger("securagentx.reasoning_phase")
 

@@ -31,9 +31,9 @@ from __future__ import annotations
 import logging
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 # Issue 32 (P8-C): TLS verification is ON by default. Set
@@ -42,7 +42,6 @@ from fastapi.responses import JSONResponse
 INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
 
 from .._auth import (
-    AuthError,
     Identity,
     auth_user_required,
     generate_token_id,
@@ -53,9 +52,6 @@ from .._models import (
     APITokenPublic,
     CreateAPITokenRequest,
     CreateAPITokenResponse,
-    MAX_TOKEN_TTL_SECONDS,
-    MIN_TOKEN_TTL_SECONDS,
-    TOKEN_NAME_MAX_LENGTH,
     error_response,
     success_response,
 )
@@ -232,7 +228,7 @@ async def list_tokens(
         rows: list[dict[str, Any]] = await token_store.list_tokens(
             identity.user_id
         )
-    except Exception as exc:
+    except Exception:
         logger.exception("token_store.list_tokens failed")
         return success_response([])  # Fail open for listing.
     items = [

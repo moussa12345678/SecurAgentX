@@ -30,10 +30,13 @@ Class:
 from __future__ import annotations
 
 import io
+import logging
 import os
 import re
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     # Constants
@@ -421,9 +424,9 @@ def _register_cjk_font() -> Optional[str]:
         try:
             pdfmetrics.registerFont(TTFont("SecurAgentXCJK", cjk_path))
             return "SecurAgentXCJK"
-        except Exception:
+        except Exception as e:
             # Fall through to the CID font strategy.
-            pass
+            logger.debug("Suppressed Exception (CJK font registration): %s", e)
 
     try:
         pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))

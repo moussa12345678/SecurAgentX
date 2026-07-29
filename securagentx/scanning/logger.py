@@ -110,8 +110,9 @@ class ChainOfThoughtLogger:
         if self.current_session and self._pending_target:
             try:
                 self.save_session(self._pending_target)
-            except Exception:
-                pass  # atexit must not raise
+            except Exception as e:
+                # atexit must not raise
+                logger.debug("Suppressed Exception (atexit save): %s", e)
 
     def get_summary(self) -> str:
         lines = ["## Chain of Thought Summary\n"]

@@ -892,8 +892,8 @@ Respond with JSON:
                         "source": "ai_reasoning",  # produced by the agent's own scoring loop
                     }
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         # Finish condition
         if action_type == "finish":
@@ -1022,8 +1022,8 @@ def _build_bug_bounty_prompt(
         try:
             available_skills = skill_registry.list_available_skills()
             missing_skills = skill_registry.get_missing_skills()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
     tools_list_str = "\n".join(tool_descriptions)
     available_list = (

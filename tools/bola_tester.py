@@ -30,6 +30,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from securagentx.utils.url import validate_url_scheme
+
 logger = logging.getLogger("securagentx.bola_tester")
 
 
@@ -127,9 +129,10 @@ class BOLATester:
         network failure.
         """
         req = urllib.request.Request(url, method="GET", headers=session.to_request_headers())
+        validate_url_scheme(url)
         start = time.monotonic()
         try:
-            with urllib.request.urlopen(req, timeout=self.config.timeout_seconds) as resp:
+            with urllib.request.urlopen(req, timeout=self.config.timeout_seconds) as resp:  # nosec B310
                 raw = resp.read(self.config.sample_body_bytes)
                 elapsed = (time.monotonic() - start) * 1000
                 return resp.status, raw.decode("utf-8", errors="replace"), elapsed
@@ -139,8 +142,8 @@ class BOLATester:
             if hasattr(e, "read"):
                 try:
                     raw = e.read(self.config.sample_body_bytes)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
             return e.code, raw.decode("utf-8", errors="replace"), elapsed
         except Exception as e:
             return -1, str(e), 0.0

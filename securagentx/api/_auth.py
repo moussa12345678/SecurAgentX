@@ -154,18 +154,84 @@ _NEG_CACHE_SENTINEL = "__not_found__"
 # ``SESSION_SECRET`` is the server-wide HMAC key used by
 # :func:`securagentx.auth.sessions.create_session_cookie` to sign the
 # ``securagentx_session`` cookie. The same secret MUST be used to verify
-# it. We resolve it lazily from ``SECURAGENTX_SESSION_SECRET`` so the
-# default is obviously insecure (``"change-me-in-production"``) and
-# production deployments set the env var (or wire
+# it. We resolve it lazily from ``SECURAGENTX_SESSION_SECRET`` and
+# **fail closed** if the secret is missing or matches a known insecure
+# default (``"change-me-in-production"``, ``""``, ``"default"``,
+# ``"secret"``, ``"password"``) or is shorter than 32 characters.
+# Production deployments MUST set the env var (or wire
 # ``app.state.session_secret`` directly in ``create_app()``).
 #
 # ``SESSION_MAX_AGE`` is the upper-bound freshness check applied by
 # :func:`verify_session_cookie`. The session payload also carries an
 # authoritative ``exp`` claim which :func:`validate_session_cookie`
 # enforces independently.
-SESSION_SECRET: str = os.environ.get(
-    "SECURAGENTX_SESSION_SECRET", "change-me-in-production"
-)
+_INSECURE_SESSION_SECRETS = {
+    "change-me-in-production",
+    "",
+    "default",
+    "secret",
+    "password",
+}
+
+
+def _resolve_session_secret() -> str:
+    """Resolve session secret, rejecting insecure defaults.
+
+    Reads ``SECURAGENTX_SESSION_SECRET`` from the environment and
+    refuses to return a secret that is missing, empty, matches a known
+    insecure default, or is shorter than 32 characters. This mirrors
+    the fail-closed stance :func:`sign_api_token` already takes for
+    ``global_salt`` (refusing ``"salt"``) — the server must not silently
+    operate with a forgeable session-signing key.
+
+    Raises:
+        ValueError: If the session secret is not configured, uses an
+            insecure default, or is shorter than 32 characters.
+
+    Returns:
+        The validated session secret string.
+    """
+    secret = os.environ.get("SECURAGENTX_SESSION_SECRET", "")
+    if not secret or secret in _INSECURE_SESSION_SECRETS:
+        raise ValueError(
+            "SECURAGENTX_SESSION_SECRET is not configured or uses an insecure "
+            "default. Set a strong, unique secret (min 32 chars) in the "
+            "SECURAGENTX_SESSION_SECRET env var."
+        )
+    if len(secret) < 32:
+        raise ValueError(
+            "SECURAGENTX_SESSION_SECRET must be at least 32 characters long."
+        )
+    return secret
+
+
+# Lazy resolution — only fails when actually needed, not at import time.
+# ``SESSION_SECRET`` is populated on first call to :func:`_get_session_secret`
+# and reused thereafter. Callers that need the secret MUST go through
+# ``_get_session_secret()`` rather than reading the module-level variable
+# directly so that misconfiguration surfaces at first use rather than
+# silently forging cookies with a default key.
+SESSION_SECRET: Optional[str] = None
+
+
+def _get_session_secret() -> str:
+    """Get the session secret, resolving it lazily on first use.
+
+    Subsequent calls return the cached value without re-reading the
+    environment. Tests that need to swap the secret can reset the
+    cache by setting ``SESSION_SECRET = None`` and updating
+    ``SECURAGENTX_SESSION_SECRET``.
+
+    Raises:
+        ValueError: If the secret cannot be resolved (see
+            :func:`_resolve_session_secret`).
+    """
+    global SESSION_SECRET
+    if SESSION_SECRET is None:
+        SESSION_SECRET = _resolve_session_secret()
+    return SESSION_SECRET
+
+
 SESSION_MAX_AGE: int = 3600  # 1 hour — itsdangerous freshness window
 
 
@@ -493,21 +559,28 @@ def verify_session_cookie(
 
     Args:
         cookie_value: Raw cookie value from the ``Cookie`` header.
-        secret_key: Server-wide signing secret. When ``None``, falls
-            back to the module-level :data:`SESSION_SECRET` (env-var
-            driven). If both are unset/empty the function returns
-            ``None`` — we **fail closed** rather than trust an
-            unsigned cookie.
+        secret_key: Server-wide signing secret. When ``None``, lazily
+            resolved from :func:`_get_session_secret` (env-var driven,
+            fails closed on insecure defaults). If resolution raises
+            ``ValueError`` (misconfigured secret) the exception
+            propagates — callers that must not raise (e.g.
+            :func:`try_auth`) should wrap the call.
 
     Returns:
         Decoded session payload dict on success, ``None`` on any
-        verification failure (bad signature, expired, tampered, or
-        no secret configured).
+        verification failure (bad signature, expired, tampered).
+
+    Raises:
+        ValueError: If no ``secret_key`` is supplied and
+            ``SECURAGENTX_SESSION_SECRET`` is missing, insecure, or
+            too short (see :func:`_resolve_session_secret`).
     """
     if not cookie_value:
         return None
-    secret = secret_key or SESSION_SECRET
+    secret = secret_key or _get_session_secret()
     if not secret:
+        # Defensive — ``_get_session_secret()`` already raises on empty
+        # secrets, but an explicit empty ``secret_key`` would land here.
         logger.warning(
             "verify_session_cookie: no session secret configured — "
             "refusing to trust cookie; set SECURAGENTX_SESSION_SECRET "
@@ -586,10 +659,19 @@ def _extract_session_cookie(
 
 async def try_auth(request: Request) -> Optional[Identity]:
     """Optional auth — attach identity if a valid token or cookie is
-    present, return ``None`` otherwise. Never raises.
+    present, return ``None`` otherwise.
 
     PentAGI's ``TryAuth`` middleware: public endpoints use this so they
     can customise their response based on whether the caller is logged in.
+
+    Raises:
+        ValueError: If no ``app.state.session_secret`` is wired and
+            ``SECURAGENTX_SESSION_SECRET`` is missing, insecure, or too
+            short (see :func:`_resolve_session_secret`). This is the
+            fail-closed path for issue #39 — the server refuses to
+            process cookies signed with a forgeable default key. Endpoints
+            that must tolerate misconfiguration in dev (e.g. health
+            checks) should not depend on this.
     """
     bearer = _extract_bearer(request.headers.get("authorization"))
     if bearer:
@@ -617,12 +699,15 @@ async def try_auth(request: Request) -> Optional[Identity]:
         token_cache.set(tid, identity)
         return identity
     # Cookie session — pull the signing secret from ``app.state``
-    # (configured by ``create_app()``) with a fallback to the
-    # env-var-driven module-level ``SESSION_SECRET``. Failing closed
-    # when no secret is configured is intentional (issue #39).
-    session_secret = getattr(
-        request.app.state, "session_secret", SESSION_SECRET
-    )
+    # (configured by ``create_app()``) with a lazy fallback to the
+    # env-var-driven ``SECURAGENTX_SESSION_SECRET``. ``_get_session_secret``
+    # is only invoked when ``app.state.session_secret`` is unset so a
+    # properly-configured app never pays the resolution cost. Failing
+    # closed (raising ``ValueError``) when no strong secret is
+    # configured is intentional (issue #39).
+    session_secret = getattr(request.app.state, "session_secret", None)
+    if not session_secret:
+        session_secret = _get_session_secret()
     sess = _extract_session_cookie(
         request.cookies, secret_key=session_secret
     )

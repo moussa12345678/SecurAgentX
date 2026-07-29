@@ -12,7 +12,7 @@ import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 from securagentx.paths import get_data_path
 
 DB_PATH = get_data_path("user_preferences.db")

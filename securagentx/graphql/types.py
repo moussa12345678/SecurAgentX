@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import strawberry
 from strawberry import field as _sf
@@ -88,7 +88,7 @@ class Settings:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "Settings":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             debug=getattr(model, "debug", False),
             ask_user=getattr(model, "ask_user", False),
             version=getattr(model, "version", ""),
@@ -107,7 +107,7 @@ class UserPreferences:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "UserPreferences":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             favorite_flows=[
                 strawberry.ID(str(fid)) for fid in getattr(model, "favorite_flows", []) or []
@@ -128,7 +128,7 @@ class FlowTemplate:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "FlowTemplate":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             user_id=strawberry.ID(str(getattr(model, "user_id", "0"))),
             title=getattr(model, "title", ""),
@@ -163,7 +163,7 @@ class Terminal:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "Terminal":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             type=TerminalType(getattr(model, "type", "primary")),
             name=getattr(model, "name", ""),
@@ -184,7 +184,7 @@ class Provider:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "Provider":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             name=getattr(model, "name", ""),
             type=ProviderType(getattr(model, "type", "openai")),
         )
@@ -204,11 +204,11 @@ class Assistant:
     @classmethod
     def from_pydantic(cls, model: Any) -> "Assistant":
         prov = getattr(model, "provider", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             title=getattr(model, "title", ""),
             status=StatusType(getattr(model, "status", "created")),
-            provider=Provider.from_pydantic(prov) if prov is not None else Provider(
+            provider=Provider.from_pydantic(prov) if prov is not None else Provider(  # type: ignore[call-arg]
                 name="", type=ProviderType.OPENAI
             ),
             flow_id=strawberry.ID(str(getattr(model, "flow_id", "0"))),
@@ -227,7 +227,7 @@ class FlowAssistant:
     def from_pydantic(cls, model: Any) -> "FlowAssistant":
         flow = getattr(model, "flow", None)
         assistant = getattr(model, "assistant", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             flow=Flow.from_pydantic(flow) if flow is not None else Flow.placeholder(),
             assistant=(
                 Assistant.from_pydantic(assistant)
@@ -249,12 +249,12 @@ class Flow:
 
     @classmethod
     def placeholder(cls) -> "Flow":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID("0"),
             title="",
             status=StatusType.CREATED,
             terminals=[],
-            provider=Provider(name="", type=ProviderType.OPENAI),
+            provider=Provider(name="", type=ProviderType.OPENAI),  # type: ignore[call-arg]
             created_at=_dt.datetime.utcnow(),
             updated_at=_dt.datetime.utcnow(),
         )
@@ -263,7 +263,7 @@ class Flow:
     def from_pydantic(cls, model: Any) -> "Flow":
         terms = getattr(model, "terminals", None) or []
         prov = getattr(model, "provider", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             title=getattr(model, "title", ""),
             status=StatusType(getattr(model, "status", "created")),
@@ -271,7 +271,7 @@ class Flow:
             provider=(
                 Provider.from_pydantic(prov)
                 if prov is not None
-                else Provider(name="", type=ProviderType.OPENAI)
+                else Provider(name="", type=ProviderType.OPENAI)  # type: ignore[call-arg]
             ),
             created_at=getattr(model, "created_at", _dt.datetime.utcnow()),
             updated_at=getattr(model, "updated_at", _dt.datetime.utcnow()),
@@ -291,7 +291,7 @@ class Subtask:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "Subtask":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             status=StatusType(getattr(model, "status", "created")),
             title=getattr(model, "title", ""),
@@ -318,7 +318,7 @@ class Task:
     @classmethod
     def from_pydantic(cls, model: Any) -> "Task":
         subs = getattr(model, "subtasks", None) or []
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             title=getattr(model, "title", ""),
             status=StatusType(getattr(model, "status", "created")),
@@ -348,7 +348,7 @@ class AssistantLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "AssistantLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             type=MessageLogType(getattr(model, "type", "answer")),
             message=getattr(model, "message", ""),
@@ -376,7 +376,7 @@ class AgentLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "AgentLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             initiator=AgentType(getattr(model, "initiator", "primary_agent")),
             executor=AgentType(getattr(model, "executor", "primary_agent")),
@@ -412,7 +412,7 @@ class MessageLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "MessageLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             type=MessageLogType(getattr(model, "type", "answer")),
             message=getattr(model, "message", ""),
@@ -449,7 +449,7 @@ class SearchLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "SearchLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             initiator=AgentType(getattr(model, "initiator", "primary_agent")),
             executor=AgentType(getattr(model, "executor", "primary_agent")),
@@ -484,7 +484,7 @@ class TerminalLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "TerminalLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             flow_id=strawberry.ID(str(getattr(model, "flow_id", "0"))),
             task_id=(
@@ -520,7 +520,7 @@ class VectorStoreLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "VectorStoreLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             initiator=AgentType(getattr(model, "initiator", "primary_agent")),
             executor=AgentType(getattr(model, "executor", "primary_agent")),
@@ -560,7 +560,7 @@ class ToolCallLog:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "ToolCallLog":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             call_id=getattr(model, "call_id", ""),
             status=ToolCallStatus(getattr(model, "status", "received")),
@@ -596,7 +596,7 @@ class Screenshot:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "Screenshot":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             flow_id=strawberry.ID(str(getattr(model, "flow_id", "0"))),
             task_id=(
@@ -626,7 +626,7 @@ class FlowFile:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "FlowFile":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=str(getattr(model, "id", "")),
             name=getattr(model, "name", ""),
             path=getattr(model, "path", ""),
@@ -649,7 +649,7 @@ class UserResource:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "UserResource":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             user_id=strawberry.ID(str(getattr(model, "user_id", "0"))),
             name=getattr(model, "name", ""),
@@ -677,7 +677,7 @@ class APIToken:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "APIToken":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             token_id=getattr(model, "token_id", ""),
             user_id=strawberry.ID(str(getattr(model, "user_id", "0"))),
@@ -699,7 +699,7 @@ class APITokenWithSecret(APIToken):
     @classmethod
     def from_pydantic(cls, model: Any) -> "APITokenWithSecret":
         base = APIToken.from_pydantic(model)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=base.id,
             token_id=base.token_id,
             user_id=base.user_id,
@@ -738,7 +738,7 @@ class PromptValidationResult:
     @classmethod
     def from_pydantic(cls, model: Any) -> "PromptValidationResult":
         et = getattr(model, "error_type", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             result=ResultType(getattr(model, "result", "success")),
             error_type=(
                 PromptValidationErrorType(et) if et is not None else None
@@ -757,7 +757,7 @@ class DefaultPrompt:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "DefaultPrompt":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             type=PromptType(getattr(model, "type", "assistant")),
             template=getattr(model, "template", ""),
             variables=list(getattr(model, "variables", []) or []),
@@ -774,7 +774,7 @@ class UserPrompt:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "UserPrompt":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             type=PromptType(getattr(model, "type", "assistant")),
             template=getattr(model, "template", ""),
@@ -790,7 +790,7 @@ class AgentPrompt:
     @classmethod
     def from_pydantic(cls, model: Any) -> "AgentPrompt":
         sys_ = getattr(model, "system", None)
-        return cls(system=DefaultPrompt.from_pydantic(sys_) if sys_ else DefaultPrompt(
+        return cls(system=DefaultPrompt.from_pydantic(sys_) if sys_ else DefaultPrompt(  # type: ignore[call-arg]
             type=PromptType.ASSISTANT, template="", variables=[]
         ))
 
@@ -804,8 +804,8 @@ class AgentPrompts:
     def from_pydantic(cls, model: Any) -> "AgentPrompts":
         sys_ = getattr(model, "system", None)
         human = getattr(model, "human", None)
-        empty = DefaultPrompt(type=PromptType.ASSISTANT, template="", variables=[])
-        return cls(
+        empty = DefaultPrompt(type=PromptType.ASSISTANT, template="", variables=[])  # type: ignore[call-arg]
+        return cls(  # type: ignore[call-arg]
             system=DefaultPrompt.from_pydantic(sys_) if sys_ else empty,
             human=DefaultPrompt.from_pydantic(human) if human else empty,
         )
@@ -831,9 +831,9 @@ class AgentsPrompts:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "AgentsPrompts":
-        empty_prompt = DefaultPrompt(type=PromptType.ASSISTANT, template="", variables=[])
-        empty_single = AgentPrompt(system=empty_prompt)
-        empty_pair = AgentPrompts(system=empty_prompt, human=empty_prompt)
+        empty_prompt = DefaultPrompt(type=PromptType.ASSISTANT, template="", variables=[])  # type: ignore[call-arg]
+        empty_single = AgentPrompt(system=empty_prompt)  # type: ignore[call-arg]
+        empty_pair = AgentPrompts(system=empty_prompt, human=empty_prompt)  # type: ignore[call-arg]
 
         def _single(name: str) -> AgentPrompt:
             sub = getattr(model, name, None)
@@ -843,7 +843,7 @@ class AgentsPrompts:
             sub = getattr(model, name, None)
             return AgentPrompts.from_pydantic(sub) if sub else empty_pair
 
-        return cls(
+        return cls(  # type: ignore[call-arg]
             primary_agent=_single("primary_agent"),
             assistant=_single("assistant"),
             pentester=_pair("pentester"),
@@ -879,13 +879,13 @@ class ToolsPrompts:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "ToolsPrompts":
-        empty = DefaultPrompt(type=PromptType.ASSISTANT, template="", variables=[])
+        empty = DefaultPrompt(type=PromptType.ASSISTANT, template="", variables=[])  # type: ignore[call-arg]
 
         def _g(name: str) -> DefaultPrompt:
             sub = getattr(model, name, None)
             return DefaultPrompt.from_pydantic(sub) if sub else empty
 
-        return cls(
+        return cls(  # type: ignore[call-arg]
             get_flow_description=_g("get_flow_description"),
             get_task_description=_g("get_task_description"),
             get_execution_logs=_g("get_execution_logs"),
@@ -910,7 +910,7 @@ class DefaultPrompts:
     def from_pydantic(cls, model: Any) -> "DefaultPrompts":
         agents = getattr(model, "agents", None)
         tools = getattr(model, "tools", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             agents=AgentsPrompts.from_pydantic(agents) if agents else AgentsPrompts.from_pydantic(
                 type("M", (), {})()
             ),
@@ -929,7 +929,7 @@ class PromptsConfig:
     def from_pydantic(cls, model: Any) -> "PromptsConfig":
         default = getattr(model, "default", None)
         user = getattr(model, "user_defined", None) or []
-        return cls(
+        return cls(  # type: ignore[call-arg]
             default=DefaultPrompts.from_pydantic(default) if default else (
                 DefaultPrompts.from_pydantic(type("M", (), {})())
             ),
@@ -951,7 +951,7 @@ class TestResult:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "TestResult":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             name=getattr(model, "name", ""),
             type=getattr(model, "type", ""),
             result=bool(getattr(model, "result", False)),
@@ -969,7 +969,7 @@ class AgentTestResult:
     @classmethod
     def from_pydantic(cls, model: Any) -> "AgentTestResult":
         tests = getattr(model, "tests", []) or []
-        return cls(tests=[TestResult.from_pydantic(t) for t in tests])
+        return cls(tests=[TestResult.from_pydantic(t) for t in tests])  # type: ignore[call-arg]
 
 
 @_stype
@@ -990,13 +990,13 @@ class ProviderTestResult:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "ProviderTestResult":
-        empty = AgentTestResult(tests=[])
+        empty = AgentTestResult(tests=[])  # type: ignore[call-arg]
 
         def _g(name: str) -> AgentTestResult:
             sub = getattr(model, name, None)
             return AgentTestResult.from_pydantic(sub) if sub else empty
 
-        return cls(
+        return cls(  # type: ignore[call-arg]
             simple=_g("simple"),
             simple_json=_g("simple_json"),
             primary_agent=_g("primary_agent"),
@@ -1026,7 +1026,7 @@ class UsageStats:
 
     @classmethod
     def empty(cls) -> "UsageStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             total_usage_in=0,
             total_usage_out=0,
             total_usage_cache_in=0,
@@ -1037,7 +1037,7 @@ class UsageStats:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "UsageStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             total_usage_in=int(getattr(model, "total_usage_in", 0)),
             total_usage_out=int(getattr(model, "total_usage_out", 0)),
             total_usage_cache_in=int(getattr(model, "total_usage_cache_in", 0)),
@@ -1054,11 +1054,11 @@ class ToolcallsStats:
 
     @classmethod
     def empty(cls) -> "ToolcallsStats":
-        return cls(total_count=0, total_duration_seconds=0.0)
+        return cls(total_count=0, total_duration_seconds=0.0)  # type: ignore[call-arg]
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "ToolcallsStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             total_count=int(getattr(model, "total_count", 0)),
             total_duration_seconds=float(getattr(model, "total_duration_seconds", 0.0)),
         )
@@ -1073,7 +1073,7 @@ class FlowsStats:
 
     @classmethod
     def empty(cls) -> "FlowsStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             total_flows_count=0,
             total_tasks_count=0,
             total_subtasks_count=0,
@@ -1082,7 +1082,7 @@ class FlowsStats:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "FlowsStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             total_flows_count=int(getattr(model, "total_flows_count", 0)),
             total_tasks_count=int(getattr(model, "total_tasks_count", 0)),
             total_subtasks_count=int(getattr(model, "total_subtasks_count", 0)),
@@ -1098,11 +1098,11 @@ class FlowStats:
 
     @classmethod
     def empty(cls) -> "FlowStats":
-        return cls(total_tasks_count=0, total_subtasks_count=0, total_assistants_count=0)
+        return cls(total_tasks_count=0, total_subtasks_count=0, total_assistants_count=0)  # type: ignore[call-arg]
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "FlowStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             total_tasks_count=int(getattr(model, "total_tasks_count", 0)),
             total_subtasks_count=int(getattr(model, "total_subtasks_count", 0)),
             total_assistants_count=int(getattr(model, "total_assistants_count", 0)),
@@ -1117,7 +1117,7 @@ class DailyUsageStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "DailyUsageStats":
         stats = getattr(model, "stats", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             date=getattr(model, "date", _dt.datetime.utcnow()),
             stats=UsageStats.from_pydantic(stats) if stats else UsageStats.empty(),
         )
@@ -1131,7 +1131,7 @@ class ProviderUsageStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "ProviderUsageStats":
         stats = getattr(model, "stats", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             provider=getattr(model, "provider", ""),
             stats=UsageStats.from_pydantic(stats) if stats else UsageStats.empty(),
         )
@@ -1146,7 +1146,7 @@ class ModelUsageStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "ModelUsageStats":
         stats = getattr(model, "stats", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             model=getattr(model, "model", ""),
             provider=getattr(model, "provider", ""),
             stats=UsageStats.from_pydantic(stats) if stats else UsageStats.empty(),
@@ -1164,7 +1164,7 @@ class ModelAgentsUsageStats:
     def from_pydantic(cls, model: Any) -> "ModelAgentsUsageStats":
         stats = getattr(model, "stats", None)
         ats = getattr(model, "agent_types", []) or []
-        return cls(
+        return cls(  # type: ignore[call-arg]
             model=getattr(model, "model", ""),
             provider=getattr(model, "provider", ""),
             agent_types=[AgentType(a) for a in ats],
@@ -1180,7 +1180,7 @@ class AgentTypeUsageStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "AgentTypeUsageStats":
         stats = getattr(model, "stats", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             agent_type=AgentType(getattr(model, "agent_type", "primary_agent")),
             stats=UsageStats.from_pydantic(stats) if stats else UsageStats.empty(),
         )
@@ -1194,7 +1194,7 @@ class DailyToolcallsStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "DailyToolcallsStats":
         stats = getattr(model, "stats", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             date=getattr(model, "date", _dt.datetime.utcnow()),
             stats=ToolcallsStats.from_pydantic(stats) if stats else ToolcallsStats.empty(),
         )
@@ -1210,7 +1210,7 @@ class FunctionToolcallsStats:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "FunctionToolcallsStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             function_name=getattr(model, "function_name", ""),
             is_agent=bool(getattr(model, "is_agent", False)),
             total_count=int(getattr(model, "total_count", 0)),
@@ -1227,7 +1227,7 @@ class DailyFlowsStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "DailyFlowsStats":
         stats = getattr(model, "stats", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             date=getattr(model, "date", _dt.datetime.utcnow()),
             stats=FlowsStats.from_pydantic(stats) if stats else FlowsStats.empty(),
         )
@@ -1242,7 +1242,7 @@ class SubtaskExecutionStats:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "SubtaskExecutionStats":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             subtask_id=strawberry.ID(str(getattr(model, "subtask_id", "0"))),
             subtask_title=getattr(model, "subtask_title", ""),
             total_duration_seconds=float(getattr(model, "total_duration_seconds", 0.0)),
@@ -1261,7 +1261,7 @@ class TaskExecutionStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "TaskExecutionStats":
         subs = getattr(model, "subtasks", []) or []
-        return cls(
+        return cls(  # type: ignore[call-arg]
             task_id=strawberry.ID(str(getattr(model, "task_id", "0"))),
             task_title=getattr(model, "task_title", ""),
             total_duration_seconds=float(getattr(model, "total_duration_seconds", 0.0)),
@@ -1282,7 +1282,7 @@ class FlowExecutionStats:
     @classmethod
     def from_pydantic(cls, model: Any) -> "FlowExecutionStats":
         tasks = getattr(model, "tasks", []) or []
-        return cls(
+        return cls(  # type: ignore[call-arg]
             flow_id=strawberry.ID(str(getattr(model, "flow_id", "0"))),
             flow_title=getattr(model, "flow_title", ""),
             total_duration_seconds=float(getattr(model, "total_duration_seconds", 0.0)),
@@ -1303,7 +1303,7 @@ class ModelPrice:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "ModelPrice":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             input=float(getattr(model, "input", 0.0)),
             output=float(getattr(model, "output", 0.0)),
             cache_read=float(getattr(model, "cache_read", 0.0)),
@@ -1319,7 +1319,7 @@ class ReasoningConfig:
     @classmethod
     def from_pydantic(cls, model: Any) -> "ReasoningConfig":
         eff = getattr(model, "effort", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             effort=ReasoningEffort(eff) if eff is not None else None,
             max_tokens=getattr(model, "max_tokens", None),
         )
@@ -1344,7 +1344,7 @@ class AgentConfig:
     def from_pydantic(cls, model: Any) -> "AgentConfig":
         reasoning = getattr(model, "reasoning", None)
         price = getattr(model, "price", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             model=getattr(model, "model", ""),
             max_tokens=getattr(model, "max_tokens", None),
             temperature=getattr(model, "temperature", None),
@@ -1380,8 +1380,8 @@ class AgentsConfig:
     def from_pydantic(cls, model: Any) -> "AgentsConfig":
         def _g(name: str) -> AgentConfig:
             sub = getattr(model, name, None)
-            return AgentConfig.from_pydantic(sub) if sub else AgentConfig(model="")
-        return cls(
+            return AgentConfig.from_pydantic(sub) if sub else AgentConfig(model="")  # type: ignore[call-arg]
+        return cls(  # type: ignore[call-arg]
             simple=_g("simple"),
             simple_json=_g("simple_json"),
             primary_agent=_g("primary_agent"),
@@ -1410,7 +1410,7 @@ class ProviderConfig:
     @classmethod
     def from_pydantic(cls, model: Any) -> "ProviderConfig":
         agents = getattr(model, "agents", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=strawberry.ID(str(getattr(model, "id", "0"))),
             name=getattr(model, "name", ""),
             type=ProviderType(getattr(model, "type", "openai")),
@@ -1433,7 +1433,7 @@ class ModelConfig:
     @classmethod
     def from_pydantic(cls, model: Any) -> "ModelConfig":
         price = getattr(model, "price", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             name=getattr(model, "name", ""),
             description=getattr(model, "description", None),
             release_date=getattr(model, "release_date", None),
@@ -1461,7 +1461,7 @@ class ProvidersModelsList:
             lst = getattr(model, name, None) or []
             return [ModelConfig.from_pydantic(m) for m in lst] or None
 
-        return cls(
+        return cls(  # type: ignore[call-arg]
             openai=_g("openai") or [],
             anthropic=_g("anthropic") or [],
             gemini=_g("gemini") or [],
@@ -1490,7 +1490,7 @@ class ProvidersReadinessStatus:
 
     @classmethod
     def from_pydantic(cls, model: Any) -> "ProvidersReadinessStatus":
-        return cls(
+        return cls(  # type: ignore[call-arg]
             openai=bool(getattr(model, "openai", False)),
             anthropic=bool(getattr(model, "anthropic", False)),
             gemini=bool(getattr(model, "gemini", False)),
@@ -1523,7 +1523,7 @@ class DefaultProvidersConfig:
             sub = getattr(model, name, None)
             return ProviderConfig.from_pydantic(sub) if sub else None
 
-        empty = ProviderConfig(
+        empty = ProviderConfig(  # type: ignore[call-arg]
             id=strawberry.ID("0"),
             name="",
             type=ProviderType.OPENAI,
@@ -1531,7 +1531,7 @@ class DefaultProvidersConfig:
             created_at=_dt.datetime.utcnow(),
             updated_at=_dt.datetime.utcnow(),
         )
-        return cls(
+        return cls(  # type: ignore[call-arg]
             openai=_g("openai") or empty,
             anthropic=_g("anthropic") or empty,
             gemini=_g("gemini"),
@@ -1558,7 +1558,7 @@ class ProvidersConfig:
         default = getattr(model, "default", None)
         user = getattr(model, "user_defined", None) or []
         models = getattr(model, "models", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             enabled=(
                 ProvidersReadinessStatus.from_pydantic(enabled)
                 if enabled
@@ -1651,7 +1651,7 @@ class KnowledgeDocument:
     def from_pydantic(cls, model: Any) -> "KnowledgeDocument":
         gt = getattr(model, "guide_type", None)
         at = getattr(model, "answer_type", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             id=str(getattr(model, "id", "")),
             doc_type=KnowledgeDocType(getattr(model, "doc_type", "answer")),
             content=getattr(model, "content", ""),
@@ -1690,12 +1690,12 @@ class KnowledgeDocumentWithScore:
     @classmethod
     def from_pydantic(cls, model: Any) -> "KnowledgeDocumentWithScore":
         doc = getattr(model, "document", None)
-        return cls(
+        return cls(  # type: ignore[call-arg]
             score=float(getattr(model, "score", 0.0)),
             document=(
                 KnowledgeDocument.from_pydantic(doc)
                 if doc is not None
-                else KnowledgeDocument(
+                else KnowledgeDocument(  # type: ignore[call-arg]
                     id="",
                     doc_type=KnowledgeDocType.ANSWER,
                     content="",

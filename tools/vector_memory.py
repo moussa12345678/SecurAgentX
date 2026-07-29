@@ -11,7 +11,6 @@ import hashlib
 import json
 import logging
 import sqlite3
-from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -31,19 +30,9 @@ except ImportError:
     logger.info("ChromaDB not installed — using SQLite FTS5 fallback (zero deps).")
 
 
-@dataclass
-class MemoryEntry:
-    """Single memory entry with metadata."""
-
-    id: str
-    content: str  # Text to embed (searchable)
-    target: str  # target domain/IP
-    category: str  # finding, conversation, decision, tool_result
-    timestamp: str
-    metadata: Dict[str, Any]  # Additional metadata
-
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+# MemoryEntry is defined canonically in securagentx.memory; this module
+# previously held a duplicate (unused, different field shape) which has been
+# removed.  Consumers should import MemoryEntry from securagentx.memory.
 
 
 class VectorMemory:
@@ -93,7 +82,7 @@ class VectorMemory:
     def _generate_id(self, content: str, target: str, timestamp: str) -> str:
         """Generate unique ID from content hash."""
         hash_input = f"{content}{target}{timestamp}"
-        return hashlib.md5(hash_input.encode()).hexdigest()[:16]
+        return hashlib.sha256(hash_input.encode()).hexdigest()[:16]
 
     def add_memory(
         self, content: str, target: str, category: str = "general", metadata: Dict[str, Any] = None
@@ -349,7 +338,7 @@ class VectorMemory:
             timestamp = datetime.now(timezone.utc).isoformat()
 
             # Dedup: hash content+target to get a stable ID
-            dedup_hash = hashlib.md5(f"{content}{target.lower().strip()}".encode()).hexdigest()[:16]
+            dedup_hash = hashlib.sha256(f"{content}{target.lower().strip()}".encode()).hexdigest()[:16]
             dedup_rowid = int(dedup_hash, 16) % (2**63)
 
             with sqlite3.connect(str(self._fts_db())) as conn:

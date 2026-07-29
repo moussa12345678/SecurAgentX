@@ -36,14 +36,12 @@ from __future__ import annotations
 
 import ast
 import asyncio
-import base64
 import json
 import logging
 import re
-import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 logger = logging.getLogger("securagentx.supply_chain_analyzer")
 
@@ -793,8 +791,8 @@ def lookup_cves(components: List[Component]) -> List[Finding]:
                             cve_id=cve_id,
                         )
                     )
-            except (ValueError, Exception):
-                pass
+            except (ValueError, Exception) as e:
+                logger.debug("Suppressed (ValueError: %s", e)
     return findings
 
 

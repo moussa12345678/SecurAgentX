@@ -12,14 +12,12 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 if TYPE_CHECKING:
     from securagentx.scanning.scan_context import ScanContext
 
-import yaml
 
 logger = logging.getLogger("securagentx.prompt_builder")
 
@@ -89,8 +87,8 @@ def _get_relevant_few_shots(ctx: "ScanContext", max_traces: int = 3) -> List[Dic
                 vuln_type = belief.metadata.get("vuln_type") or belief.metadata.get("vulnerability_type")
                 if vuln_type:
                     vuln_types.add(vuln_type.lower())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
     # From findings
     for finding in ctx.all_findings[-5:]:  # Last 5 findings
@@ -387,7 +385,7 @@ Do NOT attempt to run a scan. Respond naturally in the user's language (English 
     def _build_memory_context(self, ctx: "ScanContext", user_input: str) -> str:
         """Build semantic memory + related memories context."""
         try:
-            from tools.vector_memory import get_context_for_ai, recall
+            from tools.vector_memory import get_context_for_ai
 
             semantic_context = get_context_for_ai(
                 current_query=user_input,

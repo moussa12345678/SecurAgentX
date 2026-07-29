@@ -59,7 +59,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from pydantic import BaseModel, Field, ValidationError
 

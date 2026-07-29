@@ -113,8 +113,8 @@ def mine_parameters(
                     "reflected": reflected,
                     "base_status": baseline_status,
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         return None
 
     with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:

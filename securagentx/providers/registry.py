@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Callable, Dict
+from typing import Callable
 
 from securagentx.providers.base import (
     Provider,
@@ -257,7 +257,6 @@ class ProviderRegistry:
 def _bedrock_factory(config: ProviderConfig | None) -> Provider:
     """Construct a :class:`BedrockProvider` from env + optional config."""
     from securagentx.providers.bedrock import (
-        BEDROCK_DEFAULT_MODEL,
         BedrockProvider,
         resolve_auth_from_env,
     )

@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -133,7 +132,7 @@ def make_user_hash(name: str) -> str:
     value = name + current_time
     salt = _USER_HASH_SALT
     payload = (current_time + value + salt).encode("utf-8")
-    return hashlib.md5(payload).hexdigest()  # noqa: S324 — byte-compat with Go
+    return hashlib.sha256(payload).hexdigest()  # SHA-256 (was MD5, P2-A security fix)
 
 
 # ---------------------------------------------------------------------------

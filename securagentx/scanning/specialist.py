@@ -390,7 +390,6 @@ Respond ONLY with valid JSON. No extra text."""
             WorkerResult.
         """
         import asyncio
-        from pathlib import Path
 
         from tools.tool_registry import registry
 

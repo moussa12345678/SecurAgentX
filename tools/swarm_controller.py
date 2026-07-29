@@ -183,8 +183,8 @@ class SwarmController:
                     import json
 
                     config = json.loads(parts[2].strip())
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
 
             target = SwarmTarget(
                 target_id=f"swarm_{i}_{uuid4().hex[:8]}",

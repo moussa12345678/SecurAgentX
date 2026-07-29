@@ -43,6 +43,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from securagentx.utils.url import validate_url_scheme
+
 logger = logging.getLogger("securagentx.active_fuzzer")
 
 
@@ -169,6 +171,7 @@ class BaselineCapture:
             sep = "&" if "?" in url else "?"
             full_url = f"{url}{sep}{qs}"
 
+        validate_url_scheme(full_url)
         req_headers = {"User-Agent": self.config.user_agent}
         if headers:
             req_headers.update(headers)
@@ -180,7 +183,7 @@ class BaselineCapture:
 
         start = time.monotonic()
         try:
-            with urllib.request.urlopen(req, timeout=self.config.timeout_seconds) as resp:
+            with urllib.request.urlopen(req, timeout=self.config.timeout_seconds) as resp:  # nosec B310
                 raw = resp.read(self.config.max_body_capture)
                 elapsed = (time.monotonic() - start) * 1000
                 resp_headers = {k.lower(): v for k, v in resp.headers.items()}
@@ -342,6 +345,7 @@ class ActiveFuzzer:
             sep = "&" if "?" in url else "?"
             full_url = f"{url}{sep}{qs}"
 
+        validate_url_scheme(full_url)
         req_headers = {"User-Agent": self.config.user_agent}
         if headers:
             req_headers.update(headers)
@@ -354,7 +358,7 @@ class ActiveFuzzer:
         for attempt in range(self.config.max_retries):
             try:
                 start = time.monotonic()
-                with urllib.request.urlopen(req, timeout=self.config.timeout_seconds) as resp:
+                with urllib.request.urlopen(req, timeout=self.config.timeout_seconds) as resp:  # nosec B310
                     raw = resp.read(self.config.max_body_capture)
                     elapsed = (time.monotonic() - start) * 1000
                     return resp.status, raw.decode("utf-8", errors="replace"), elapsed
@@ -369,8 +373,8 @@ class ActiveFuzzer:
                 if hasattr(e, "read"):
                     try:
                         raw = e.read(self.config.max_body_capture)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Suppressed Exception: %s", e)
                 return e.code, raw.decode("utf-8", errors="replace"), elapsed
             except Exception as e:
                 if attempt < self.config.max_retries - 1:

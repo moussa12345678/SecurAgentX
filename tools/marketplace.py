@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from securagentx.utils.url import validate_url_scheme
+
 logger = logging.getLogger("securagentx.marketplace")
 
 # Default marketplace index (a JSON file in a known GitHub repo)
@@ -120,10 +122,11 @@ class Marketplace:
         try:
             import urllib.request
 
+            validate_url_scheme(self.index_url)
             req = urllib.request.Request(
                 self.index_url, headers={"User-Agent": "SecurAgentX-Marketplace/1.0"}
             )
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
                 text = resp.read().decode("utf-8")
             self._index = self._parse_index(text)
             self._index_loaded_at = time.time()

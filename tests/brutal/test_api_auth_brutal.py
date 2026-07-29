@@ -104,6 +104,9 @@ def _reset_auth_state():
     api_auth.derive_signing_key.cache_clear()
     api_auth.token_cache = api_auth.TokenCache()
     api_auth.user_cache = api_auth.UserCache()
+    # Force lazy re-resolution of SESSION_SECRET so tests that
+    # monkeypatch the env var see the new value.
+    api_auth.SESSION_SECRET = None
     yield
     # Final cleanup (in case a test registered a DB lookup).
     tk.token_status_cache.set_db_lookup(None)
@@ -436,7 +439,7 @@ def session_cookie(app_state):
     which enforces the itsdangerous HMAC signature. The opaque
     ``session-<uid>-<exp>`` placeholder used previously is no longer
     accepted. We mint a real signed cookie for the mock ``alice`` user
-    using the module-level ``SESSION_SECRET`` (the same fallback used by
+    using the lazily-resolved session secret (the same path used by
     ``try_auth`` when ``app.state.session_secret`` is unset).
     """
     from securagentx.auth.sessions import create_session_cookie
@@ -447,7 +450,7 @@ def session_cookie(app_state):
         "name": "alice",
     }
     cookie_value = create_session_cookie(
-        user, secret_key=api_auth.SESSION_SECRET, ttl_seconds=3600,
+        user, secret_key=api_auth._get_session_secret(), ttl_seconds=3600,
     )
     return {"Cookie": f"securagentx_session={cookie_value}"}
 
@@ -1922,9 +1925,9 @@ class TestOAuthUserCreation:
 
         The route layer enforces this by looking up users by email.
         Here we verify the make_user_hash generates a deterministic-ish
-        32-char hex hash."""
+        64-char hex hash (SHA-256, migrated from MD5 in P2-A)."""
         h = make_user_hash("alice@example.com")
-        assert len(h) == 32
+        assert len(h) == 64
         assert all(c in "0123456789abcdef" for c in h)
 
 

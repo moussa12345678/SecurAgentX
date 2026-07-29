@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable
-from pathlib import Path
+from typing import Dict, List, Optional, Callable
 import yaml
 
 from .types import (
-    RiskLevel, AIAction, MissionContext, RiskAssessment
+    RiskLevel, AIAction, RiskAssessment
 )
 
 logger = logging.getLogger("securagentx.governance")
@@ -48,12 +46,6 @@ class GovernancePolicy:
     auto_approve_conditions: List[str] = field(default_factory=list)
     max_concurrent: int = 5
     rate_limit_rps: float = 10.0
-
-
-@dataclass
-class RiskAssessment:
-    level: str
-    factors: Dict[str, Any] = field(default_factory=dict)
 
 
 class GovernanceGate:
@@ -300,12 +292,6 @@ class GovernanceGate:
         }
         self.audit_log.append(entry)
         logger.info(f"Governance: {decision.decision.value} - {action.tool} on {action.target} - {decision.rationale}")
-
-
-@dataclass
-class RiskAssessment:
-    level: str
-    factors: Dict[str, Any] = field(default_factory=dict)
 
 
 # Export

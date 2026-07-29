@@ -47,7 +47,7 @@ import os
 import secrets
 import time
 from typing import Any, Optional, Protocol
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import urlparse
 
 logger = logging.getLogger("securagentx.auth.oauth")
 

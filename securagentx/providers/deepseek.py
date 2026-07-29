@@ -33,7 +33,6 @@ Key features ported from the Go original
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import secrets
@@ -50,7 +49,6 @@ from securagentx.providers.base import (
     ModelConfig,
     ModelsConfig,
     PriceInfo,
-    Provider,
     ProviderConfig,
     ProviderOptionsType,
     ProviderType,

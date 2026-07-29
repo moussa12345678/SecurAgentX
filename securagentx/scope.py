@@ -14,7 +14,6 @@ import os
 import re
 from pathlib import Path
 from typing import Optional, Set
-from urllib.parse import urlparse
 
 logger = logging.getLogger("securagentx.scope")
 

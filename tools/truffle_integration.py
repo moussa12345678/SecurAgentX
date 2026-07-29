@@ -7,9 +7,12 @@ tools/truffle_integration.py — Secret Detection
 
 import asyncio
 import json
+import logging
 import time
 from pathlib import Path
 from typing import List, Union
+
+logger = logging.getLogger(__name__)
 
 from tools.tool_registry import (
     BaseTool,
@@ -154,8 +157,8 @@ class TrufflehogTool(BaseTool):
                         findings.append(finding)
                     except json.JSONDecodeError:
                         continue
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         # Generate summary
         verified_count = sum(1 for f in findings if f.get("verified"))

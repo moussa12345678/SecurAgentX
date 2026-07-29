@@ -26,7 +26,7 @@ from typing import Any, AsyncIterator, Optional, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from securagentx.agents.base import AgentContext, AgentType
+from securagentx.agents.base import AgentContext
 
 logger = logging.getLogger("securagentx.agents.assistant")
 

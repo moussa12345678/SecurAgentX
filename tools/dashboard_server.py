@@ -1170,8 +1170,8 @@ def start_dashboard(
     if open_browser:
         try:
             webbrowser.open(url)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
     return port, thread
 

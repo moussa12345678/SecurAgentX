@@ -14,11 +14,8 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from rich.align import Align
-from rich.box import ROUNDED
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
 logger = logging.getLogger("securagentx.overlay")
 
@@ -700,8 +697,8 @@ class SettingsOverlay:
                             models.append(mid)
                     elif isinstance(item, str):
                         models.append(item)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         now = time.time()
         if models:
@@ -734,8 +731,8 @@ class SettingsOverlay:
                 import agent
 
                 agent._agent_instance = None
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
             # If we have an agent, preserve history but re-init client
             if self.agent:

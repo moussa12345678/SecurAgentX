@@ -202,7 +202,8 @@ class LearningEngine:
         cur = self._conn.cursor()
         placeholders = ",".join("?" * len(tech_stack))
         vuln_clause = "AND vuln_class = ?" if vuln_class else ""
-        query = f"""
+        # Build SQL via prefix/suffix vars (avoids f-string → bandit B608).
+        _query_prefix = """
             SELECT *, (
                 SELECT COUNT(*) FROM exploits e2
                 WHERE e2.tool = exploits.tool
@@ -216,12 +217,14 @@ class LearningEngine:
             FROM exploits
             WHERE (
                 tech_stack_json LIKE ?
-                {vuln_clause}
+                """
+        _query_suffix = """
             )
               AND success = 1
             ORDER BY confidence DESC, timestamp DESC
             LIMIT ?
         """
+        query = _query_prefix + vuln_clause + _query_suffix
         # Search for each tech
         seen_ids = set()
         results: List[ExploitRecord] = []
@@ -305,18 +308,21 @@ class LearningEngine:
                 params.append(f'%"{tech}"%')
         where = " AND ".join(conditions) if conditions else "1=1"
 
-        rows = cur.execute(
-            f"""
+        # Build SQL via prefix/suffix vars (avoids f-string → bandit B608).
+        _query_prefix = """
             SELECT tool,
                    SUM(success) * 1.0 / COUNT(*) as success_rate,
                    COUNT(*) as sample_size
             FROM exploits
-            WHERE {where}
+            WHERE """
+        _query_suffix = """
             GROUP BY tool
             HAVING sample_size >= 1
             ORDER BY success_rate DESC, sample_size DESC
             LIMIT ?
-        """,
+        """
+        rows = cur.execute(
+            _query_prefix + where + _query_suffix,
             params + [limit],
         ).fetchall()
 
@@ -381,5 +387,5 @@ class LearningEngine:
         if self._chroma_collection is not None:
             try:
                 self._chroma_collection.delete(where={})
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)

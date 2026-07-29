@@ -24,7 +24,7 @@ Design notes
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Optional, Protocol, runtime_checkable
 
 from securagentx.agents.base import AgentContext, AgentType
 

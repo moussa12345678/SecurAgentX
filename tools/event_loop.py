@@ -42,8 +42,8 @@ def _cleanup() -> None:
     if _loop is not None and not _loop.is_closed():
         try:
             _loop.call_soon_threadsafe(_loop.stop)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
 
 def get_shared_loop() -> asyncio.AbstractEventLoop:

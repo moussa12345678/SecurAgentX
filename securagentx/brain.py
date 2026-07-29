@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable, Awaitable
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from securagentx.types import (
@@ -18,7 +17,6 @@ from securagentx.types import (
 )
 from securagentx.constitution_engine import ConstitutionalAIEngine
 from securagentx.memory import CognitiveMemoryManager
-from securagentx.governance import GovernanceGate
 from securagentx.tools import ToolRegistry
 
 logger = logging.getLogger("securagentx.brain")

@@ -232,11 +232,6 @@ class ConstitutionalGuidance:
         }
 
 
-class RiskAssessment:
-    level: str
-    factors: Dict[str, Any] = field(default_factory=dict)
-
-
 @dataclass
 class LoopConfig:
     """การตั้งค่าลูป"""

@@ -436,8 +436,8 @@ class ContainerCleanup:
                     continue
                 try:
                     await self.network.disconnect_container(name, ep_id, force=True)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
             try:
                 await self.network.remove_network(name)
                 removed += 1

@@ -114,7 +114,7 @@ class SBOMParser:
                 version=ver,
                 type="pip",
                 purl=f"pkg:pip/{name}@{ver}",
-                checksum=hashlib.md5(f"{name}@{ver}".encode()).hexdigest()[:12],
+                checksum=hashlib.sha256(f"{name}@{ver}".encode()).hexdigest()[:12],
             )
         return None
 
@@ -131,7 +131,7 @@ class SBOMParser:
                             type="npm",
                             path=str(path),
                             purl=f"pkg:npm/{name}@{ver.strip('^~>=< ')}",
-                            checksum=hashlib.md5(f"{name}@{ver}".encode()).hexdigest()[:12],
+                            checksum=hashlib.sha256(f"{name}@{ver}".encode()).hexdigest()[:12],
                         )
                     )
         except Exception as e:
@@ -221,8 +221,8 @@ class SBOMParser:
                                     purl=f"pkg:pip/{name}@{ver}",
                                 )
                             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         return pkgs
 
     def _parse_dotnet(self, path: Path) -> List[Package]:
@@ -242,8 +242,8 @@ class SBOMParser:
                         purl=f"pkg:nuget/{match.group(1)}@{match.group(2)}",
                     )
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         return pkgs
 
 

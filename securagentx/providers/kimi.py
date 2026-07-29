@@ -55,19 +55,16 @@ Key features ported from the Go original
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any, List, Optional
 
 from securagentx.providers._openai_compat import (
     OpenAICompatProvider,
-    make_generate_tool_call_id,
 )
 from securagentx.providers.base import (
     AgentConfig,
     ModelConfig,
     PriceInfo,
     ProviderConfig,
-    ProviderOptionsType,
     ProviderType,
 )
 

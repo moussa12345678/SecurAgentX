@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional
 from datetime import datetime
 
 from .constitution import (
-    Constitution, ConstitutionalArticle, ConstitutionalPrinciple,
-    ConstitutionalViolation, ConstitutionalRuling
+    Constitution, ConstitutionalArticle, ConstitutionalRuling
 )
 from .types import AIAction, ConstitutionalGuidance
 

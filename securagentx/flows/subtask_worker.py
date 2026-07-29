@@ -55,7 +55,6 @@ from securagentx.flows.flow_worker import (
     TaskContext,
 )
 from securagentx.flows.models import (
-    MsgchainType,
     Subtask,
     SubtaskStatus,
 )
@@ -461,8 +460,8 @@ class SubtaskWorker:
                     await self.subtask_ctx.provider.ensure_chain_consistency(
                         self.msg_chain_id
                     )
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as e: # noqa: BLE001
+                    logger.debug("Suppressed Exception: %s", e)
                 await self._handle_interrupting()
                 raise RuntimeError(
                     f"failed to perform agent chain for subtask "

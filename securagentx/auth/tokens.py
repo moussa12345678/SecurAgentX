@@ -50,8 +50,6 @@ from typing import Any, Optional
 from securagentx.auth.models import (
     APITokenClaims,
     TOKEN_STATUS_ACTIVE,
-    TOKEN_STATUS_EXPIRED,
-    TOKEN_STATUS_REVOKED,
 )
 
 logger = logging.getLogger("securagentx.auth.tokens")

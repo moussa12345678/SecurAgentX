@@ -38,7 +38,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
+
+from securagentx.utils.url import validate_url_scheme
 
 logger = logging.getLogger("securagentx.waf_detector")
 
@@ -241,11 +243,12 @@ class SmartWAFDetector:
 
     def _send(self, url: str) -> Dict[str, Any]:
         """Send a GET request, return response info."""
+        validate_url_scheme(url)
         req = urllib.request.Request(
             url, method="GET", headers={"User-Agent": "SecurAgentX-WAF-Probe/1.0"}
         )
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # nosec B310
                 raw = resp.read(4096)
                 return {
                     "status": resp.status,
@@ -257,8 +260,8 @@ class SmartWAFDetector:
             if hasattr(e, "read"):
                 try:
                     raw = e.read(4096)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
             return {
                 "status": e.code,
                 "body": raw.decode("utf-8", errors="replace"),

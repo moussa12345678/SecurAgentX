@@ -166,8 +166,8 @@ async def suggest_attack_vectors(endpoint: str, method: str, params: List[str]) 
             vectors = json.loads(response[start:end])
             if isinstance(vectors, list):
                 return [str(v) for v in vectors[:5]]
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return []
 
 

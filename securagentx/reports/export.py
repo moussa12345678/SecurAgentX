@@ -26,9 +26,12 @@ import csv
 import html as _html_mod
 import io
 import json
+import logging
 import string
 from datetime import datetime, timezone
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 __all__: list[str] = [
     "SUPPORTED_FORMATS",
@@ -178,8 +181,8 @@ def _get_markdown_generator():
         from securagentx.reports.markdown import generate_report_markdown
         if callable(generate_report_markdown):
             return generate_report_markdown
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return _fallback_generate_markdown
 
 
@@ -256,8 +259,8 @@ def _render_pdf_bytes(md: str) -> bytes:
         from securagentx.reports.pdf import render_to_pdf_bytes
         if callable(render_to_pdf_bytes):
             return render_to_pdf_bytes(md)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return _render_pdf_bytes_reportlab(md)
 
 

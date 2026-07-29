@@ -76,8 +76,8 @@ def _probe(session: requests.Session, base_url: str, endpoint: str) -> Dict | No
                 "size": len(r.content),
                 "is_json": "json" in content_type or url.endswith(".json"),
             }
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return None
 
 

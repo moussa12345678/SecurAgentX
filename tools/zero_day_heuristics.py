@@ -350,8 +350,8 @@ class HTTPClient:
         """Shut down the executor cleanly."""
         try:
             self._executor.shutdown(wait=False, cancel_futures=True)
-        except Exception:  # pragma: no cover - best effort
-            pass
+        except Exception as e: # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
 
 
 def _entropy(data: str) -> float:
@@ -1217,8 +1217,8 @@ class HTTPSmugglingDetector:
             try:
                 writer.close()
                 await writer.wait_closed()
-            except Exception:  # pragma: no cover - best effort
-                pass
+            except Exception as e: # pragma: no cover - best effort
+                logger.debug("Suppressed Exception: %s", e)
         # Split into HTTP messages (very rough — enough for heuristic).
         # Only split on a *response* status line at the start of a line, not
         # on incidental "Server: ...HTTP/x.y" headers.
@@ -3034,8 +3034,8 @@ class ZeroDayEngine:
         """Release resources held by the engine."""
         try:
             self.http.close()
-        except Exception:  # pragma: no cover - best effort
-            pass
+        except Exception as e: # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

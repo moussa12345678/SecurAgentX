@@ -45,10 +45,9 @@ import logging
 import os
 import secrets
 import threading
-from typing import Any, Callable, Iterable
+from typing import Any, Iterable
 
 from securagentx.providers.base import (
-    ALL_AGENT_TYPES,
     AgentConfig,
     CallUsage,
     Choice,
@@ -58,7 +57,6 @@ from securagentx.providers.base import (
     ModelConfig,
     ModelsConfig,
     PriceInfo,
-    Provider,
     ProviderConfig,
     ProviderOptionsType,
     ProviderType,

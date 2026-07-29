@@ -611,7 +611,7 @@ class PostExecutionProcessor:
                                 "strategy_adaptation",
                                 trigger_finding=finding.get("type", "unknown"),
                             )
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug("Suppressed Exception: %s", e)
                 except Exception as e:
                     logger.debug(f"Adaptive strategy failed: {e}")

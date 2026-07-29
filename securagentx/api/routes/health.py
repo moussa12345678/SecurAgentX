@@ -22,9 +22,9 @@ from __future__ import annotations
 import logging
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 
 from .._auth import try_auth
 from .._models import (

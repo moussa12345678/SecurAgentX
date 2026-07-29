@@ -574,8 +574,8 @@ if _HAS_FASTAPI:
             try:
                 with open(f) as fh:
                     webhooks.append(json.load(fh))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
         return {"webhooks": webhooks}
 
     @_app.delete("/webhook/{webhook_id}", tags=["Webhooks"])
@@ -616,8 +616,8 @@ if _HAS_FASTAPI:
                     await websocket.send_text(json.dumps({"event": "pong"}))
         except WebSocketDisconnect:
             pass
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         finally:
             if scan_id in _ws_connections:
                 _ws_connections[scan_id].discard(websocket)

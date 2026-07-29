@@ -161,7 +161,7 @@ async def list_flows(
             status=status,
         )
         total = await flows.count_flows(identity.user_id, status=status)
-    except Exception as exc:
+    except Exception:
         logger.exception("flows.list_flows failed")
         return success_response(
             {"items": [], "page": p.page, "per_page": p.per_page, "total": 0}
@@ -375,7 +375,7 @@ async def get_flow_graph(
         )
     try:
         graph = await flows.get_graph(flow_id=flow_id, user_id=identity.user_id)
-    except Exception as exc:
+    except Exception:
         logger.exception("flows.get_graph failed")
         return JSONResponse(
             status_code=200,
@@ -648,7 +648,7 @@ async def get_flow_usage(
         usage = await flows.get_usage(
             flow_id=flow_id, user_id=identity.user_id
         )
-    except Exception as exc:
+    except Exception:
         logger.exception("flows.get_usage failed")
         return JSONResponse(
             status_code=200,

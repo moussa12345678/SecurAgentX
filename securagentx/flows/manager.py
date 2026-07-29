@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable
 
 from securagentx.flows.db import FlowDB
 from securagentx.flows.flow_worker import (
@@ -47,10 +47,7 @@ from securagentx.flows.flow_worker import (
 from securagentx.flows.models import (
     Flow,
     FlowStatus,
-    MsglogResultFormat,
-    MsglogType,
     ProviderType,
-    TaskStatus,
 )
 
 logger = logging.getLogger("securagentx.flows.manager")

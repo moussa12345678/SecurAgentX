@@ -23,9 +23,8 @@ import logging
 import shlex
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 from securagentx.paths import get_reports_path
 from securagentx.agent.agent_memory import MemoryStore
 from securagentx.agent.agent_skills import SkillStore
@@ -173,7 +172,7 @@ def _tool_port_scan(target: str, ports: str = "common") -> Dict[str, Any]:
 
         result = run_scan(target, scan_type="port")
         return {"success": True, "output": str(result), "port_count": 0}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — logged
         logger.debug("port scan failed: %s", exc)
         return {"success": False, "error": str(exc)}
 
@@ -185,7 +184,7 @@ def _tool_web_recon(target: str, path: str = "/") -> Dict[str, Any]:
 
         result = run_scan(target, scan_type="web")
         return {"success": True, "output": str(result)}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -200,7 +199,7 @@ def _tool_vuln_scan(target: str, scan_type: str = "general") -> Dict[str, Any]:
             return {"success": True, "output": result.output if hasattr(result, "output") else str(result)}
         else:
             return {"success": False, "error": f"No {scan_type} tool available"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -211,7 +210,7 @@ def _tool_search_cve(service: str, version: str = "") -> Dict[str, Any]:
 
         results = search_cve(f"{service} {version}".strip())
         return {"success": True, "cves": str(results)[:2000]}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -222,7 +221,7 @@ def _tool_analyze_target(target: str) -> Dict[str, Any]:
 
         result = run_scan(target, scan_type="recon")
         return {"success": True, "output": str(result)}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -250,7 +249,7 @@ def _tool_web_search(query: str, num_results: int = 5) -> Dict[str, Any]:
             lines.append(f"{i}. {title}\n   URL: {url}\n   {content}\n")
 
         return {"success": True, "output": "\n".join(lines), "results": results[:num_results]}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -273,7 +272,7 @@ def _tool_web_extract(url: str) -> Dict[str, Any]:
             "output": data.get("text", "")[:4000],
             "chars": data.get("chars", 0),
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -302,7 +301,7 @@ def _tool_read_file(path: str, offset: int = 1, limit: int = 200) -> Dict[str, A
         )
         info = f"File: {fpath} ({total} lines, showing {start+1}-{end})\n"
         return {"success": True, "output": info + numbered, "total_lines": total}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -316,7 +315,7 @@ def _tool_write_file(path: str, content: str) -> Dict[str, Any]:
         fpath.parent.mkdir(parents=True, exist_ok=True)
         fpath.write_text(content, encoding="utf-8")
         return {"success": True, "output": f"Written {len(content)} bytes to {fpath}"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -340,7 +339,7 @@ def _tool_edit_file(path: str, old_string: str, new_string: str) -> Dict[str, An
         text = text.replace(old_string, new_string, 1)
         fpath.write_text(text, encoding="utf-8")
         return {"success": True, "output": f"Replaced 1 occurrence in {fpath}"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -375,7 +374,7 @@ def _tool_search_files(pattern: str, path: str = ".", file_glob: str = "", limit
         return {"success": True, "output": info + output, "total_matches": len(lines)}
     except _sp.TimeoutExpired:
         return {"success": False, "error": "Search timed out (15s)"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -409,7 +408,7 @@ def _tool_run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
         }
     except _sp.TimeoutExpired:
         return {"success": False, "error": f"Command timed out ({timeout}s)"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -450,7 +449,7 @@ def _tool_run_python(code: str, timeout: int = 30) -> Dict[str, Any]:
         }
     except _sp.TimeoutExpired:
         return {"success": False, "error": f"Python timed out ({timeout}s)"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
     finally:
         if _tmp:
@@ -501,7 +500,7 @@ Be specific. Reference line numbers, exact patterns, or CVE IDs when possible.""
         return {"success": True, "output": analysis[:6000]}
     except ImportError:
         return {"success": False, "error": "UniversalAIClient not available"}
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
 
@@ -510,6 +509,7 @@ CHILD_AGENT_CODE = r"""True multi-AI child: runs as subprocess, has full VulnAge
 
 import sys as _sys
 import json as _json
+import tempfile as _tempfile
 from pathlib import Path as _Path
 
 
@@ -524,7 +524,7 @@ def _run_child_agent(target: str, output_path: str) -> None:
             client=client,
             target=target,
             max_steps=8,
-            report_dir=_Path("/tmp/securagentx_delegate"),
+            report_dir=_Path(_tempfile.mkdtemp(prefix="securagentx_delegate_")),
         )
         report = agent.hunt(verbose=False)
 
@@ -546,7 +546,7 @@ def _run_child_agent(target: str, output_path: str) -> None:
             "summary": report.summary[:600],
             "steps_used": report.total_steps,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — broad catch for resilience
         result = {"target": target, "success": False, "error": str(e)[:600]}
 
     _Path(output_path).write_text(_json.dumps(result, indent=2, ensure_ascii=False))
@@ -562,6 +562,7 @@ CHILD_AGENT_CODE = r"""True multi-AI child: runs as subprocess, has full VulnAge
 
 import sys as _sys
 import json as _json
+import tempfile as _tempfile
 from pathlib import Path as _Path
 
 
@@ -576,7 +577,7 @@ def _run_child_agent(target: str, output_path: str) -> None:
             client=client,
             target=target,
             max_steps=8,
-            report_dir=_Path("/tmp/securagentx_delegate"),
+            report_dir=_Path(_tempfile.mkdtemp(prefix="securagentx_delegate_")),
         )
         report = agent.hunt(verbose=False)
 
@@ -598,7 +599,7 @@ def _run_child_agent(target: str, output_path: str) -> None:
             "summary": report.summary[:600],
             "steps_used": report.total_steps,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — broad catch for resilience
         result = {"target": target, "success": False, "error": str(e)[:600]}
 
     _Path(output_path).write_text(_json.dumps(result, indent=2, ensure_ascii=False))
@@ -726,8 +727,8 @@ def _tool_delegate(
                                 break
                         if "__SECURAGENTX_AI_CONFIG" in env:
                             break
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 — logged
+            logger.debug("Suppressed Exception: %s", e)
 
     def _spawn_one(target: str) -> None:
         """Launch a VulnAgent subprocess for one target."""
@@ -744,7 +745,7 @@ def _tool_delegate(
         except sp.TimeoutExpired:
             results[target] = {"target": target, "success": False, "error": f"Timed out after {timeout}s"}
             return
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — broad catch for resilience
             results[target] = {"target": target, "success": False, "error": str(e)[:300]}
             return
 
@@ -761,8 +762,8 @@ def _tool_delegate(
 
     try:
         shutil.rmtree(workdir, ignore_errors=True)
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001 — logged
+        logger.debug("Suppressed Exception: %s", e)
 
     summary_lines = [
         f"Delegate: {task}",
@@ -834,8 +835,6 @@ def _register_dynamic_tool(
     Returns success/error dict.
     """
     import sys as _sys
-    import subprocess as _sp
-    import tempfile as _tf
 
     # 1. Validate the handler code compiles
     try:
@@ -871,9 +870,10 @@ def _register_dynamic_tool(
             test_result = handler_fn({})
             if not isinstance(test_result, dict):
                 return {"success": False, "error": "handler() must return a dict"}
-        except Exception:
-            pass  # may legitimately require arguments
-    except Exception as exc:
+        except Exception as e:  # noqa: BLE001 — broad catch for resilience
+            # may legitimately require arguments
+            logger.debug("Suppressed Exception (handler test): %s", e)
+    except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": f"Failed to load generated tool module: {exc}"}
     finally:
         if str(gen_dir) in _sys.path:
@@ -1021,9 +1021,10 @@ def _tool_edit_own_tool(name: str, handler_code: str) -> Dict[str, Any]:
                     if handler_fn is not None:
                         _dynamic_tools[name] = handler_fn
                 return {"success": False, "error": "handler() must return a dict"}
-        except Exception:
-            pass  # may legitimately require arguments
-    except Exception as exc:
+        except Exception as e:  # noqa: BLE001 — broad catch for resilience
+            # may legitimately require arguments
+            logger.debug("Suppressed Exception (handler test): %s", e)
+    except Exception as exc:  # noqa: BLE001 — broad catch for resilience
         # Restore backup on import failure
         if backup is not None:
             backup.rename(gen_path)
@@ -1033,8 +1034,8 @@ def _tool_edit_own_tool(name: str, handler_code: str) -> Dict[str, Any]:
                 orig_fn = getattr(mod, "handler", None)
                 if orig_fn is not None:
                     _dynamic_tools[name] = orig_fn
-            except Exception:
-                pass
+            except Exception as e:  # noqa: BLE001 — logged
+                logger.debug("Suppressed Exception: %s", e)
         return {"success": False, "error": f"Failed to load edited tool module: {exc}"}
     finally:
         if str(gen_dir) in _sys.path:
@@ -1747,7 +1748,7 @@ class VulnAgent:
                 memory_context = self.memory.get_context(self.target)
                 if recall["memories"]:
                     logger.info("Recalled %d past memories for %s", len(recall["memories"]), self.target)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.debug(f"Memory recall failed: {e}")
 
         if verbose:
@@ -1807,7 +1808,7 @@ class VulnAgent:
                         result=result,
                         reasoning=action.get("reasoning", ""),
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 — logged
                     logger.debug(f"Memory store failed: {e}")
 
             # 6. REFLECT — on consecutive failures, analyze and self-improve
@@ -1849,7 +1850,7 @@ class VulnAgent:
             try:
                 self.memory.post_hunt(report)
                 logger.info("Memory stored for %s", self.target)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.debug(f"Post-hunt memory store failed: {e}")
 
         return report
@@ -1881,7 +1882,7 @@ class VulnAgent:
             messages = self._convert_messages(self.conversation)
             response = self.client.chat(messages)
             content = response.content.strip() if response else ""
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — logged
             logger.error("AI call failed: %s", exc)
             return {"conclude": True, "summary": f"AI error: {exc}"}
 
@@ -1930,7 +1931,7 @@ class VulnAgent:
             messages = self._convert_messages(self.conversation)
             response = self.client.chat(messages)
             content = response.content.strip() if response else ""
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — logged
             logger.error("Reflection AI call failed: %s", exc)
             return None
 
@@ -2023,7 +2024,7 @@ class VulnAgent:
         try:
             result = handler(**arguments)
             return result
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — logged
             logger.error("Tool execution failed: %s", exc)
             return {"success": False, "error": str(exc)}
 
@@ -2241,7 +2242,7 @@ class VulnAgent:
         try:
             report_path.write_text(json.dumps(report.to_dict(), indent=2))
             logger.info("Report saved: %s", report_path)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — logged
             logger.warning("Failed to save report: %s", exc)
 
         return report

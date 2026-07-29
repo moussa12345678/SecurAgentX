@@ -160,7 +160,7 @@ async def list_documents(
             limit=p.per_page,
         )
         total: int = await store.count_documents(identity.user_id)
-    except Exception as exc:
+    except Exception:
         logger.exception("knowledge.list_documents failed")
         return success_response(
             {"items": [], "page": p.page, "per_page": p.per_page, "total": 0}

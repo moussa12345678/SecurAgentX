@@ -437,7 +437,7 @@ class HybridAgent:
                             if tool and tool.is_available:
                                 self._execute_registry_tool(tool, tool_name, cmd_target, cycle)
                                 return
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug(f"Auto-installation of tool '{tool_name}' failed: {e}")
 
         # Tool not registered — note it and try shell
@@ -479,7 +479,7 @@ class HybridAgent:
                 console.print(f"  {result.output[:600]}")
             else:
                 console.print(f"  [red][FAIL] {result.error}[/red]")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — broad catch for resilience
             console.print(f"  [red][FAIL] File error: {e}[/red]")
 
     def _handle_update_intel(self, decision: Dict):
@@ -550,7 +550,7 @@ class HybridAgent:
                 )
             else:
                 console.print("  [cyan][INFO] No new hypotheses from reasoning[/cyan]")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug(f"reason action failed: {e}")
             console.print(f"  [yellow][WARN] Reasoning skipped: {e}[/yellow]")
 
@@ -571,11 +571,7 @@ class HybridAgent:
         tools/event_loop.py so we never create/teardown a loop per tool call.
         """
         import asyncio
-        from pathlib import Path
         from securagentx.paths import get_reports_path
-        from typing import (
-            Any,
-        )
         console.print(f"  [cyan][RUN] [{tool_name}] via ToolRegistry[/cyan]")
 
         report_dir = get_reports_path(f"hybrid_{tool_name}_{int(time.time())}")
@@ -592,7 +588,7 @@ class HybridAgent:
                 tool.execute(cmd_target, report_dir, sem), loop
             )
             result = future.result(timeout=timeout)
-        except Exception as e:
+        except Exception:  # noqa: BLE001 — broad catch for resilience
             # Fallback: isolated event loop if shared loop unavailable
             try:
                 loop = asyncio.new_event_loop()
@@ -600,7 +596,7 @@ class HybridAgent:
                 sem = asyncio.Semaphore(3)
                 result = loop.run_until_complete(tool.execute(cmd_target, report_dir, sem))
                 loop.close()
-            except Exception as inner_e:
+            except Exception as inner_e:  # noqa: BLE001 — broad catch for resilience
                 result = ToolResult(
                     success=False,
                     tool_name=tool_name,
@@ -719,7 +715,7 @@ class HybridAgent:
                 mission_state=self.mission_state,
                 callback=None,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug(f"Analysis pipeline error: {e}")
 
     def _should_run_analysis(self, command: str) -> bool:
@@ -753,7 +749,7 @@ class HybridAgent:
             if line_str.startswith("{") and line_str.endswith("}"):
                 try:
                     json_lines.append(json.loads(line_str))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 — logged
                     logger.debug("Failed to parse JSON line: %s", e)
 
         # Try to parse entire output as single JSON array/object if no lines parsed
@@ -764,7 +760,7 @@ class HybridAgent:
                     json_lines.extend(parsed)
                 elif isinstance(parsed, dict):
                     json_lines.append(parsed)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.debug("Failed to parse entire output as JSON: %s", e)
 
         # Process parsed JSON objects
@@ -913,7 +909,7 @@ class HybridAgent:
                         "vector": score.vector_string,
                     }
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.warning(
                     "CVSS scoring failed for finding '%s': %s", f.get("type", "unknown"), e
                 )
@@ -1005,48 +1001,48 @@ class HybridAgent:
 
             ref.payload_mutator = PayloadMutator()
             ref.smart_payload_generator = SmartPayloadGenerator(seed=42)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load payload_mutation: %s", e)
         try:
             from tools.active_fuzzer import ActiveFuzzer
 
             ref.active_fuzzer = ActiveFuzzer()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load active_fuzzer: %s", e)
         try:
             from tools.coverage_analyzer import CoverageAnalyzer
 
             ref.coverage_analyzer = CoverageAnalyzer()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load coverage_analyzer: %s", e)
         try:
             from tools.learning_engine import LearningEngine
 
             ref.learning_engine = LearningEngine(use_chroma=False)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load learning_engine: %s", e)
         try:
             from tools.bola_tester import BOLATester
 
             ref.bola_tester = BOLATester()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load bola_tester: %s", e)
         try:
             from tools.waf_detector import SmartWAFDetector
 
             ref.waf_detector = SmartWAFDetector()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load waf_detector: %s", e)
         try:
             from tools.logic_analyzer import BusinessLogicAnalyzer
 
             ref.logic_analyzer = BusinessLogicAnalyzer(mission_state=self.mission_state)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load logic_analyzer: %s", e)
         try:
             from cli.live_display import get_activity_logger
 
             ref.activity_logger = get_activity_logger()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug("Could not load activity_logger: %s", e)
         return ref

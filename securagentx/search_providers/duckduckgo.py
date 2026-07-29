@@ -57,7 +57,6 @@ import logging
 import os
 import re
 from typing import Any, Literal, Optional
-from urllib.parse import quote_plus
 
 from securagentx.search_providers.base import (
     DEFAULT_MAX_RESULTS,
@@ -311,6 +310,13 @@ def _parse_ddg_with_lxml(html_text: str, max_results: int) -> list[dict[str, str
     ``cssselect`` package — ``lxml`` itself ships with full XPath
     support and is sufficient for the selector complexity we need.
     """
+    # P2-A XXE hardening: import defusedxml.lxml first so that lxml's
+    # etree-based parsers (used internally by lxml.html for entity
+    # resolution) reject external entity expansion / billion-laughs
+    # attacks. lxml.html itself does not process DTDs by default, but
+    # importing defusedxml.lxml is defense-in-depth: it monkey-patches
+    # ``lxml.etree`` to forbid DOCTYPE / external entity declarations.
+    import defusedxml.lxml  # noqa: WPS433,F401 — defensive, imported for side-effect
     from lxml import html as lxml_html  # noqa: WPS433 — lazy import
 
     tree = lxml_html.fromstring(html_text)

@@ -35,8 +35,11 @@ tenacity>=8.0.0         # Advanced retry & backoff strategies
 tiktoken                # Accurate token counting (auto-detected, lightweight)
 
 # ── Vector Memory & Semantic Search ────────────────────
-chromadb                # Persistent vector memory backend
+chromadb>=1.5.9  # CVE-2026-45829: Pre-auth RCE — pin to latest available patched release
 sentence-transformers   # Embeddings for semantic recall/search
+
+# ── XXE Defense (P2-A) ─────────────────────────────────
+defusedxml>=0.7.1  # Hardens lxml/ElementTree against XXE / billion-laughs
 
 # ── Async HTTP (OPTIONAL) ──────────────────────────────
 # httpx provides async HTTP for AI client.

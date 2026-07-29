@@ -6,12 +6,11 @@ import asyncio
 import json
 import logging
 import sqlite3
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 from uuid import uuid4
 
 try:
@@ -23,7 +22,6 @@ except ImportError:
     chromadb = None
     Settings = None
 
-from .types import Finding, MissionContext
 
 logger = logging.getLogger("securagentx.memory")
 
@@ -152,8 +150,8 @@ class VectorMemoryBackend(MemoryBackend):
             try:
                 collection.delete(ids=[entry_id])
                 return True
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception (memory delete): %s", e)
         return False
 
     async def close(self):
@@ -239,21 +237,6 @@ class SQLiteMemoryBackend(MemoryBackend):
 
     async def close(self):
         pass
-
-
-@dataclass
-class MemoryEntry:
-    """Memory Entry"""
-    id: str = field(default_factory=lambda: str(uuid4()))
-    content: str = ""
-    category: str = "general"  # working, episodic, semantic, constitutional
-    importance: float = 0.5
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict = field(default_factory=dict)
-    embedding: Optional[List[float]] = None
-    created_at: float = field(default_factory=lambda: datetime.now().timestamp())
-    accessed_at: float = field(default_factory=lambda: datetime.now().timestamp())
-    access_count: int = 0
 
 
 class CognitiveMemoryManager:

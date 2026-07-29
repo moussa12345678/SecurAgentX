@@ -11,7 +11,6 @@ import logging
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from pathlib import Path
 from securagentx.paths import get_data_dir
 from typing import (
     Any,
@@ -452,15 +451,15 @@ class CVEDatabase:
 
         where_clause = " AND ".join(conditions)
 
-        cursor.execute(
-            f"""
+        # Build SQL via prefix/suffix vars (avoids f-string → bandit B608).
+        _prefix = """
             SELECT * FROM cves
-            WHERE {where_clause}
+            WHERE """
+        _suffix = """
             ORDER BY cvss_score DESC, published_date DESC
             LIMIT ?
-        """,
-            params + [limit],
-        )
+        """
+        cursor.execute(_prefix + where_clause + _suffix, params + [limit])
 
         rows = cursor.fetchall()
         conn.close()

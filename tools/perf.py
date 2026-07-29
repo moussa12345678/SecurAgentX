@@ -113,7 +113,7 @@ def cached(cache: SmartCache, key_fn: Optional[Callable] = None, ttl: Optional[f
             if key_fn:
                 key = key_fn(*args, **kwargs)
             else:
-                key = f"{func.__module__}.{func.__name__}:{hashlib.md5(repr((args, sorted(kwargs.items()))).encode()).hexdigest()[:16]}"
+                key = f"{func.__module__}.{func.__name__}:{hashlib.sha256(repr((args, sorted(kwargs.items()))).encode()).hexdigest()[:16]}"
             result = cache.get(key)
             if result is not None:
                 return result

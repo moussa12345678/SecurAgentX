@@ -77,7 +77,6 @@ from securagentx.providers.base import (
     TextPart,
     ToolCall,
     ToolCallResponse,
-    apply_model_prefix,
 )
 
 logger = logging.getLogger("securagentx.providers.anthropic")

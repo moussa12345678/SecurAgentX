@@ -178,8 +178,9 @@ class DockerNetwork:
                 flow_id,
             )
             return str(info.get("Id", name))
-        except Exception:
-            pass  # network doesn't exist — fall through to create
+        except Exception as e:
+            # network doesn't exist — fall through to create
+            logger.debug("Suppressed Exception (network inspect): %s", e)
 
         # --- create ----------------------------------------------------
         ipam_cfg: dict[str, Any] = {

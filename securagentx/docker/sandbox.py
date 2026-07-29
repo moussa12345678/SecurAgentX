@@ -434,8 +434,9 @@ class DockerSandbox:
             try:
                 await client.networks.get(name)
                 return
-            except Exception:  # noqa: BLE001
-                pass  # not found → create
+            except Exception as e:  # noqa: BLE001
+                # not found → create
+                logger.debug("Suppressed Exception (network get): %s", e)
             try:
                 await client.networks.create(
                     {"Name": name, "Driver": "bridge"},
@@ -695,16 +696,16 @@ class DockerSandbox:
                     if any(n.lstrip("/") == name for n in c_names):
                         try:
                             await c.delete(force=True, v=True)
-                        except Exception:  # noqa: BLE001
-                            pass
+                        except Exception as e: # noqa: BLE001
+                            logger.debug("Suppressed Exception: %s", e)
             else:
                 def _sync() -> None:
                     for c in client.containers.list(all=True):
                         if c.name.lstrip("/") == name:
                             try:
                                 c.remove(force=True, v=True)
-                            except Exception:  # noqa: BLE001
-                                pass
+                            except Exception as e: # noqa: BLE001
+                                logger.debug("Suppressed Exception: %s", e)
 
                 await asyncio.to_thread(_sync)
         except Exception as exc:  # noqa: BLE001

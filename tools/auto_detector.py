@@ -16,8 +16,10 @@ import re
 from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import urlparse
+import logging
 
 
+logger = logging.getLogger(__name__)
 class AutoDetector:
     """
     Smart detector that figures out what module to use based on input.
@@ -104,8 +106,8 @@ class AutoDetector:
                     "confidence": 0.7,
                     "explanation": f"JSON file detected: {p.name}. Analyzing content...",
                 }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         # Cloud/Terraform files
         if ext in [".t", ".tfvars", ".yml", ".yaml"]:

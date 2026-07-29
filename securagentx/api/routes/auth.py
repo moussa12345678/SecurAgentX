@@ -30,7 +30,7 @@ import logging
 import os
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 # Issue 32 (P8-C): TLS verification is ON by default. Set

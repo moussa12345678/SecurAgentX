@@ -62,7 +62,7 @@ import logging
 import os
 import shlex
 import tarfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
@@ -550,8 +550,8 @@ class ContainerLifecycle:
             # Best-effort cleanup before re-raising.
             try:
                 await container.delete(force=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
             raise RuntimeError(f"ContainerStart failed for {container_name}: {e}") from e
 
         return docker_id
@@ -568,8 +568,9 @@ class ContainerLifecycle:
             if local_images:
                 logger.debug("image %s already present locally", image)
                 return
-        except Exception:
-            pass  # be lenient — fall through to pull
+        except Exception as e:
+            # be lenient — fall through to pull
+            logger.debug("Suppressed Exception (image inspect): %s", e)
         logger.info("pulling image %s", image)
         try:
             await client.images.pull(image)

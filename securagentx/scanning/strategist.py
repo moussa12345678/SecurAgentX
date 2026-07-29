@@ -271,8 +271,8 @@ Respond with ONLY one word: "approve" or "deny" (no punctuation, no explanation)
             from tools.vector_memory import get_context_for_ai
 
             memory_context = get_context_for_ai(objective, target, max_memories=5)[:400]
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         prompt = self.PLAN_PROMPT.format(
             objective=objective,

@@ -80,8 +80,8 @@ class _TraceContextProcessor:
             if ctx is not None and ctx.is_valid:
                 trace_id = f"{ctx.trace_id:032x}"
                 span_id = f"{ctx.span_id:016x}"
-        except Exception:  # pragma: no cover — defensive
-            pass
+        except Exception as e: # pragma: no cover — defensive
+            logger.debug("Suppressed Exception: %s", e)
 
         event_dict.setdefault("trace_id", trace_id)
         event_dict.setdefault("span_id", span_id)
@@ -105,8 +105,8 @@ class _TraceContextProcessor:
             try:
                 lf_trace = self._langfuse_getters[0]()
                 lf_obs = self._langfuse_getters[1]()
-            except Exception:  # pragma: no cover — defensive
-                pass
+            except Exception as e: # pragma: no cover — defensive
+                logger.debug("Suppressed Exception: %s", e)
 
         event_dict.setdefault("langfuse_trace_id", lf_trace)
         event_dict.setdefault("langfuse_observation_id", lf_obs)

@@ -42,6 +42,8 @@ from typing import Any, Callable, Protocol, Union, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from securagentx.utils.url import validate_url_scheme
+
 logger = logging.getLogger("securagentx.providers.base")
 
 
@@ -590,13 +592,14 @@ def load_models_from_http(
     """
     models_url = base_url.rstrip("/") + "/models"
 
+    validate_url_scheme(models_url)
     req = urllib.request.Request(models_url, method="GET")
     req.add_header("Content-Type", "application/json")
     if api_key:
         req.add_header("Authorization", f"Bearer {api_key}")
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310
             if resp.status != 200:
                 raise RuntimeError(
                     f"unexpected status code from {models_url}: {resp.status}"

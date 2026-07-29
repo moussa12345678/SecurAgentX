@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -393,8 +392,8 @@ class VulnReasoningEngine:
                     {"phase": "think", "content": thinking},
                     {"phase": "critique", "content": critique},
                 ]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
             return result
         except Exception as e:
             logger.error("LLM analysis failed: %s", e)

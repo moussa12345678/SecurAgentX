@@ -25,7 +25,6 @@ import logging
 import os
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
 from securagentx.paths import find_env
@@ -458,8 +457,8 @@ class UniversalAIClient:
             # falling through to them would break PROVIDER_CONFIGS lookup.
             if active and active not in ("auto", "custom", "none"):
                 return active
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         # Fall back to environment variable detection
         # Priority order
@@ -780,8 +779,8 @@ class UniversalAIClient:
                         delta = chunk["choices"][0].get("delta", {})
                         if "content" in delta:
                             yield delta["content"]
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Suppressed Exception: %s", e)
 
     async def chat_async(
         self,
@@ -919,8 +918,8 @@ class UniversalAIClient:
             )
             self._ping_ok = r.status_code < 500
             return self._ping_ok
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         # Fallback: raw TCP connect
         try:
             import socket

@@ -207,8 +207,8 @@ class TeamAegis:
                 if recalled:
                     self._memories[target] = str(recalled)
                     logger.info(f"Recalled {len(recalled)} prior memories for {target}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         logger.info(
             f"Team Aegis initialized: {self.team_size} agents targeting {target} (parallel={parallel_mode})"
@@ -450,8 +450,8 @@ class TeamAegis:
             if tool_names:
                 tools_context += "\n### SECURITY TOOLS AVAILABLE:\n"
                 tools_context += "\n".join(f"  - {name}" for name in sorted(tool_names))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         prompt = f"""## TEAM AEGIS — Security Research Team Collaboration
 

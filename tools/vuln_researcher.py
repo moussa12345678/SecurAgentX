@@ -383,8 +383,8 @@ class VulnerabilityResearcher:
             resp = self.session.get(search_url, timeout=15)
             if resp.status_code == 200 and "No results" not in resp.text:
                 pocs.append({"source": "Exploit-DB", "url": search_url, "type": "exploit"})
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         # Check GitHub for PoC repos
         try:
@@ -401,8 +401,8 @@ class VulnerabilityResearcher:
                             "stars": repo.get("stargazers_count", 0),
                         }
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         return pocs
 

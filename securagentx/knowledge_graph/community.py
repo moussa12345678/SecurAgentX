@@ -26,7 +26,7 @@ import logging
 import uuid
 from typing import Any, Iterable, Protocol, TYPE_CHECKING
 
-from .extractor import Edge, EdgeType, Node, NodeLabel, _label_str, _now_dt
+from .extractor import Edge, Node, NodeLabel, _label_str
 from .graph import Community, KnowledgeGraph  # noqa: F401  (re-exported)
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -510,8 +510,8 @@ class CommunityDetector:
                 all_nodes, _ = await self._fetch_subgraph(community.group_id)
                 wanted = set(community.member_node_uuids)
                 nodes = [n for n in all_nodes if n.uuid in wanted]
-            except Exception:  # pragma: no cover - defensive
-                pass
+            except Exception as e: # pragma: no cover - defensive
+                logger.debug("Suppressed Exception: %s", e)
         return nodes
 
     async def _resolve_edges(

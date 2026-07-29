@@ -257,7 +257,10 @@ def apply_to_container_config(
         tmpfs: list[dict[str, Any]] = list(host_config.get("Tmpfs") or {})
         # Docker accepts ``Tmpfs`` as a dict mapping mount-point -> opts.
         tmpfs_dict: dict[str, str] = dict(host_config.get("Tmpfs") or {})
-        tmpfs_dict.setdefault("/tmp", "rw,noexec,nosuid,size=64m")
+        # NOTE: ``/tmp`` and ``/run`` here are Docker *in-container* mount
+        # points (tmpfs targets), NOT host-side temp file paths — B108 does
+        # not apply. Suppressed per-line.
+        tmpfs_dict.setdefault("/tmp", "rw,noexec,nosuid,size=64m")  # nosec B108
         tmpfs_dict.setdefault("/run", "rw,noexec,nosuid,size=16m")
         host_config["Tmpfs"] = tmpfs_dict
 

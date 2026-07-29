@@ -345,8 +345,8 @@ class ConfigWizard:
 
                 mgr = AIClientManager()
                 active_provider_key = mgr.get_active_provider()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
             # Detect team members
             active_models_str = os.environ.get("ACTIVE_MODELS", "")
@@ -960,8 +960,8 @@ class ConfigWizard:
             active_provider_key = mgr.get_active_provider()
             if mgr.active_client:
                 active_model = mgr.active_client.model
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         # AI Providers table
         table = Table(show_header=True, header_style="bold", border_style="dim")
@@ -1064,8 +1064,8 @@ class ConfigWizard:
             if example_file.exists():
                 try:
                     return yaml.safe_load(example_file.read_text()) or {}
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
             return {}
         try:
             return yaml.safe_load(config_file.read_text()) or {}
@@ -1310,7 +1310,7 @@ class ConfigWizard:
 
     def _configure_mcp(self) -> None:
         """Configure MCP servers."""
-        from mcp.config import get_config_manager, MCPConfig, MCPServerConfig
+        from mcp.config import get_config_manager
 
         console.print("\n[bold cyan]MCP Server Configuration[/bold cyan]")
         console.print(

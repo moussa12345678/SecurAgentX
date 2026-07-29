@@ -21,7 +21,6 @@ Backward-compatible aliases: LogicFlaw, LogicFlawResult
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 import re
 import secrets
@@ -820,8 +819,8 @@ class AuthLogicDetector(BaseDetector):
                                     remediation="Validate redirect_uri against an allowlist of trusted domains.",
                                 )
                             )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Suppressed Exception: %s", e)
 
                 # Missing state parameter (CSRF)
                 if not state:
@@ -1408,8 +1407,8 @@ class LogicFlawEngine:
         if self.http:
             try:
                 await self.http.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

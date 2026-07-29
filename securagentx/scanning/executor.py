@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from tools.governance import Governance
-from tools.safe_exec import execute_safely, execute_safely_streaming, execute_safely_interactive
+from tools.safe_exec import execute_safely, execute_safely_interactive
 from tools.tool_registry import ToolCategory, ToolResult, registry
 from tools.vector_memory import remember
 
@@ -302,8 +302,8 @@ def execute_shell_command(
                         retry_result = execute_safely(cmd_raw, timeout=300)
                         if retry_result["success"]:
                             return retry_result["stdout"][:max_output_len]
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Suppressed Exception: %s", e)
 
             return f"[FAIL] Command failed: {err}"
         return output
@@ -479,8 +479,8 @@ def execute_batch(
     if callback:
         try:
             callback(f"batch_done:{len(results)} actions executed in parallel")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
     return summary
 
@@ -753,7 +753,7 @@ def detect_and_install_missing_tool(
 
     # Execute installation
     try:
-        from tools.safe_exec import execute_safely, execute_safely_streaming, execute_safely_interactive
+        from tools.safe_exec import execute_safely
 
         result = execute_safely(install_cmd, timeout=120)
         if result.get("success"):

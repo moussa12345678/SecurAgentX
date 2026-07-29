@@ -40,7 +40,6 @@ Key features ported from the Go original
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any, List
 
 from securagentx.providers._openai_compat import (
@@ -52,9 +51,7 @@ from securagentx.providers.base import (
     ModelConfig,
     PriceInfo,
     ProviderConfig,
-    ProviderOptionsType,
     ProviderType,
-    ReasoningEffort,
 )
 
 logger = logging.getLogger("securagentx.providers.glm")

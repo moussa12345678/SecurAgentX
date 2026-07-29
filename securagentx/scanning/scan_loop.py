@@ -10,7 +10,6 @@ Extracted from agent_brain.py process_query() lines 1045-1857.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections import Counter
 from dataclasses import dataclass, field
@@ -84,8 +83,8 @@ class ScanLoop:
                 from tools.universal_ai_client import AIClientManager
 
                 client = AIClientManager()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
         self._llm_client = client
 
         # Periodic re-planning: every N steps, regenerate the attack tree
@@ -389,8 +388,8 @@ class ScanLoop:
                         "new_steps": len(getattr(new_tree, "steps", []) or []),
                         "old_steps": len(getattr(old_tree, "steps", []) or []),
                     })
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
                 logger.info(
                     f"re-planned attack tree at step {step} "
                     f"(findings={len(findings)}, new_steps="
@@ -403,8 +402,8 @@ class ScanLoop:
                             f"with {len(getattr(new_tree, 'steps', []) or [])} steps "
                             f"based on {len(findings)} findings so far."
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Suppressed Exception: %s", e)
         except Exception as e:
             logger.debug(f"re-planning skipped: {e}")
 

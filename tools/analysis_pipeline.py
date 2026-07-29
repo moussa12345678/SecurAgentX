@@ -384,8 +384,8 @@ class AnalysisPipeline:
                         if parsed.netloc:
                             domains_found.add(parsed.netloc)
                         endpoints_found.add(url)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Suppressed Exception: %s", e)
 
             for domain in domains_found:
                 mission_state.upsert_node(
@@ -898,6 +898,6 @@ class AnalysisPipeline:
                 return tgt
             if tgt:
                 return f"https://{tgt}"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         return "http://localhost"

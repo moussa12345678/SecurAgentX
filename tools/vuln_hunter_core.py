@@ -24,7 +24,6 @@ import sqlite3
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from securagentx.paths import get_data_path

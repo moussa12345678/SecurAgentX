@@ -44,7 +44,6 @@ Design notes
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import re
@@ -54,7 +53,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Protocol, TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from securagentx.agents.base import LLMClient
+    pass
 
 logger = logging.getLogger("securagentx.knowledge_graph.extractor")
 

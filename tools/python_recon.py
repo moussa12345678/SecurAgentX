@@ -583,8 +583,8 @@ class PythonRecon:
             writer.close()
             try:
                 await writer.wait_closed()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
             return PortHit(host=host, port=port, state="open", service=service)
         except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
             return None
@@ -706,6 +706,6 @@ class PythonRecon:
             if loop is not None:
                 try:
                     loop.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
         return result

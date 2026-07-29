@@ -2,25 +2,22 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Callable, Set
-from uuid import uuid4
 
 from securagentx.constitution import Constitution
 from securagentx.constitution_engine import ConstitutionalAIEngine
 from securagentx.types import (
-    AIAction, ActionType, RiskLevel, MissionContext,
-    MissionResult, Finding, ConstitutionalGuidance
+    AIAction, MissionContext,
+    MissionResult, ConstitutionalGuidance
 )
-from securagentx.brain import TrueAIBrain, CognitiveState, ReasoningResult
+from securagentx.brain import TrueAIBrain, CognitiveState
 from securagentx.memory import CognitiveMemoryManager
 from securagentx.governance import GovernanceGate
 from securagentx.tools import ToolRegistry
-from securagentx.types import MissionContext, Finding, ConstitutionalGuidance
+from securagentx.types import MissionContext, ConstitutionalGuidance
 
 logger = logging.getLogger("securagentx.loop")
 

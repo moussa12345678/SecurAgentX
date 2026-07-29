@@ -416,15 +416,15 @@ if _HAS_TEXTUAL:
                 card.status = status
                 card.target_text = target
                 card.findings_count = count
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         def _update_findings(self, findings: List[Dict[str, Any]]):
             try:
                 table = self.query_one("#findings-table", FindingsTable)
                 table.update_findings(findings)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         def action_refresh(self):
             self.log_panel.log("Refreshed", "dim")
@@ -432,8 +432,8 @@ if _HAS_TEXTUAL:
         def action_focus_findings(self):
             try:
                 self.query_one("#findings-table", DataTable).focus()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
         def action_focus_log(self):
             self.log_panel.focus()

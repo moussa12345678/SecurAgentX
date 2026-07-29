@@ -50,7 +50,7 @@ class FileEditor:
         except ValueError:
             logger.warning(f"Path outside base dir blocked: {file_path}")
             return None
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.error(f"Invalid path: {e}")
             return None
 
@@ -75,8 +75,8 @@ class FileEditor:
                     "read",
                     {"file": file_path, "blocked": True},
                 )
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 — logged
+            logger.debug("Suppressed Exception: %s", e)
 
         path = self._validate_path(file_path)
         if not path:
@@ -114,7 +114,7 @@ class FileEditor:
                     "truncated": limit < total_lines,
                 },
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "read", {})
 
     def write_file(self, file_path: str, content: str, overwrite: bool = False) -> ExecutionResult:
@@ -153,7 +153,7 @@ class FileEditor:
                 "write",
                 {"file": str(path), "chars": len(content)},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "write", {})
 
     def edit_file(self, file_path: str, old_string: str, new_string: str) -> ExecutionResult:
@@ -215,7 +215,7 @@ class FileEditor:
                     "total_chars": len(new_content),
                 },
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "edit", {})
 
     def search_in_file(self, file_path: str, pattern: str) -> ExecutionResult:
@@ -269,7 +269,7 @@ class FileEditor:
                 "search",
                 {"file": str(path), "pattern": pattern, "matches": len(matches)},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "search", {})
 
     def list_directory(self, dir_path: str = ".", max_depth: int = 2) -> ExecutionResult:
@@ -299,7 +299,7 @@ class FileEditor:
             return ExecutionResult(
                 True, output, "", "list", {"dir": str(path), "items": len(files)}
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "list", {})
 
 
@@ -389,7 +389,7 @@ class PackageManager:
             )
         except subprocess.TimeoutExpired:
             return ExecutionResult(False, "", "Command timed out after 300s", "package", {})
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "package", {})
 
 
@@ -458,7 +458,7 @@ class UniversalExecutor:
                     purpose="UniversalExecutor shell command",
                     governance=self._governance,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001 — broad catch for resilience
                 approved, enable_auto = False, False
 
             if enable_auto:
@@ -499,7 +499,6 @@ class UniversalExecutor:
         # Agent workspace isolation: each agent gets its own temp dir
         work_dir = cwd
         if agent_id >= 0 and not cwd:
-            from pathlib import Path
 
             agent_dir = get_data_dir(f"team_workspaces/agent_{agent_id}")
             agent_dir.mkdir(parents=True, exist_ok=True)
@@ -551,7 +550,7 @@ class UniversalExecutor:
             return ExecutionResult(
                 False, "", f"Timeout after {timeout}s", "shell", {"command": command}
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — graceful fallback
             return ExecutionResult(False, "", str(e), "shell", {"command": command})
 
     # NOTE: _execute_pipeline is no longer needed — shlex.split() handles
@@ -605,7 +604,6 @@ class UniversalExecutor:
         elif action_type == "run_tool":
             import asyncio
             import time
-            from pathlib import Path
 
             from tools.tool_registry import ToolResult, registry
 
@@ -645,7 +643,7 @@ class UniversalExecutor:
                         "run_tool",
                         {"tools": tool_list, "total_findings": total_findings},
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 — graceful fallback
                     return ExecutionResult(False, "", str(e), "run_tool", params)
 
             # Single tool execution
@@ -673,7 +671,7 @@ class UniversalExecutor:
                     "run_tool",
                     {"tool": tool_name, "findings": len(result.findings), "target": tool_target},
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", str(e), "run_tool", params)
 
         elif action_type == "package":
@@ -702,7 +700,7 @@ class UniversalExecutor:
                     try:
                         extracted = extract_and_summarize(url, max_chars=1000)
                         content = extracted.get("text", "")[:800]
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001 — logged
                         logger.debug(f"Could not extract content from {url}: {e}")
 
                 enriched_results.append(
@@ -745,7 +743,7 @@ class UniversalExecutor:
                 return ExecutionResult(
                     True, output or "No programs found.", "", "bounty_intel", {"count": len(result)}
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", str(e), "bounty_intel", params)
 
         elif action_type == "github_search":
@@ -762,7 +760,7 @@ class UniversalExecutor:
                 return ExecutionResult(
                     True, output or "No results.", "", "github_search", {"count": len(results)}
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", str(e), "github_search", params)
 
         elif action_type == "cve_lookup":
@@ -781,7 +779,7 @@ class UniversalExecutor:
                 else:
                     output = "Specify cve_id or keyword."
                 return ExecutionResult(True, output, "", "cve_lookup", {})
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", str(e), "cve_lookup", params)
 
         elif action_type == "js_analyze":
@@ -806,7 +804,7 @@ class UniversalExecutor:
                     "js_analyze",
                     {"secrets": len(secrets), "endpoints": len(endpoints)},
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", str(e), "js_analyze", params)
 
         elif action_type == "check_takeover":
@@ -828,7 +826,7 @@ class UniversalExecutor:
                 return ExecutionResult(
                     True, output, "", "check_takeover", {"vulnerable": bool(result)}
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", str(e), "check_takeover", params)
 
         elif action_type == "ask_user":
@@ -843,8 +841,9 @@ class UniversalExecutor:
                 from integrations.bot_utils import send_telegram_notification
 
                 send_telegram_notification(f"[ASK_USER] {question}")
-            except Exception:
-                pass  # Telegram optional
+            except Exception as e:  # noqa: BLE001 — broad catch for resilience
+                # Telegram optional
+                logger.debug("Suppressed Exception (Telegram notify): %s", e)
 
             # Check if running in non-interactive mode
             import sys
@@ -871,8 +870,8 @@ class UniversalExecutor:
                     from integrations.bot_utils import send_telegram_notification
 
                     send_telegram_notification("[ASK_USER] Password received (hidden)")
-                except Exception:
-                    pass
+                except Exception as e:  # noqa: BLE001 — logged
+                    logger.debug("Suppressed Exception: %s", e)
                 return ExecutionResult(
                     True, "Password received (hidden)", "", "ask_user", {"question": question}
                 )
@@ -884,7 +883,7 @@ class UniversalExecutor:
                 answer = input(prompt).strip()
             except EOFError:
                 return ExecutionResult(False, "", "EOF reading input", "ask_user", params)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — graceful fallback
                 return ExecutionResult(False, "", f"Input error: {e}", "ask_user", params)
 
             # Save to memory
@@ -897,8 +896,8 @@ class UniversalExecutor:
                 from integrations.bot_utils import send_telegram_notification
 
                 send_telegram_notification(f"[USER_REPLY] {answer}")
-            except Exception:
-                pass
+            except Exception as e:  # noqa: BLE001 — logged
+                logger.debug("Suppressed Exception: %s", e)
 
             return ExecutionResult(
                 True, answer, "", "ask_user", {"question": question, "answer": answer}
@@ -989,11 +988,15 @@ def get_universal_executor(base_dir: str = None) -> UniversalExecutor:
 
 if __name__ == "__main__":
     # Test
+    import os
+    import tempfile
+
     print("Testing Universal Executor...")
     executor = UniversalExecutor()
 
-    # Test file operations
-    test_file = "/tmp/test_universal.txt"
+    # Test file operations — use a secure temp file (B108).
+    fd, test_file = tempfile.mkstemp(prefix="test_universal_", suffix=".txt")
+    os.close(fd)
     r1 = executor.file_editor.write_file(test_file, "Hello World\nLine 2\nLine 3")
     print(f"Write: {r1.success}")
 
@@ -1009,3 +1012,9 @@ if __name__ == "__main__":
     # Test shell
     r5 = executor.execute_shell("echo 'Universal Executor Working!'")
     print(f"Shell: {r5.output}")
+
+    # Cleanup test temp file
+    try:
+        os.unlink(test_file)
+    except OSError:
+        pass

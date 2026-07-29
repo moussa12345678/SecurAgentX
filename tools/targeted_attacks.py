@@ -320,10 +320,10 @@ async def test_mass_assignment(
                                 detector="TargetedMassAssignmentDetector",
                             )
                         )
-                except Exception:
-                    pass
-    except Exception:
-        pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return findings
 
 
@@ -372,10 +372,10 @@ async def test_jwt_alg_none(session: aiohttp.ClientSession, ep: Endpoint) -> Lis
                             detector="TargetedJWTDetector",
                         )
                     )
-            except Exception:
-                pass
-    except Exception:
-        pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return findings
 
 
@@ -411,8 +411,8 @@ async def test_proto_pollution(
                         detector="TargetedProtoPollutionDetector",
                     )
                 )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return findings
 
 
@@ -565,8 +565,8 @@ async def test_stored_xss(session: aiohttp.ClientSession, ep: Endpoint) -> List[
                         detector="TargetedStoredXSSDetector",
                     )
                 )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Suppressed Exception: %s", e)
     return findings
 
 

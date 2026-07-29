@@ -191,8 +191,8 @@ async def try_login(
                                 pass
                         if "role" in user:
                             auth_session.role = str(user["role"])
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Suppressed Exception: %s", e)
 
                 # Success indicators
                 if status == 200 and (auth_session.cookies or auth_session.jwt_token):

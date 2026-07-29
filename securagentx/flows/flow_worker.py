@@ -56,7 +56,6 @@ from securagentx.flows.db import FlowDB
 from securagentx.flows.models import (
     Flow,
     FlowStatus,
-    MsgchainType,
     SubtaskInfo,
     TaskStatus,
 )
@@ -487,8 +486,8 @@ class FlowWorker:
         # Push a sentinel to wake the loop if it's blocked on queue.get().
         try:
             self._input_queue.put_nowait(_FlowInput(input="", done=_noop_future()))
-        except Exception:  # noqa: BLE001 — best-effort wakeup.
-            pass
+        except Exception as e: # noqa: BLE001 — best-effort wakeup.
+            logger.debug("Suppressed Exception: %s", e)
 
         # Cancel the worker task itself.
         if self._worker_task is not None and not self._worker_task.done():
@@ -647,8 +646,8 @@ class FlowWorker:
                     # the user can submit new input.
                     try:
                         await self.flow_ctx.set_flow_status(FlowStatus.WAITING)
-                    except Exception:  # noqa: BLE001
-                        pass
+                    except Exception as e: # noqa: BLE001
+                        logger.debug("Suppressed Exception: %s", e)
                     if not flin.done.done():
                         flin.done.set_exception(exc)
         finally:

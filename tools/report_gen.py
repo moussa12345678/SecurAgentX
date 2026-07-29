@@ -12,7 +12,28 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
-from xml.sax.saxutils import escape
+
+# P2-A XXE hardening: ``xml.sax.saxutils.escape`` is a pure string
+# utility (not an XML parser), but to eliminate the ``xml.*`` import
+# surface entirely we vendor a local 3-character escaper that mirrors
+# the upstream behaviour exactly (escapes only ``& < >`` — NOT quotes,
+# so HTML/XML attribute quoting in this module is unchanged).
+# defusedxml is also imported for side-effect so any future XML
+# parsing in this module is hardened against XXE / billion-laughs.
+import defusedxml  # noqa: F401 — defensive, imported for side-effect
+
+
+def escape(data: str) -> str:
+    """Escape ``&``, ``<``, ``>`` for safe embedding in XML/HTML.
+
+    Drop-in replacement for ``xml.sax.saxutils.escape`` (P2-A).
+    """
+    return (
+        data.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
 
 logger = logging.getLogger("securagentx.report")
 

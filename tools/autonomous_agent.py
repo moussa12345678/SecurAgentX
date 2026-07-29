@@ -38,7 +38,7 @@ from urllib.parse import urlparse
 
 try:
     from tools.user_memory import get_target_summary, save_target_learning
-except Exception:
+except Exception:  # noqa: BLE001 — graceful degradation
     save_target_learning = None
     get_target_summary = None
 
@@ -57,7 +57,7 @@ def _display(msg, level="info"):
     """Route output through activity logger and UI components."""
     try:
         display_in_chat_mode(str(msg), level)
-    except Exception:
+    except Exception:  # noqa: BLE001 — broad catch for resilience
         _ui_console._display(f"[dim]{msg}[/dim]")
 
 
@@ -136,7 +136,7 @@ def _ai_call(ai_client, system: str, user: str, temperature: float = 0.3) -> str
         ]
         response = ai_client.chat(messages, temperature=temperature)
         return response.content
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"AI call failed: {e}")
         return ""
 
@@ -204,7 +204,7 @@ def _exec_recon(action: AgentAction, state: AgentState) -> List[Dict]:
             f"{result.stats.get('endpoints', 0)} endpoints, "
             f"{len(result.findings)} findings"
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"Recon error: {e}")
         _display(f"  [recon] error: {e}")
     return findings
@@ -268,7 +268,7 @@ def _exec_http_probe(action: AgentAction, state: AgentState) -> List[Dict]:
             state.assets["live_endpoints"].append(url)
 
         _display(f"  [http_probe] {url} → {r.status_code}, {len(missing)} missing headers")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"HTTP probe error: {e}")
         _display(f"  [http_probe] error: {e}")
     return findings
@@ -326,7 +326,7 @@ def _exec_waf_detect(action: AgentAction, state: AgentState) -> List[Dict]:
             )
 
         _display(f"  [waf_detect] {url} → WAF={waf_found}, blocked={blocked}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"WAF detect error: {e}")
         _display(f"  [waf_detect] error: {e}")
     return findings
@@ -376,8 +376,8 @@ def _exec_endpoint_fuzz(action: AgentAction, state: AgentState, ai_client=None) 
             if r.status_code in (200, 201, 301, 302, 401, 403):
                 interesting.append((path, r.status_code, len(r.content)))
                 time.sleep(0.3)
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 — logged
+            logger.debug("Suppressed Exception: %s", e)
 
     for path, status, size in interesting:
         sev = "info"
@@ -445,8 +445,8 @@ def _exec_bola_probe(action: AgentAction, state: AgentState) -> List[Dict]:
                     }
                 )
             time.sleep(0.25)
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 — logged
+            logger.debug("Suppressed Exception: %s", e)
 
     _display(f"  [bola_probe] {base} → {len(findings)} potential surfaces")
     return findings
@@ -503,7 +503,7 @@ def _exec_header_audit(action: AgentAction, state: AgentState) -> List[Dict]:
             )
 
         _display(f"  [header_audit] {url} → ACAO={acao or 'none'}, creds={acac}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"Header audit error: {e}")
         _display(f"  [header_audit] error: {e}")
     return findings
@@ -811,7 +811,7 @@ def _exec_js_recon(action: AgentAction, state: AgentState) -> List[Dict]:
                         if category == "API Endpoint":
                             state.assets.setdefault("api_endpoints", [])
                             state.assets["api_endpoints"].append(match["match"])
-        except Exception:
+        except Exception:  # noqa: BLE001 — graceful fallback
             continue
 
     _display(
@@ -858,7 +858,7 @@ def _exec_param_mine(action: AgentAction, state: AgentState) -> List[Dict]:
             state.assets.setdefault("discovered_params", [])
             state.assets["discovered_params"].append(r["param"])
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"param_mine error: {e}")
         _display(f"  [param_mine] error: {e}")
 
@@ -893,7 +893,7 @@ def _exec_cors_scan(action: AgentAction, state: AgentState) -> List[Dict]:
                     "target": target,
                 }
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"CORS scan error: {e}")
         _display(f"  [cors_scan] error: {e}")
 
@@ -929,10 +929,10 @@ def _exec_injection_test(action: AgentAction, state: AgentState) -> List[Dict]:
                 try:
                     extra = run_all_injection_tests(url=full_url)
                     findings.extend(extra)
-                except Exception:
+                except Exception:  # noqa: BLE001 — graceful fallback
                     continue
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"Injection test error: {e}")
         _display(f"  [injection_test] error: {e}")
 
@@ -962,7 +962,7 @@ def _exec_subdomain_takeover(action: AgentAction, state: AgentState) -> List[Dic
     try:
         results = check_subdomains(subdomains)
         findings.extend(results)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"Subdomain takeover error: {e}")
         _display(f"  [subdomain_takeover] error: {e}")
 
@@ -1042,7 +1042,7 @@ def _exec_waf_bypass(action: AgentAction, state: AgentState) -> List[Dict]:
                 }
             )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"WAF bypass error: {e}")
         _display(f"  [waf_bypass] error: {e}")
 
@@ -1221,7 +1221,7 @@ def _exec_create_custom_tool(action: AgentAction, state: AgentState, ai_client=N
                             }
                         )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"create_custom_tool error: {e}")
         _display(f"  [create_custom_tool] error: {e}")
 
@@ -1269,11 +1269,11 @@ def _exec_vuln_scan(action: AgentAction, state: AgentState) -> List[Dict]:
                             "target": url,
                         }
                     )
-            except Exception:
+            except Exception:  # noqa: BLE001 — graceful fallback
                 continue
 
         _display(f"  [vuln_scan] Found {len(findings)} potential issues")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"vuln_scan error: {e}")
         _display(f"  [vuln_scan] error: {e}")
     return findings
@@ -1321,11 +1321,11 @@ def _exec_xss_hunt(action: AgentAction, state: AgentState) -> List[Dict]:
                             }
                         )
                         break  # Found XSS in this param, move to next
-                except Exception:
+                except Exception:  # noqa: BLE001 — graceful fallback
                     continue
 
         _display(f"  [xss_hunt] Found {len(findings)} XSS vulnerabilities")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"xss_hunt error: {e}")
         _display(f"  [xss_hunt] error: {e}")
     return findings
@@ -1354,7 +1354,7 @@ def _exec_zap_active_scan(action: AgentAction, state: AgentState) -> List[Dict]:
         # Check if ZAP daemon is running
         try:
             zap.core.version
-        except Exception:
+        except Exception:  # noqa: BLE001 — broad catch for resilience
             # Try to start ZAP daemon
             import subprocess
 
@@ -1428,7 +1428,7 @@ def _exec_zap_active_scan(action: AgentAction, state: AgentState) -> List[Dict]:
 
         _display(f"  [zap_active_scan] Found {len(findings)} vulnerabilities")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"ZAP scan error: {e}")
         _display(f"  [zap_active_scan] error: {e}")
 
@@ -1752,7 +1752,7 @@ class AutonomousAgent:
                 from tools.universal_ai_client import AIClientManager
 
                 self.ai_client = AIClientManager()
-            except Exception:
+            except Exception:  # noqa: BLE001 — graceful degradation
                 self.ai_client = None
         else:
             self.ai_client = ai_client
@@ -1761,7 +1761,7 @@ class AutonomousAgent:
             from tools.ai_tool_creator import AIToolCreator
 
             self.tool_creator = AIToolCreator(governance_mode=governance_mode)
-        except Exception:
+        except Exception:  # noqa: BLE001 — graceful degradation
             self.tool_creator = None
 
         self.decision_history: List[AgentAction] = []
@@ -1794,7 +1794,7 @@ class AutonomousAgent:
                 target=target,
                 objective=f"{goal} | governance={self.governance_mode}",
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 — graceful degradation
             mission = None
 
         try:
@@ -1942,7 +1942,7 @@ class AutonomousAgent:
             }
             out_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
             _display(f"[Export] Saved to {out_path}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.warning(f"JSON export failed: {e}")
 
     def _execute_action(self, action: AgentAction, state: AgentState) -> List[Dict]:
@@ -1977,7 +1977,7 @@ class AutonomousAgent:
         if action.name == "threat_model":
             try:
                 return _exec_threat_model(action, state, ai_client=self.ai_client)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.warning(f"threat_model failed: {e}")
                 _display(f"  [!] threat_model error: {e}")
                 return []
@@ -1985,7 +1985,7 @@ class AutonomousAgent:
         if action.name == "create_custom_tool":
             try:
                 return _exec_create_custom_tool(action, state, ai_client=self.ai_client)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.warning(f"create_custom_tool failed: {e}")
                 _display(f"  [!] create_custom_tool error: {e}")
                 return []
@@ -1993,7 +1993,7 @@ class AutonomousAgent:
         if action.name == "endpoint_fuzz":
             try:
                 return _exec_endpoint_fuzz(action, state, ai_client=self.ai_client)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.warning(f"endpoint_fuzz failed: {e}")
                 _display(f"  [!] endpoint_fuzz error: {e}")
                 return []
@@ -2002,7 +2002,7 @@ class AutonomousAgent:
         if fn:
             try:
                 return fn(action, state)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — logged
                 logger.warning(f"Action {action.name} failed: {e}")
                 _display(f"  [!] {action.name} error: {e}")
         return []
@@ -2023,10 +2023,10 @@ class AutonomousAgent:
                             "payout_range": p.payout_range,
                         }
                     )
-                except Exception:
-                    pass
+                except Exception as e:  # noqa: BLE001 — logged
+                    logger.debug("Suppressed Exception: %s", e)
             return out
-        except Exception:
+        except Exception:  # noqa: BLE001 — graceful fallback
             return []
 
     def _generate_report(
@@ -2044,7 +2044,7 @@ class AutonomousAgent:
             gen = PDFReportGenerator()
             paths = gen.generate_from_findings(findings, meta)
             return paths.get("pd") or paths.get("html")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.debug(f"Report generation failed: {e}")
             return None
 
@@ -2121,7 +2121,7 @@ class AutonomousAgent:
                     new_client = UniversalAIClient(provider=provider, model=model_name)
                     if new_client.is_available():
                         team_clients.append(new_client)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 — logged
                     logger.warning(f"Failed to load team client {model_name}: {e}")
 
             if len(team_clients) < 2:
@@ -2217,7 +2217,7 @@ class AutonomousAgent:
                 summary=summary,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — logged
             logger.error(f"Team Aegis failed: {e}")
             _display(f"[Team Aegis] Error: {e}. Falling back to single agent.")
             return self.run_autonomous_scan(target, goal=goal)
@@ -2238,7 +2238,7 @@ def _exec_ssrf_scan_ex(action: AgentAction, state: AgentState) -> List[Dict]:
         results = engine.scan(url=action.target, headers=_build_headers(state))
         findings.extend(results)
         _display(f"  [ssrf_scan] {action.target} → {len(findings)} SSRF findings")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"SSRF scan error: {e}")
         _display(f"  [ssrf_scan] error: {e}")
     return findings
@@ -2253,7 +2253,7 @@ def _exec_graphql_ex(action: AgentAction, state: AgentState) -> List[Dict]:
         results = scan_graphql(action.target, headers=_build_headers(state))
         findings.extend(results)
         _display(f"  [graphql_introspect] {action.target} → {len(findings)} findings")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"GraphQL scan error: {e}")
         _display(f"  [graphql_introspect] error: {e}")
     return findings
@@ -2268,7 +2268,7 @@ def _exec_race_condition_ex(action: AgentAction, state: AgentState) -> List[Dict
         results = scan_race_conditions(action.target, headers=_build_headers(state))
         findings.extend(results)
         _display(f"  [race_condition] {action.target} → {len(findings)} findings")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"Race condition error: {e}")
         _display(f"  [race_condition] error: {e}")
     return findings
@@ -2291,7 +2291,7 @@ def _exec_auth_test_ex(action: AgentAction, state: AgentState) -> List[Dict]:
         )
         findings.extend(results)
         _display(f"  [auth_test] {action.target} → {len(findings)} findings")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — logged
         logger.warning(f"Auth test error: {e}")
         _display(f"  [auth_test] error: {e}")
     return findings

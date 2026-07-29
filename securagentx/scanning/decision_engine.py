@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 if TYPE_CHECKING:
     from securagentx.scanning.prompt_builder import PromptBuilder
@@ -224,8 +224,8 @@ class DecisionEngine:
                     "dominant_purpose": dominant_purpose,
                     "reason": getattr(reflection, "recommendation", "") or "reflection.switch_strategy",
                 })
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
             return "\n".join(parts)
         except Exception as e:
@@ -299,8 +299,8 @@ class DecisionEngine:
             try:
                 lo = getattr(ctx, "last_output", "") or ""
                 last_output_excerpt = lo[:1500]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
             think_prompt = _REACT_THINK_PROMPT.format(
                 step=step,
@@ -331,8 +331,8 @@ class DecisionEngine:
                     trace = []
                     setattr(self, "reasoning_trace", trace)
                 trace.append({"phase": "react_think", "content": text})
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
             return text
         except Exception as e:
             logger.debug(f"ReAct think phase skipped: {e}")

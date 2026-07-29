@@ -55,7 +55,6 @@ from typing import Any, Awaitable, Callable, Optional
 
 from securagentx.auth.models import (
     TOKEN_STATUS_ACTIVE,
-    USER_STATUS_ACTIVE,
     USER_STATUS_BLOCKED,
     USER_TYPE_API,
 )

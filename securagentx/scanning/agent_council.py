@@ -451,8 +451,8 @@ class AgentCouncil:
         if self.callback:
             try:
                 self.callback(msg)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
 
     # ── Report Builder ─────────────────────────────────────────────────────────
 

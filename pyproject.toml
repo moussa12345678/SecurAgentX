@@ -63,7 +63,9 @@ dependencies = [
     # Token counting
     "tiktoken>=0.5.0",
     # Vector memory
-    "chromadb>=0.4.0",
+    "chromadb>=1.5.9",  # CVE-2026-45829: Pre-auth RCE — pin to latest available patched release
+    # XXE defense — securagentx/search_providers/duckduckgo.py + tools/report_gen.py
+    "defusedxml>=0.7.1",
     # Web intelligence
     "trafilatura>=1.6.0",
     "googlesearch-python>=1.2.0",

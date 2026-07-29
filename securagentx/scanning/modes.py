@@ -12,8 +12,7 @@ import logging
 import re
 import time
 import traceback
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from securagentx.paths import get_reports_path
 
 from tools.cvss_calculator import CVSSCalculator

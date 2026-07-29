@@ -188,8 +188,6 @@ def get_subscriptions_controller(
 from .subscriptions import (  # noqa: E402
     OriginValidator,
     RedisSubscriptionsController,
-    get_controller as _get_controller,
-    set_controller as _set_controller,
 )
 
 # Re-export the Strawberry root types lazily via __getattr__ so that

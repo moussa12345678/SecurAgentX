@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from tools.adaptive_planner import AdaptivePlanner, ActionType
+from tools.adaptive_planner import AdaptivePlanner
 from tools.chaining_engine import ChainingEngine
 from tools.escalation_engine import EscalationEngine
 from tools.knowledge_graph import KnowledgeGraph
@@ -308,8 +308,6 @@ class VulnFinder:
 
         # Execute the tool via the registry (async under the hood)
         import asyncio
-        from pathlib import Path
-        from securagentx.paths import get_reports_path
         report_dir = get_data_dir("reports")
         report_dir.mkdir(parents=True, exist_ok=True)
         semaphore = asyncio.Semaphore(1)

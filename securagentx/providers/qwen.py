@@ -64,7 +64,6 @@ from securagentx.providers.base import (
     ModelConfig,
     PriceInfo,
     ProviderConfig,
-    ProviderOptionsType,
     ProviderType,
 )
 

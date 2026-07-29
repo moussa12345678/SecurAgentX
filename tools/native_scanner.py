@@ -350,8 +350,8 @@ class NativeScanner:
                 if not chunk:
                     break
                 data.extend(chunk)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
         return bytes(data)
 
     # ── Parallel Scanning ─────────────────────────────────────────────────
@@ -421,8 +421,8 @@ class NativeScanner:
                     url = match.group(1)
                     if url.startswith(base):
                         urls.add(url.split("?")[0].rstrip("/"))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         return list(urls)
 

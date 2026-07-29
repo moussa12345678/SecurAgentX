@@ -50,7 +50,6 @@ from securagentx.providers.base import (
     Choice,
     ContentResponse,
     MessageContent,
-    MessagePart,
     ModelConfig,
     ModelsConfig,
     PriceInfo,
@@ -62,6 +61,7 @@ from securagentx.providers.base import (
     ToolCall,
     ToolCallResponse,
 )
+from securagentx.utils.url import validate_url_scheme
 
 logger = logging.getLogger("securagentx.providers.ollama")
 
@@ -777,50 +777,58 @@ class _OllamaHTTPClient:
         """POST /api/chat with the Ollama chat payload."""
         body = json.dumps(kwargs).encode("utf-8")
         from urllib import request as urllib_request
+        chat_url = f"{self._server_url}/api/chat"
+        validate_url_scheme(chat_url)
         req = urllib_request.Request(
-            f"{self._server_url}/api/chat",
+            chat_url,
             data=body,
             headers=self._headers(),
             method="POST",
         )
-        with urllib_request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310
+        with urllib_request.urlopen(req, timeout=self._timeout) as resp:  # nosec B310
             return json.loads(resp.read().decode("utf-8"))
 
     def list(self) -> dict:
         """GET /api/list — return available local models."""
         from urllib import request as urllib_request
+        list_url = f"{self._server_url}/api/list"
+        validate_url_scheme(list_url)
         req = urllib_request.Request(
-            f"{self._server_url}/api/list",
+            list_url,
             headers=self._headers(),
             method="GET",
         )
-        with urllib_request.urlopen(req, timeout=10.0) as resp:  # noqa: S310
+        with urllib_request.urlopen(req, timeout=10.0) as resp:  # nosec B310
             return json.loads(resp.read().decode("utf-8"))
 
     def show(self, model: str) -> dict:
         """POST /api/show — return model metadata."""
         body = json.dumps({"model": model}).encode("utf-8")
         from urllib import request as urllib_request
+        show_url = f"{self._server_url}/api/show"
+        validate_url_scheme(show_url)
         req = urllib_request.Request(
-            f"{self._server_url}/api/show",
+            show_url,
             data=body,
             headers=self._headers(),
             method="POST",
         )
-        with urllib_request.urlopen(req, timeout=10.0) as resp:  # noqa: S310
+        with urllib_request.urlopen(req, timeout=10.0) as resp:  # nosec B310
             return json.loads(resp.read().decode("utf-8"))
 
     def pull(self, model: str) -> Any:
         """POST /api/pull — return a sync iterator of progress dicts."""
         body = json.dumps({"model": model, "stream": True}).encode("utf-8")
         from urllib import request as urllib_request
+        pull_url = f"{self._server_url}/api/pull"
+        validate_url_scheme(pull_url)
         req = urllib_request.Request(
-            f"{self._server_url}/api/pull",
+            pull_url,
             data=body,
             headers=self._headers(),
             method="POST",
         )
-        resp = urllib_request.urlopen(req, timeout=600.0)  # noqa: S310
+        resp = urllib_request.urlopen(req, timeout=600.0)  # nosec B310
         # Return an iterator that reads lines from the response
         def _iter():
             for line in resp:

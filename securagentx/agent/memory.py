@@ -12,14 +12,12 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from securagentx.paths import get_data_path
 
 if TYPE_CHECKING:
     from tools.learning_engine import ExploitRecord
-    from tools.vector_memory import VectorMemory
     from .vuln_agent import VulnReport
 
 logger = logging.getLogger("securagentx.agent.memory")

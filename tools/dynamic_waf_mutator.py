@@ -328,8 +328,8 @@ class DynamicWAFMutatorTool(BaseTool):
         # Save output
         try:
             output_file.write_text(json.dumps(result, indent=2))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Suppressed Exception: %s", e)
 
         findings = []
         if result.get("success"):

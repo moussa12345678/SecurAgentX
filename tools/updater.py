@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from securagentx.utils.url import validate_url_scheme
+
 logger = logging.getLogger("securagentx.updater")
 
 # Where to check for updates
@@ -162,6 +164,7 @@ class Updater:
         try:
             import urllib.request
 
+            validate_url_scheme(self.api_url)
             req = urllib.request.Request(
                 self.api_url,
                 headers={
@@ -169,7 +172,7 @@ class Updater:
                     "Accept": "application/vnd.github+json",
                 },
             )
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
                 data = json.loads(resp.read().decode("utf-8"))
             tag = data.get("tag_name", "")
             if not tag:
