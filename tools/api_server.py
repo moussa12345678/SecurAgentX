@@ -120,9 +120,25 @@ class ScanRecord:
         }
 
 
-# Global scan store (use Redis/Postgres in production)
+# Global scan store (use Redis/Postgres in production).
+#
+# Concurrency note: ``_scan_store`` is accessed from async handlers, but in
+# asyncio's single-threaded model every dict read/write below is atomic
+# (no ``await`` between read and mutate — e.g.
+# ``_scan_store[record.id] = record`` is a single bytecode op). The
+# ``_scan_lock`` is therefore reserved for future handlers that may need
+# to span an ``await`` between read and mutate; current call sites are
+# safe without it.
 _scan_store: Dict[str, ScanRecord] = {}
+_scan_lock = asyncio.Lock()  # reserved for future read-mutate-await spans
+
+# WebSocket connection registry — REAL race condition: ``_notify_ws`` iterates
+# the per-scan set while awaiting ``ws.send_text`` between iterations, so
+# another coroutine can mutate the set (raise "Set changed size during
+# iteration") or replace it. All mutations and iterations of ``_ws_connections``
+# MUST be performed while holding ``_ws_lock``.
 _ws_connections: Dict[str, Set[WebSocket]] = {}
+_ws_lock = asyncio.Lock()
 
 
 # ---------------------------------------------------------------------------
@@ -188,17 +204,31 @@ if _HAS_FASTAPI:
     # ── API App & Helpers ────────────────────────────────────────────────
 
     async def _notify_ws(scan_id: str, event: str, data: Dict[str, Any]) -> None:
-        """Send a WebSocket notification to all connected clients for a scan."""
-        if scan_id not in _ws_connections:
-            return
+        """Send a WebSocket notification to all connected clients for a scan.
+
+        Race-condition safe: we hold ``_ws_lock`` only long enough to snapshot
+        the per-scan set, then release it before awaiting ``ws.send_text``
+        (so a slow client cannot block other handlers from mutating the
+        registry). Stale websockets are pruned under the lock afterwards.
+        """
+        async with _ws_lock:
+            conns = _ws_connections.get(scan_id)
+            if not conns:
+                return
+            # Snapshot so iteration is safe across the awaits below.
+            snapshot: Set[WebSocket] = set(conns)
         payload = json.dumps({"event": event, "data": data})
         stale: Set[WebSocket] = set()
-        for ws in _ws_connections[scan_id]:
+        for ws in snapshot:
             try:
                 await ws.send_text(payload)
             except Exception:
                 stale.add(ws)
-        _ws_connections[scan_id] -= stale
+        if stale:
+            async with _ws_lock:
+                conns = _ws_connections.get(scan_id)
+                if conns:
+                    conns -= stale
 
     # Create the FastAPI app
     _app = FastAPI(
@@ -217,9 +247,11 @@ if _HAS_FASTAPI:
     )
     _server_start_time: float = time.time()
 
-    # Global WS connections for all events
-    if "global" not in _ws_connections:
-        _ws_connections["global"] = set()
+    # Ensure the global WS bucket exists. Safe to do without ``_ws_lock``
+    # because module import runs synchronously (no event loop yet) — no
+    # other coroutine can interleave. Runtime mutations of this bucket
+    # (in ``global_websocket`` and ``_notify_ws``) DO acquire ``_ws_lock``.
+    _ws_connections.setdefault("global", set())
 
     @_app.on_event("startup")
     async def startup():
@@ -594,9 +626,11 @@ if _HAS_FASTAPI:
     async def websocket_endpoint(websocket: WebSocket, scan_id: str):
         """Real-time scan progress via WebSocket."""
         await websocket.accept()
-        if scan_id not in _ws_connections:
-            _ws_connections[scan_id] = set()
-        _ws_connections[scan_id].add(websocket)
+        # Register under ``_ws_lock``: concurrent connect handlers for the
+        # same scan_id would otherwise race on the ``if scan_id not in ...``
+        # branch and one websocket could be lost.
+        async with _ws_lock:
+            _ws_connections.setdefault(scan_id, set()).add(websocket)
         try:
             # Send current status immediately
             record = _scan_store.get(scan_id)
@@ -619,8 +653,10 @@ if _HAS_FASTAPI:
         except Exception as e:
             logger.debug("Suppressed Exception: %s", e)
         finally:
-            if scan_id in _ws_connections:
-                _ws_connections[scan_id].discard(websocket)
+            async with _ws_lock:
+                conns = _ws_connections.get(scan_id)
+                if conns:
+                    conns.discard(websocket)
 
     # ── Static Dashboard ─────────────────────────────────────────────────
 
@@ -773,17 +809,20 @@ setInterval(refreshScans, 5000); refreshScans(); connectWS();
         """Global WebSocket for all scan events."""
         await websocket.accept()
         _session_id = f"session_{uuid.uuid4().hex[:8]}"
-        if "global" not in _ws_connections:
-            _ws_connections["global"] = set()
-        _ws_connections["global"].add(websocket)
+        # Register under ``_ws_lock`` to race-condition-proof concurrent
+        # connections (see ``websocket_endpoint`` above).
+        async with _ws_lock:
+            _ws_connections.setdefault("global", set()).add(websocket)
         try:
             while True:
                 _data = await websocket.receive_text()
         except WebSocketDisconnect:
             pass
         finally:
-            if "global" in _ws_connections:
-                _ws_connections["global"].discard(websocket)
+            async with _ws_lock:
+                conns = _ws_connections.get("global")
+                if conns:
+                    conns.discard(websocket)
 
     # Export module-level app reference
     globals()["app"] = _app

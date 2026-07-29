@@ -29,6 +29,7 @@ jobs:
           # Ensure test deps are present
           pip install pytest pytest-asyncio pytest-timeout rich
           pip install reportlab pyjwt fastapi httpx uvicorn python-multipart
+          pip install aiodocker authlib structlog cachetools selectolax lxml google-api-python-client boto3 aiohttp urllib3
 
       - name: Run test suite
         run: |

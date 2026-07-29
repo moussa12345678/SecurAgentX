@@ -447,18 +447,33 @@ class PythonRecon:
 
     def _build_session(self) -> requests.Session:
         s = requests.Session()
-        # No retries on connect errors — we want to fail fast and move on
-        # when a target is slow/unreachable. Retries only on 5xx (server hiccups).
-        retry = Retry(total=0, connect=0, read=0, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retry, pool_connections=50, pool_maxsize=50)
-        s.mount("http://", adapter)
-        s.mount("https://", adapter)
-        s.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (SecurAgentX Python Recon) AppleWebKit/537.36",
-            }
-        )
-        return s
+        _ok = False
+        try:
+            # No retries on connect errors — we want to fail fast and move on
+            # when a target is slow/unreachable. Retries only on 5xx (server hiccups).
+            retry = Retry(total=0, connect=0, read=0, status_forcelist=[500, 502, 503, 504])
+            adapter = HTTPAdapter(max_retries=retry, pool_connections=50, pool_maxsize=50)
+            s.mount("http://", adapter)
+            s.mount("https://", adapter)
+            s.headers.update(
+                {
+                    "User-Agent": "Mozilla/5.0 (SecurAgentX Python Recon) AppleWebKit/537.36",
+                }
+            )
+            _ok = True
+            return s
+        finally:
+            if not _ok:
+                s.close()
+
+    def close(self) -> None:
+        """Close the underlying HTTP session."""
+        try:
+            if self._session is not None:
+                self._session.close()
+                self._session = None
+        except Exception as e:  # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
 
     def _normalize_url(self, target: str) -> str:
         """Accept bare domain or full URL. Return http://domain."""

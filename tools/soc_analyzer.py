@@ -156,6 +156,64 @@ class SOCAnalyzer:
             logger.debug(f"Syslog parse failed: {e}")
             return None
 
+    def _normalize_json_severity(self, severity: str) -> str:
+        """Map raw SIEM severity strings onto canonical SOC severity buckets."""
+        if severity in ["emergency", "critical", "alert"]:
+            return "critical"
+        if severity in ["error", "high"]:
+            return "high"
+        if severity in ["warning", "notice", "medium"]:
+            return "medium"
+        if severity in ["info", "low", "debug"]:
+            return "low"
+        return severity
+
+    def _extract_json_network_info(
+        self, json_data: Dict[str, Any]
+    ) -> Tuple[Optional[str], Optional[str], Optional[int], Optional[int]]:
+        """Pull src/dst IP and port fields out of various SIEM JSON shapes."""
+        src_ip = json_data.get("src_ip") or json_data.get("source_ip") or json_data.get("src")
+        dst_ip = json_data.get("dst_ip") or json_data.get("dest_ip") or json_data.get("dst")
+        src_port = json_data.get("src_port") or json_data.get("sport")
+        dst_port = json_data.get("dst_port") or json_data.get("dport")
+
+        # Convert ports to int if string
+        if isinstance(src_port, str):
+            src_port = int(src_port) if src_port.isdigit() else None
+        if isinstance(dst_port, str):
+            dst_port = int(dst_port) if dst_port.isdigit() else None
+
+        return src_ip, dst_ip, src_port, dst_port
+
+    def _classify_json_alert_type(self, signature: str) -> str:
+        """Classify an alert into a canonical type from its signature text."""
+        sig_lower = signature.lower()
+        if any(kw in sig_lower for kw in ["malware", "trojan", "virus"]):
+            return "malware"
+        if any(
+            kw in sig_lower
+            for kw in [
+                "intrusion",
+                "exploit",
+                "attack",
+                "cve",
+                "injection",
+                "sqli",
+                "xss",
+                "rce",
+                "lfi",
+                "ssti",
+            ]
+        ):
+            return "intrusion"
+        if any(kw in sig_lower for kw in ["recon", "scan", "probe"]):
+            return "recon"
+        if any(kw in sig_lower for kw in ["privilege", "escalation", "sudo", "admin"]):
+            return "privilege_escalation"
+        if any(kw in sig_lower for kw in ["data", "exfil", "leak", "theft"]):
+            return "data_exfiltration"
+        return "unknown"
+
     def parse_json_alert(self, json_data: Dict[str, Any], source: str) -> Optional[Alert]:
         """Parse JSON format alert (common in modern SIEMs)."""
         try:
@@ -170,59 +228,16 @@ class SOCAnalyzer:
                 or json_data.get("@timestamp")
                 or datetime.now(timezone.utc).isoformat()
             )
-            severity = (json_data.get("severity") or json_data.get("level") or "medium").lower()
-
-            # Normalize severity
-            if severity in ["emergency", "critical", "alert"]:
-                severity = "critical"
-            elif severity in ["error", "high"]:
-                severity = "high"
-            elif severity in ["warning", "notice", "medium"]:
-                severity = "medium"
-            elif severity in ["info", "low", "debug"]:
-                severity = "low"
+            severity = self._normalize_json_severity(
+                (json_data.get("severity") or json_data.get("level") or "medium").lower()
+            )
 
             # Extract network info
-            src_ip = json_data.get("src_ip") or json_data.get("source_ip") or json_data.get("src")
-            dst_ip = json_data.get("dst_ip") or json_data.get("dest_ip") or json_data.get("dst")
-            src_port = json_data.get("src_port") or json_data.get("sport")
-            dst_port = json_data.get("dst_port") or json_data.get("dport")
-
-            # Convert ports to int if string
-            if isinstance(src_port, str):
-                src_port = int(src_port) if src_port.isdigit() else None
-            if isinstance(dst_port, str):
-                dst_port = int(dst_port) if dst_port.isdigit() else None
+            src_ip, dst_ip, src_port, dst_port = self._extract_json_network_info(json_data)
 
             # Determine alert type
-            alert_type = "unknown"
             signature = json_data.get("signature") or json_data.get("rule_name") or ""
-            if any(kw in signature.lower() for kw in ["malware", "trojan", "virus"]):
-                alert_type = "malware"
-            elif any(
-                kw in signature.lower()
-                for kw in [
-                    "intrusion",
-                    "exploit",
-                    "attack",
-                    "cve",
-                    "injection",
-                    "sqli",
-                    "xss",
-                    "rce",
-                    "lfi",
-                    "ssti",
-                ]
-            ):
-                alert_type = "intrusion"
-            elif any(kw in signature.lower() for kw in ["recon", "scan", "probe"]):
-                alert_type = "recon"
-            elif any(
-                kw in signature.lower() for kw in ["privilege", "escalation", "sudo", "admin"]
-            ):
-                alert_type = "privilege_escalation"
-            elif any(kw in signature.lower() for kw in ["data", "exfil", "leak", "theft"]):
-                alert_type = "data_exfiltration"
+            alert_type = self._classify_json_alert_type(signature)
 
             return Alert(
                 alert_id=alert_id,

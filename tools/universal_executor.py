@@ -574,25 +574,20 @@ class UniversalExecutor:
             return self.file_editor.read_file(
                 params.get("path"), params.get("offset", 1), params.get("limit", 100)
             )
-
         elif action_type == "write_file":
             return self.file_editor.write_file(
                 params.get("path"), params.get("content"), params.get("overwrite", False)
             )
-
         elif action_type == "edit_file":
             return self.file_editor.edit_file(
                 params.get("path"), params.get("old_string"), params.get("new_string")
             )
-
         elif action_type == "search_file":
             return self.file_editor.search_in_file(params.get("path"), params.get("pattern"))
-
         elif action_type == "list_dir":
             return self.file_editor.list_directory(
                 params.get("path", "."), params.get("max_depth", 2)
             )
-
         elif action_type == "shell":
             return self.execute_shell(
                 params.get("command"),
@@ -600,351 +595,385 @@ class UniversalExecutor:
                 params.get("cwd"),
                 agent_id=params.get("agent_id", -1),
             )
-
         elif action_type == "run_tool":
-            import asyncio
-            import time
-
-            from tools.tool_registry import ToolResult, registry
-
-            tool_name = params.get("tool", "")
-            tool_target = params.get("target", "")
-            params.get("args", "")
-            tool_list = params.get("tools", [])
-
-            # Support parallel execution: if "tools" is a list, run all concurrently
-            if tool_list:
-                targets = [tool_target] * len(tool_list) if tool_target else [""] * len(tool_list)
-
-                async def _run_parallel():
-                    sem = asyncio.Semaphore(5)
-
-                    async def _run_one(name, tgt):
-                        t = registry.get_tool(name)
-                        if not t or not t.is_available:
-                            return ToolResult(False, name, error_message=f"{name} not available")
-                        rd = get_reports_path(f"run_{name}_{int(time.time())}")
-                        rd.mkdir(parents=True, exist_ok=True)
-                        return await t.execute(tgt, rd, sem)
-
-                    results = await asyncio.gather(
-                        *[_run_one(n, t) for n, t in zip(tool_list, targets)]
-                    )
-                    lines = [f"[{r.tool_name}] {len(r.findings)} findings" for r in results]
-                    total = sum(len(r.findings) for r in results)
-                    return "\n".join(lines), total
-
-                try:
-                    output, total_findings = asyncio.run(_run_parallel())
-                    return ExecutionResult(
-                        True,
-                        output,
-                        "",
-                        "run_tool",
-                        {"tools": tool_list, "total_findings": total_findings},
-                    )
-                except Exception as e:  # noqa: BLE001 — graceful fallback
-                    return ExecutionResult(False, "", str(e), "run_tool", params)
-
-            # Single tool execution
-            if not tool_name:
-                return ExecutionResult(False, "", "No tool specified", "run_tool", params)
-            tool = registry.get_tool(tool_name)
-            if not tool or not tool.is_available:
-                return ExecutionResult(
-                    False, "", f"Tool '{tool_name}' not available", "run_tool", params
-                )
-            report_dir = get_reports_path(f"run_{tool_name}_{int(time.time())}")  # type: ignore[name-defined]
-            report_dir.mkdir(parents=True, exist_ok=True)
-            try:
-
-                async def _run():
-                    sem = asyncio.Semaphore(3)
-                    return await tool.execute(tool_target, report_dir, sem)
-
-                result = asyncio.run(_run())
-                output = result.output or f"{len(result.findings)} findings"
-                return ExecutionResult(
-                    result.success,
-                    output[:5000],
-                    result.error_message or "",
-                    "run_tool",
-                    {"tool": tool_name, "findings": len(result.findings), "target": tool_target},
-                )
-            except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", str(e), "run_tool", params)
-
+            return self._handle_run_tool(params)
         elif action_type == "package":
             return self.package_manager.execute(
                 params.get("manager", "pip"), params.get("action", "install"), params.get("package")
             )
-
         elif action_type == "search_web":
-            from tools.research_tool import extract_and_summarize, search_web
-
-            query = params.get("query", "")
-            num = params.get("num_results", 5)
-
-            # Get search results
-            results = search_web(query, num)
-
-            # Extract content from top results for better context
-            enriched_results = []
-            for r in results[:3]:  # Top 3 results
-                url = r.get("url", "")
-                title = r.get("title", "")
-                content = r.get("content", "")
-
-                # If no content, try to extract from URL
-                if not content and url:
-                    try:
-                        extracted = extract_and_summarize(url, max_chars=1000)
-                        content = extracted.get("text", "")[:800]
-                    except Exception as e:  # noqa: BLE001 — logged
-                        logger.debug(f"Could not extract content from {url}: {e}")
-
-                enriched_results.append(
-                    {
-                        "url": url,
-                        "title": title,
-                        "content": content[:1000] if content else "[Visit URL for full content]",
-                    }
-                )
-
-            output_text = f"Search results for '{query}':\n\n"
-            for i, r in enumerate(enriched_results, 1):
-                output_text += f"[{i}] {r['title']}\n"
-                output_text += f"URL: {r['url']}\n"
-                output_text += f"Content: {r['content'][:500]}...\n\n"
-
-            return ExecutionResult(
-                True,
-                output_text,
-                "",
-                "search_web",
-                {"query": query, "results": len(enriched_results)},
-            )
-
+            return self._handle_search_web(params)
         elif action_type == "bounty_intel":
-            from tools.bounty_intelligence import BountyIntelligence
-
-            program = params.get("program", "")
-            result = []
-            try:
-                bi = BountyIntelligence()
-                if program:
-                    programs = bi.discover_programs_public(limit=20)
-                    result = [p for p in programs if program.lower() in p.name.lower()][:5]
-                else:
-                    result = bi.discover_programs_public(limit=10)
-                output = "\n".join(
-                    [f"  - {p.name}: ${p.min_bounty}-${p.max_bounty} ({p.state})" for p in result]
-                )
-                return ExecutionResult(
-                    True, output or "No programs found.", "", "bounty_intel", {"count": len(result)}
-                )
-            except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", str(e), "bounty_intel", params)
-
+            return self._handle_bounty_intel(params)
         elif action_type == "github_search":
-            from tools.github_intel import search_code
-
-            query = params.get("query", "")
-            if not query:
-                return ExecutionResult(False, "", "No query specified", "github_search", params)
-            try:
-                results = search_code(query)
-                output = "\n".join(
-                    [f"  - {r.get('repo', '?')}: {r.get('file', '?')}" for r in results[:10]]
-                )
-                return ExecutionResult(
-                    True, output or "No results.", "", "github_search", {"count": len(results)}
-                )
-            except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", str(e), "github_search", params)
-
+            return self._handle_github_search(params)
         elif action_type == "cve_lookup":
-            from tools.cve_database import get_cve_database
-
-            cve_id = params.get("cve_id", "")
-            keyword = params.get("keyword", "")
-            try:
-                db = get_cve_database()
-                if cve_id:
-                    entry = db.get_cve(cve_id)
-                    output = f"{entry.cve_id}: {entry.description[:200]}" if entry else "Not found."
-                elif keyword:
-                    results = db.search_cves(keyword, limit=5)  # type: ignore[assignment]
-                    output = "\n".join([f"  - {r.cve_id}: {r.description[:100]}" for r in results])  # type: ignore[attr-defined]
-                else:
-                    output = "Specify cve_id or keyword."
-                return ExecutionResult(True, output, "", "cve_lookup", {})
-            except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", str(e), "cve_lookup", params)
-
+            return self._handle_cve_lookup(params)
         elif action_type == "js_analyze":
-            from tools.js_analyzer import analyze_js
+            return self._handle_js_analyze(params)
+        elif action_type == "check_takeover":
+            return self._handle_check_takeover(params)
+        elif action_type == "ask_user":
+            return self._handle_ask_user(params)
+        elif action_type == "submit_findings":
+            return self._handle_submit_findings(params)
+        elif action_type == "web_search":
+            return self._handle_web_search(params)
+        else:
+            return ExecutionResult(False, "", f"Unknown action type: {action_type}", "unknown", {})
 
-            url = params.get("url", "")
-            if not url:
-                return ExecutionResult(False, "", "No URL specified", "js_analyze", params)
+    # ------------------------------------------------------------------ #
+    # Action handlers — extracted from execute_action() to keep the      #
+    # dispatch loop below rank-D cyclomatic complexity. Each helper     #
+    # preserves the original behaviour verbatim.                         #
+    # ------------------------------------------------------------------ #
+
+    def _handle_run_tool(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Execute a registered security tool (single or parallel batch)."""
+        import asyncio
+        import time
+
+        from tools.tool_registry import ToolResult, registry
+
+        tool_name = params.get("tool", "")
+        tool_target = params.get("target", "")
+        params.get("args", "")
+        tool_list = params.get("tools", [])
+
+        # Support parallel execution: if "tools" is a list, run all concurrently
+        if tool_list:
+            targets = [tool_target] * len(tool_list) if tool_target else [""] * len(tool_list)
+
+            async def _run_parallel():
+                sem = asyncio.Semaphore(5)
+
+                async def _run_one(name, tgt):
+                    t = registry.get_tool(name)
+                    if not t or not t.is_available:
+                        return ToolResult(False, name, error_message=f"{name} not available")
+                    rd = get_reports_path(f"run_{name}_{int(time.time())}")
+                    rd.mkdir(parents=True, exist_ok=True)
+                    return await t.execute(tgt, rd, sem)
+
+                results = await asyncio.gather(
+                    *[_run_one(n, t) for n, t in zip(tool_list, targets)]
+                )
+                lines = [f"[{r.tool_name}] {len(r.findings)} findings" for r in results]
+                total = sum(len(r.findings) for r in results)
+                return "\n".join(lines), total
+
             try:
-                result = analyze_js(url)
-                secrets = result.get("secrets", [])
-                endpoints = result.get("endpoints", [])
-                lines = [f"Found {len(secrets)} secrets, {len(endpoints)} endpoints"]
-                for s in secrets[:5]:
-                    lines.append(f"  [SECRET] {s.get('type', '?')}: {str(s.get('value', ''))[:80]}")
-                for e in endpoints[:5]:  # type: ignore[misc]
-                    lines.append(f"  [ENDPOINT] {e}")  # type: ignore[misc]
+                output, total_findings = asyncio.run(_run_parallel())
                 return ExecutionResult(
                     True,
-                    "\n".join(lines),
+                    output,
                     "",
-                    "js_analyze",
-                    {"secrets": len(secrets), "endpoints": len(endpoints)},
+                    "run_tool",
+                    {"tools": tool_list, "total_findings": total_findings},
                 )
             except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", str(e), "js_analyze", params)
+                return ExecutionResult(False, "", str(e), "run_tool", params)
 
-        elif action_type == "check_takeover":
-            from tools.subdomain_takeover import check_single_subdomain
+        # Single tool execution
+        if not tool_name:
+            return ExecutionResult(False, "", "No tool specified", "run_tool", params)
+        tool = registry.get_tool(tool_name)
+        if not tool or not tool.is_available:
+            return ExecutionResult(
+                False, "", f"Tool '{tool_name}' not available", "run_tool", params
+            )
+        report_dir = get_reports_path(f"run_{tool_name}_{int(time.time())}")  # type: ignore[name-defined]
+        report_dir.mkdir(parents=True, exist_ok=True)
+        try:
 
-            subdomain = params.get("subdomain", "")
-            if not subdomain:
-                return ExecutionResult(
-                    False, "", "No subdomain specified", "check_takeover", params
-                )
-            try:
-                result = check_single_subdomain(subdomain)
-                if result:
-                    vuln = result.get("vulnerable", False)
-                    service = result.get("service", "unknown")
-                    output = f"TAKEOVER {'YES' if vuln else 'NO'} — {subdomain} → {service}"
-                else:
-                    output = f"No takeover risk detected for {subdomain}"
-                return ExecutionResult(
-                    True, output, "", "check_takeover", {"vulnerable": bool(result)}
-                )
-            except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", str(e), "check_takeover", params)
+            async def _run():
+                sem = asyncio.Semaphore(3)
+                return await tool.execute(tool_target, report_dir, sem)
 
-        elif action_type == "ask_user":
-            question = params.get("question", "")
-            input_type = params.get("input_type", "confirm")
+            result = asyncio.run(_run())
+            output = result.output or f"{len(result.findings)} findings"
+            return ExecutionResult(
+                result.success,
+                output[:5000],
+                result.error_message or "",
+                "run_tool",
+                {"tool": tool_name, "findings": len(result.findings), "target": tool_target},
+            )
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", str(e), "run_tool", params)
 
-            if not question:
-                return ExecutionResult(False, "", "No question provided", "ask_user", params)
+    def _handle_search_web(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Search the live web and enrich the top hits with extracted content."""
+        from tools.research_tool import extract_and_summarize, search_web
 
-            # Send Telegram notification first
-            try:
-                from integrations.bot_utils import send_telegram_notification
+        query = params.get("query", "")
+        num = params.get("num_results", 5)
 
-                send_telegram_notification(f"[ASK_USER] {question}")
-            except Exception as e:  # noqa: BLE001 — broad catch for resilience
-                # Telegram optional
-                logger.debug("Suppressed Exception (Telegram notify): %s", e)
+        # Get search results
+        results = search_web(query, num)
 
-            # Check if running in non-interactive mode
-            import sys
+        # Extract content from top results for better context
+        enriched_results = []
+        for r in results[:3]:  # Top 3 results
+            url = r.get("url", "")
+            title = r.get("title", "")
+            content = r.get("content", "")
 
-            if not sys.stdin.isatty():
-                return ExecutionResult(
-                    False, "", "Non-interactive mode - cannot ask user", "ask_user", params
-                )
-
-            # Format the question for user
-            if input_type == "confirm":
-                prompt = f"\n[?] {question} [y/N]: "
-            elif input_type == "password":
-                import getpass
-
-                prompt = f"\n[?] {question}: "
-                answer = getpass.getpass(prompt)
-                # Save to memory
-                from tools.vector_memory import remember
-
-                remember(f"User provided password for: {question}", "system", "user_input")
-                # Notify via Telegram
+            # If no content, try to extract from URL
+            if not content and url:
                 try:
-                    from integrations.bot_utils import send_telegram_notification
-
-                    send_telegram_notification("[ASK_USER] Password received (hidden)")
+                    extracted = extract_and_summarize(url, max_chars=1000)
+                    content = extracted.get("text", "")[:800]
                 except Exception as e:  # noqa: BLE001 — logged
-                    logger.debug("Suppressed Exception: %s", e)
-                return ExecutionResult(
-                    True, "Password received (hidden)", "", "ask_user", {"question": question}
-                )
+                    logger.debug(f"Could not extract content from {url}: {e}")
+
+            enriched_results.append(
+                {
+                    "url": url,
+                    "title": title,
+                    "content": content[:1000] if content else "[Visit URL for full content]",
+                }
+            )
+
+        output_text = f"Search results for '{query}':\n\n"
+        for i, r in enumerate(enriched_results, 1):
+            output_text += f"[{i}] {r['title']}\n"
+            output_text += f"URL: {r['url']}\n"
+            output_text += f"Content: {r['content'][:500]}...\n\n"
+
+        return ExecutionResult(
+            True,
+            output_text,
+            "",
+            "search_web",
+            {"query": query, "results": len(enriched_results)},
+        )
+
+    def _handle_bounty_intel(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Look up public bug-bounty programmes (optionally filtered by name)."""
+        from tools.bounty_intelligence import BountyIntelligence
+
+        program = params.get("program", "")
+        result = []
+        try:
+            bi = BountyIntelligence()
+            if program:
+                programs = bi.discover_programs_public(limit=20)
+                result = [p for p in programs if program.lower() in p.name.lower()][:5]
             else:
-                prompt = f"\n[?] {question}: "
+                result = bi.discover_programs_public(limit=10)
+            output = "\n".join(
+                [f"  - {p.name}: ${p.min_bounty}-${p.max_bounty} ({p.state})" for p in result]
+            )
+            return ExecutionResult(
+                True, output or "No programs found.", "", "bounty_intel", {"count": len(result)}
+            )
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", str(e), "bounty_intel", params)
 
-            # Get user input
-            try:
-                answer = input(prompt).strip()
-            except EOFError:
-                return ExecutionResult(False, "", "EOF reading input", "ask_user", params)
-            except Exception as e:  # noqa: BLE001 — graceful fallback
-                return ExecutionResult(False, "", f"Input error: {e}", "ask_user", params)
+    def _handle_github_search(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Search GitHub code for a given query string."""
+        from tools.github_intel import search_code
 
+        query = params.get("query", "")
+        if not query:
+            return ExecutionResult(False, "", "No query specified", "github_search", params)
+        try:
+            results = search_code(query)
+            output = "\n".join(
+                [f"  - {r.get('repo', '?')}: {r.get('file', '?')}" for r in results[:10]]
+            )
+            return ExecutionResult(
+                True, output or "No results.", "", "github_search", {"count": len(results)}
+            )
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", str(e), "github_search", params)
+
+    def _handle_cve_lookup(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Look up a CVE by ID or search the local CVE database by keyword."""
+        from tools.cve_database import get_cve_database
+
+        cve_id = params.get("cve_id", "")
+        keyword = params.get("keyword", "")
+        try:
+            db = get_cve_database()
+            if cve_id:
+                entry = db.get_cve(cve_id)
+                output = f"{entry.cve_id}: {entry.description[:200]}" if entry else "Not found."
+            elif keyword:
+                results = db.search_cves(keyword, limit=5)  # type: ignore[assignment]
+                output = "\n".join([f"  - {r.cve_id}: {r.description[:100]}" for r in results])  # type: ignore[attr-defined]
+            else:
+                output = "Specify cve_id or keyword."
+            return ExecutionResult(True, output, "", "cve_lookup", {})
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", str(e), "cve_lookup", params)
+
+    def _handle_js_analyze(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Analyze a JavaScript URL for secrets and endpoints."""
+        from tools.js_analyzer import analyze_js
+
+        url = params.get("url", "")
+        if not url:
+            return ExecutionResult(False, "", "No URL specified", "js_analyze", params)
+        try:
+            result = analyze_js(url)
+            secrets = result.get("secrets", [])
+            endpoints = result.get("endpoints", [])
+            lines = [f"Found {len(secrets)} secrets, {len(endpoints)} endpoints"]
+            for s in secrets[:5]:
+                lines.append(f"  [SECRET] {s.get('type', '?')}: {str(s.get('value', ''))[:80]}")
+            for e in endpoints[:5]:  # type: ignore[misc]
+                lines.append(f"  [ENDPOINT] {e}")  # type: ignore[misc]
+            return ExecutionResult(
+                True,
+                "\n".join(lines),
+                "",
+                "js_analyze",
+                {"secrets": len(secrets), "endpoints": len(endpoints)},
+            )
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", str(e), "js_analyze", params)
+
+    def _handle_check_takeover(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Check a single subdomain for takeover risk."""
+        from tools.subdomain_takeover import check_single_subdomain
+
+        subdomain = params.get("subdomain", "")
+        if not subdomain:
+            return ExecutionResult(
+                False, "", "No subdomain specified", "check_takeover", params
+            )
+        try:
+            result = check_single_subdomain(subdomain)
+            if result:
+                vuln = result.get("vulnerable", False)
+                service = result.get("service", "unknown")
+                output = f"TAKEOVER {'YES' if vuln else 'NO'} — {subdomain} → {service}"
+            else:
+                output = f"No takeover risk detected for {subdomain}"
+            return ExecutionResult(
+                True, output, "", "check_takeover", {"vulnerable": bool(result)}
+            )
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", str(e), "check_takeover", params)
+
+    def _handle_ask_user(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Prompt the operator for input (optionally via Telegram)."""
+        question = params.get("question", "")
+        input_type = params.get("input_type", "confirm")
+
+        if not question:
+            return ExecutionResult(False, "", "No question provided", "ask_user", params)
+
+        # Send Telegram notification first
+        try:
+            from integrations.bot_utils import send_telegram_notification
+
+            send_telegram_notification(f"[ASK_USER] {question}")
+        except Exception as e:  # noqa: BLE001 — broad catch for resilience
+            # Telegram optional
+            logger.debug("Suppressed Exception (Telegram notify): %s", e)
+
+        # Check if running in non-interactive mode
+        import sys
+
+        if not sys.stdin.isatty():
+            return ExecutionResult(
+                False, "", "Non-interactive mode - cannot ask user", "ask_user", params
+            )
+
+        # Format the question for user
+        if input_type == "confirm":
+            prompt = f"\n[?] {question} [y/N]: "
+        elif input_type == "password":
+            import getpass
+
+            prompt = f"\n[?] {question}: "
+            answer = getpass.getpass(prompt)
             # Save to memory
             from tools.vector_memory import remember
 
-            remember(f"User answered: {answer} to question: {question}", "system", "user_input")
-
-            # Notify Telegram of answer
+            remember(f"User provided password for: {question}", "system", "user_input")
+            # Notify via Telegram
             try:
                 from integrations.bot_utils import send_telegram_notification
 
-                send_telegram_notification(f"[USER_REPLY] {answer}")
+                send_telegram_notification("[ASK_USER] Password received (hidden)")
             except Exception as e:  # noqa: BLE001 — logged
                 logger.debug("Suppressed Exception: %s", e)
-
             return ExecutionResult(
-                True, answer, "", "ask_user", {"question": question, "answer": answer}
+                True, "Password received (hidden)", "", "ask_user", {"question": question}
             )
-
-        elif action_type == "submit_findings":
-            findings = params.get("findings", [])
-            target = params.get("target", "")
-
-            if not findings:
-                return ExecutionResult(False, "", "No findings provided", "submit_findings", params)
-
-            # Save each finding to memory
-            from tools.vector_memory import remember
-
-            saved_count = 0
-            for finding in findings:
-                finding_type = finding.get("type", "unknown")
-                endpoint = finding.get("endpoint", "")
-                severity = finding.get("severity", "unknown")
-                description = finding.get("description", "")
-
-                remember(
-                    f"Finding: {finding_type} at {endpoint} - {description}",
-                    target,
-                    "finding",
-                    severity=severity,
-                )
-                saved_count += 1
-
-            return ExecutionResult(
-                True,
-                f"Saved {saved_count} findings to memory",
-                "",
-                "submit_findings",
-                {"count": saved_count, "target": target},
-            )
-
-        elif action_type == "web_search":
-            query = params.get("query", "")
-            if not query:
-                return ExecutionResult(False, "", "No query specified", "web_search", params)
-            # Map web_search to search_web
-            return self.execute_action({"type": "search_web", "params": params})
-
         else:
-            return ExecutionResult(False, "", f"Unknown action type: {action_type}", "unknown", {})
+            prompt = f"\n[?] {question}: "
+
+        # Get user input
+        try:
+            answer = input(prompt).strip()
+        except EOFError:
+            return ExecutionResult(False, "", "EOF reading input", "ask_user", params)
+        except Exception as e:  # noqa: BLE001 — graceful fallback
+            return ExecutionResult(False, "", f"Input error: {e}", "ask_user", params)
+
+        # Save to memory
+        from tools.vector_memory import remember
+
+        remember(f"User answered: {answer} to question: {question}", "system", "user_input")
+
+        # Notify Telegram of answer
+        try:
+            from integrations.bot_utils import send_telegram_notification
+
+            send_telegram_notification(f"[USER_REPLY] {answer}")
+        except Exception as e:  # noqa: BLE001 — logged
+            logger.debug("Suppressed Exception: %s", e)
+
+        return ExecutionResult(
+            True, answer, "", "ask_user", {"question": question, "answer": answer}
+        )
+
+    def _handle_submit_findings(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Persist each finding into vector memory and return the saved count."""
+        findings = params.get("findings", [])
+        target = params.get("target", "")
+
+        if not findings:
+            return ExecutionResult(False, "", "No findings provided", "submit_findings", params)
+
+        # Save each finding to memory
+        from tools.vector_memory import remember
+
+        saved_count = 0
+        for finding in findings:
+            finding_type = finding.get("type", "unknown")
+            endpoint = finding.get("endpoint", "")
+            severity = finding.get("severity", "unknown")
+            description = finding.get("description", "")
+
+            remember(
+                f"Finding: {finding_type} at {endpoint} - {description}",
+                target,
+                "finding",
+                severity=severity,
+            )
+            saved_count += 1
+
+        return ExecutionResult(
+            True,
+            f"Saved {saved_count} findings to memory",
+            "",
+            "submit_findings",
+            {"count": saved_count, "target": target},
+        )
+
+    def _handle_web_search(self, params: Dict[str, Any]) -> ExecutionResult:
+        """Alias for ``search_web`` — kept for AI backward-compatibility."""
+        query = params.get("query", "")
+        if not query:
+            return ExecutionResult(False, "", "No query specified", "web_search", params)
+        # Map web_search to search_web
+        return self.execute_action({"type": "search_web", "params": params})
 
     def get_capabilities(self) -> str:
         """Return capabilities description for AI prompt."""

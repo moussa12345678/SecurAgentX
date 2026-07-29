@@ -355,7 +355,7 @@ def run_main_menu() -> None:
 
     while True:
         # Clear screen
-        os.system("clear" if os.name != "nt" else "cls")
+        subprocess.run(["cls"] if os.name == "nt" else ["clear"], check=False)
 
         # Print banner
         from tui.welcome import ascii_logo

@@ -414,29 +414,42 @@ class UniversalAIClient:
 
         # Session for connection pooling
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "Content-Type": "application/json",
-            }
-        )
-        if self.api_key:
+        _ok = False
+        try:
             self.session.headers.update(
                 {
-                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
                 }
             )
+            if self.api_key:
+                self.session.headers.update(
+                    {
+                        "Authorization": f"Bearer {self.api_key}",
+                    }
+                )
 
-        # Rate Limiting configuration
-        env_rpm_key = f"RPM_{self.model.upper()}"
-        self.rpm_limit = int(os.environ.get(env_rpm_key, "40"))
-        self.min_delay = 60.0 / max(1, self.rpm_limit)
-        self.last_request_time = 0.0
+            # Rate Limiting configuration
+            env_rpm_key = f"RPM_{self.model.upper()}"
+            self.rpm_limit = int(os.environ.get(env_rpm_key, "40"))
+            self.min_delay = 60.0 / max(1, self.rpm_limit)
+            self.last_request_time = 0.0
 
-        logger.info(
-            f"Universal AI Client initialized: {provider} @ {self.base_url}, "
-            f"model={self.model}, api_key={'***' if self.api_key else '(missing)'}, "
-            f"sources={resolved['sources']}"
-        )
+            logger.info(
+                f"Universal AI Client initialized: {provider} @ {self.base_url}, "
+                f"model={self.model}, api_key={'***' if self.api_key else '(missing)'}, "
+                f"sources={resolved['sources']}"
+            )
+            _ok = True
+        finally:
+            if not _ok:
+                self.session.close()
+
+    def close(self) -> None:
+        """Close the underlying requests session."""
+        try:
+            self.session.close()
+        except Exception as e:  # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
 
     def get_active_provider(self) -> str:
         """Read active provider from config.yaml (via tools.ai_config).

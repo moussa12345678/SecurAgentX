@@ -246,12 +246,18 @@ class FastHTTP:
             from urllib3.util.retry import Retry
 
             s = requests.Session()
-            retries = Retry(total=2, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
-            adapter = HTTPAdapter(max_retries=retries, pool_maxsize=self.max_connections)
-            s.mount("http://", adapter)
-            s.mount("https://", adapter)
-            s.verify = not INSECURE
-            self._session = s
+            _ok = False
+            try:
+                retries = Retry(total=2, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
+                adapter = HTTPAdapter(max_retries=retries, pool_maxsize=self.max_connections)
+                s.mount("http://", adapter)
+                s.mount("https://", adapter)
+                s.verify = not INSECURE
+                self._session = s
+                _ok = True
+            finally:
+                if not _ok:
+                    s.close()
         return self._session
 
     def get(self, url: str, **kwargs) -> Optional[Dict]:

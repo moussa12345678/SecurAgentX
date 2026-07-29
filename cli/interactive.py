@@ -13,6 +13,7 @@ import hashlib
 import logging
 import os
 import select
+import subprocess
 import sys
 import threading
 import time
@@ -373,7 +374,7 @@ def show_model_selector(console: Console, manager: Any) -> Optional[List[Any]]:
 
     def print_centered_box(title: str, subtitle: str, width: int = 60):
         """Stable centered box using string manipulation (no complex ANSI)."""
-        os.system("clear" if os.name == "posix" else "cls")
+        subprocess.run(["cls"] if os.name == "nt" else ["clear"], check=False)
 
         terminal_width = 80
         padding = (terminal_width - width) // 2
@@ -409,7 +410,7 @@ def show_model_selector(console: Console, manager: Any) -> Optional[List[Any]]:
         roles = ["Strategist", "Recon Lead", "Exploit Analyst"]
 
         while True:
-            os.system("clear" if os.name == "posix" else "cls")
+            subprocess.run(["cls"] if os.name == "nt" else ["clear"], check=False)
             print_centered_box("TEAM AEGIS BUILDER", "Build your multi-agent security team")
 
             print("  Current Team Roster:")

@@ -84,49 +84,51 @@ def mine_parameters(
     canary = f"securagentx_{uuid.uuid4().hex[:8]}"
 
     session = requests.Session()
-    session.headers["User-Agent"] = "SecurAgentX-Security-Scanner/2.0"
-
-    # Baseline
     try:
-        base = session.get(url, timeout=_TIMEOUT, verify=not INSECURE)
-        baseline_status = base.status_code
-        baseline_len = len(base.content)
-    except Exception as e:
-        logger.error(f"Baseline request failed for {url}: {e}")
-        return []
+        session.headers["User-Agent"] = "SecurAgentX-Security-Scanner/2.0"
 
-    found: List[Dict] = []
-
-    def probe(param: str) -> Dict | None:
-        test_url = f"{url}{'&' if '?' in url else '?'}{param}={canary}"
+        # Baseline
         try:
-            r = session.get(test_url, timeout=_TIMEOUT, verify=not INSECURE)
-            length_delta = abs(len(r.content) - baseline_len)
-            reflected = canary in r.text
-
-            if r.status_code != baseline_status or length_delta > 50 or reflected:
-                return {
-                    "param": param,
-                    "url": test_url,
-                    "status": r.status_code,
-                    "length_delta": length_delta,
-                    "reflected": reflected,
-                    "base_status": baseline_status,
-                }
+            base = session.get(url, timeout=_TIMEOUT, verify=not INSECURE)
+            baseline_status = base.status_code
+            baseline_len = len(base.content)
         except Exception as e:
-            logger.debug("Suppressed Exception: %s", e)
-        return None
+            logger.error(f"Baseline request failed for {url}: {e}")
+            return []
 
-    with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:
-        futures = {pool.submit(probe, p): p for p in params}
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                found.append(result)
-                logger.info(f"Parameter found: {result['param']} on {url}")
+        found: List[Dict] = []
 
-    session.close()
-    return sorted(found, key=lambda x: x["param"])
+        def probe(param: str) -> Dict | None:
+            test_url = f"{url}{'&' if '?' in url else '?'}{param}={canary}"
+            try:
+                r = session.get(test_url, timeout=_TIMEOUT, verify=not INSECURE)
+                length_delta = abs(len(r.content) - baseline_len)
+                reflected = canary in r.text
+
+                if r.status_code != baseline_status or length_delta > 50 or reflected:
+                    return {
+                        "param": param,
+                        "url": test_url,
+                        "status": r.status_code,
+                        "length_delta": length_delta,
+                        "reflected": reflected,
+                        "base_status": baseline_status,
+                    }
+            except Exception as e:
+                logger.debug("Suppressed Exception: %s", e)
+            return None
+
+        with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:
+            futures = {pool.submit(probe, p): p for p in params}
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    found.append(result)
+                    logger.info(f"Parameter found: {result['param']} on {url}")
+
+        return sorted(found, key=lambda x: x["param"])
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":

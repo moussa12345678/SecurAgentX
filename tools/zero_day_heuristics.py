@@ -93,6 +93,9 @@ class SeverityLevel(Enum):
     CRITICAL = "critical"
 
 
+# Severity -> minimum CVSS score. Module-level constant — never
+# mutated at runtime; accessed via ``.get()`` only. Kept as a dict
+# (rather than ``MappingProxyType``) for readability.
 SEVERITY_CVSS_FLOOR: Dict[SeverityLevel, float] = {
     SeverityLevel.INFO: 0.1,
     SeverityLevel.LOW: 3.1,
@@ -201,16 +204,22 @@ class HTTPClient:
         self.max_retries = max_retries
         self.verify_ssl = verify_ssl
         self._session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(
-            pool_connections=50,
-            pool_maxsize=50,
-            max_retries=0,
-        )
-        self._session.mount("http://", adapter)
-        self._session.mount("https://", adapter)
-        self._executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=8, thread_name_prefix="zd-http"
-        )
+        _ok = False
+        try:
+            adapter = requests.adapters.HTTPAdapter(
+                pool_connections=50,
+                pool_maxsize=50,
+                max_retries=0,
+            )
+            self._session.mount("http://", adapter)
+            self._session.mount("https://", adapter)
+            self._executor = concurrent.futures.ThreadPoolExecutor(
+                max_workers=8, thread_name_prefix="zd-http"
+            )
+            _ok = True
+        finally:
+            if not _ok:
+                self._session.close()
 
     # ── Sync helpers ───────────────────────────────────────────────────────
 
@@ -347,9 +356,13 @@ class HTTPClient:
         }
 
     def close(self) -> None:
-        """Shut down the executor cleanly."""
+        """Shut down the executor and HTTP session cleanly."""
         try:
             self._executor.shutdown(wait=False, cancel_futures=True)
+        except Exception as e: # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
+        try:
+            self._session.close()
         except Exception as e: # pragma: no cover - best effort
             logger.debug("Suppressed Exception: %s", e)
 
@@ -389,7 +402,11 @@ def _short_hash(*parts: str) -> str:
 # Known JS gadgets — if these libraries/patterns are observed in the response or
 # in the target's technology stack, a prototype pollution becomes much more
 # dangerous (turns into RCE / XSS).
-PROTO_POLLUTION_GADGETS = [
+#
+# Frozen tuple — never mutated at runtime (only iterated for membership
+# tests in ``_mentions_gadget``). Converted from list to tuple to make
+# accidental mutation at runtime impossible.
+PROTO_POLLUTION_GADGETS = (
     "lodash.merge",
     "lodash.defaultsdeep",
     "_.merge",
@@ -407,9 +424,11 @@ PROTO_POLLUTION_GADGETS = [
     "handlebars",
     "express.bodyParser",
     "express.urlencoded({extended:true})",
-]
+)
 
-PROTO_PROBE_PAYLOADS = [
+# Frozen tuple of probe payloads — only iterated in
+# ``PrototypePollutionDetector.detect``. Never appended to or modified.
+PROTO_PROBE_PAYLOADS = (
     # Standard pollution probe — uses `__proto__` to inject a canary.
     {"__proto__": {"polluted": "elenheur-1337"}},
     # Prototype pollution via `constructor.prototype`.
@@ -420,11 +439,11 @@ PROTO_PROBE_PAYLOADS = [
     {"__proto__": {"isAdmin": True, "role": "admin"}},
     # Nested path pollution attempt.
     {"a": {"__proto__": {"polluted": "elenheur-1337"}}},
-]
+)
 
 # Field names that, when accepted and reflected back, suggest an object
-# pollution / mass-assignment sink.
-DANGEROUS_FIELDS = [
+# pollution / mass-assignment sink. Frozen tuple (membership-tested).
+DANGEROUS_FIELDS = (
     "isAdmin",
     "is_admin",
     "admin",
@@ -454,7 +473,7 @@ DANGEROUS_FIELDS = [
     "privileges",
     "accessLevel",
     "access_level",
-]
+)
 
 
 class PrototypePollutionDetector:
@@ -474,7 +493,9 @@ class PrototypePollutionDetector:
 
     name = "prototype_pollution"
 
-    STACK_PATTERNS = [
+    # Frozen tuple — class-level constant, only iterated for regex
+    # matching in ``_has_stack_signal``. Never mutated at runtime.
+    STACK_PATTERNS = (
         r"Cannot set property .* of .* which has only a getter",
         r"prototype of object is not extensible",
         r"Object\.prototype",
@@ -483,7 +504,7 @@ class PrototypePollutionDetector:
         r"merge.*__proto__",
         r"deep-extend",
         r"lodash.*merge",
-    ]
+    )
 
     def __init__(self, http: Optional[HTTPClient] = None):
         self.http = http or HTTPClient()

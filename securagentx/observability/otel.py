@@ -195,7 +195,7 @@ def setup_otel(
                 OTLPSpanExporter,
             )
         else:
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # type: ignore[no-redef]
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (  # type: ignore[no-redef,assignment]
                 OTLPSpanExporter,
             )
         span_exporter = OTLPSpanExporter(endpoint=endpoint, timeout=EXPORT_TIMEOUT_SECONDS)
@@ -224,7 +224,7 @@ def setup_otel(
                 OTLPMetricExporter,
             )
         else:
-            from opentelemetry.exporter.otlp.proto.http.metric_exporter import (  # type: ignore[no-redef]
+            from opentelemetry.exporter.otlp.proto.http.metric_exporter import (  # type: ignore[no-redef,assignment]
                 OTLPMetricExporter,
             )
         metric_exporter = OTLPMetricExporter(

@@ -133,7 +133,8 @@ async def _run_phase_recon(target: str) -> List[HuntFinding]:
                 )
             )
         # Stash endpoints for targeted attacks phase
-        _endpoint_cache[target] = endpoints
+        async with _cache_lock:
+            _endpoint_cache[target] = endpoints
 
         # Phase 1b: Authentication
         import aiohttp
@@ -142,7 +143,8 @@ async def _run_phase_recon(target: str) -> List[HuntFinding]:
             from tools.auth_session import discover_and_login
 
             auths = await discover_and_login(session, target, endpoints)
-            _auth_cache[target] = auths
+            async with _cache_lock:
+                _auth_cache[target] = auths
             for auth in auths:
                 findings.append(
                     HuntFinding(
@@ -176,9 +178,21 @@ async def _run_phase_recon(target: str) -> List[HuntFinding]:
     return findings
 
 
-# Cache discovered endpoints and auth sessions across phases
+# Cache discovered endpoints and auth sessions across phases.
+#
+# Concurrency note: ``hunt()`` runs phases sequentially (each phase awaits
+# the previous one), so in practice only one coroutine mutates these
+# caches at a time. However, two ``HuntEngine`` instances launched
+# concurrently for the same target (e.g. via ``asyncio.gather`` from a
+# caller) would race on ``_endpoint_cache[target] = ...`` and
+# ``_auth_cache[target] = ...``. Although each individual dict write is
+# atomic in CPython's single-threaded asyncio, holding ``_cache_lock``
+# around the read-modify-write sequences below is defensive and prevents
+# torn reads if a future caller ever inserts an ``await`` between read
+# and mutate.
 _endpoint_cache: Dict[str, List[Any]] = {}
 _auth_cache: Dict[str, List[Any]] = {}
+_cache_lock = asyncio.Lock()
 
 
 async def _run_phase_smart(target: str) -> List[HuntFinding]:
@@ -190,7 +204,8 @@ async def _run_phase_smart(target: str) -> List[HuntFinding]:
     findings: List[HuntFinding] = []
 
     # Get discovered endpoints from cache
-    endpoints = _endpoint_cache.get(target, [])
+    async with _cache_lock:
+        endpoints = list(_endpoint_cache.get(target, []))
     if not endpoints:
         # Discover on-demand if recon wasn't run
         try:
@@ -198,7 +213,8 @@ async def _run_phase_smart(target: str) -> List[HuntFinding]:
 
             discovery = EndpointDiscovery(target=target, timeout=5.0)
             endpoints = await discovery.discover()
-            _endpoint_cache[target] = endpoints
+            async with _cache_lock:
+                _endpoint_cache[target] = endpoints
         except Exception as e:
             logger.warning("endpoint discovery failed: %s", e)
             return findings
@@ -207,7 +223,8 @@ async def _run_phase_smart(target: str) -> List[HuntFinding]:
     try:
         from tools.targeted_attacks import run_targeted_attacks
 
-        auths = _auth_cache.get(target, [])
+        async with _cache_lock:
+            auths = list(_auth_cache.get(target, []))
         confirmed = await run_targeted_attacks(endpoints, concurrency=5, auth_sessions=auths)
     except Exception as e:
         logger.warning("targeted attacks failed: %s", e)
@@ -388,6 +405,10 @@ def _detect_target_dependencies(target: str) -> List[Tuple[str, str]]:
 # CORRELATION & SCORING
 # ═══════════════════════════════════════════════════════════════════════════
 
+# Severity weight table used by ``compute_risk_score`` and ``correlate_chains``.
+# Module-level constant — never mutated at runtime. Iterated via ``.get()``
+# only. Kept as a plain dict for readability; could be ``MappingProxyType``
+# if true immutability is desired.
 _SEVERITY_WEIGHTS = {
     "Critical": 25,
     "High": 12,
@@ -551,7 +572,8 @@ async def _run_phase_correlation_inner(
 
         auth_session = None
         # Use first auth session if available
-        auths = _auth_cache.get(target, [])
+        async with _cache_lock:
+            auths = list(_auth_cache.get(target, []))
         if auths:
             auth_session = auths[0]
 

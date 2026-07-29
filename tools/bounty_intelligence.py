@@ -126,9 +126,22 @@ class BountyIntelligence:
 
         self._ensure_cache()
         self.session = requests.Session()
-        self.session.headers.update(
-            {"User-Agent": "SecurAgentX-Bounty-Intelligence/1.0 (Security Research)"}
-        )
+        _ok = False
+        try:
+            self.session.headers.update(
+                {"User-Agent": "SecurAgentX-Bounty-Intelligence/1.0 (Security Research)"}
+            )
+            _ok = True
+        finally:
+            if not _ok:
+                self.session.close()
+
+    def close(self) -> None:
+        """Close the underlying requests session."""
+        try:
+            self.session.close()
+        except Exception as e:  # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
 
     def _ensure_cache(self) -> None:
         """Ensure cache directory and database exist."""

@@ -161,280 +161,286 @@ def test_xss(url: str, params: Optional[List[str]] = None) -> List[Dict]:
     """Test URL parameters for reflected XSS."""
     findings = []
     session = _make_session()
-    canary = f"xss{uuid.uuid4().hex[:8]}"
+    try:
+        canary = f"xss{uuid.uuid4().hex[:8]}"
 
-    # Parse existing params or use provided list
-    parsed = urlparse(url)
-    existing_params = list(parse_qs(parsed.query).keys())
-    test_params = params or existing_params or ["q", "search", "id", "name", "input"]
+        # Parse existing params or use provided list
+        parsed = urlparse(url)
+        existing_params = list(parse_qs(parsed.query).keys())
+        test_params = params or existing_params or ["q", "search", "id", "name", "input"]
 
-    payloads = _xss_payloads(canary)
+        payloads = _xss_payloads(canary)
 
-    for param in test_params:
-        for p in payloads:
-            try:
-                test_url = _inject_param(url, param, p["payload"])
-                resp = session.get(test_url, timeout=_TIMEOUT, allow_redirects=False)
+        for param in test_params:
+            for p in payloads:
+                try:
+                    test_url = _inject_param(url, param, p["payload"])
+                    resp = session.get(test_url, timeout=_TIMEOUT, allow_redirects=False)
 
-                if p["detect"] in resp.text:
-                    findings.append(
-                        {
-                            "title": f"Reflected XSS via '{param}' ({p['type']})",
-                            "description": (
-                                f"Parameter '{param}' reflects payload without sanitization.\n"
-                                f"Payload: {p['payload']}\n"
-                                f"URL: {test_url}"
-                            ),
-                            "severity": "high",
-                            "type": "xss",
-                            "param": param,
-                            "payload_type": p["type"],
-                            "url": test_url,
-                        }
-                    )
-                    break  # One hit per param is enough
-            except Exception:
-                continue
+                    if p["detect"] in resp.text:
+                        findings.append(
+                            {
+                                "title": f"Reflected XSS via '{param}' ({p['type']})",
+                                "description": (
+                                    f"Parameter '{param}' reflects payload without sanitization.\n"
+                                    f"Payload: {p['payload']}\n"
+                                    f"URL: {test_url}"
+                                ),
+                                "severity": "high",
+                                "type": "xss",
+                                "param": param,
+                                "payload_type": p["type"],
+                                "url": test_url,
+                            }
+                        )
+                        break  # One hit per param is enough
+                except Exception:
+                    continue
 
-    session.close()
-    return findings
+        return findings
+    finally:
+        session.close()
 
 
 def test_sqli(url: str, params: Optional[List[str]] = None) -> List[Dict]:
     """Test URL parameters for SQL injection."""
     findings = []
     session = _make_session()
+    try:
+        parsed = urlparse(url)
+        existing_params = list(parse_qs(parsed.query).keys())
+        test_params = params or existing_params or ["id", "user", "page", "category"]
 
-    parsed = urlparse(url)
-    existing_params = list(parse_qs(parsed.query).keys())
-    test_params = params or existing_params or ["id", "user", "page", "category"]
+        payloads = _sqli_payloads()
 
-    payloads = _sqli_payloads()
-
-    for param in test_params:
-        # Get baseline response
-        try:
-            baseline_url = _inject_param(url, param, "1")
-            baseline = session.get(baseline_url, timeout=_TIMEOUT)
-            baseline_len = len(baseline.text)
-            baseline.status_code
-        except Exception:
-            continue
-
-        for p in payloads:
+        for param in test_params:
+            # Get baseline response
             try:
-                test_url = _inject_param(url, param, p["payload"])
-                resp = session.get(test_url, timeout=_TIMEOUT)
+                baseline_url = _inject_param(url, param, "1")
+                baseline = session.get(baseline_url, timeout=_TIMEOUT)
+                baseline_len = len(baseline.text)
+                baseline.status_code
+            except Exception:
+                continue
 
-                # Error-based detection
-                if p["errors"]:
-                    body_lower = resp.text.lower()
-                    for err_pattern in p["errors"]:
-                        if err_pattern.lower() in body_lower:
+            for p in payloads:
+                try:
+                    test_url = _inject_param(url, param, p["payload"])
+                    resp = session.get(test_url, timeout=_TIMEOUT)
+
+                    # Error-based detection
+                    if p["errors"]:
+                        body_lower = resp.text.lower()
+                        for err_pattern in p["errors"]:
+                            if err_pattern.lower() in body_lower:
+                                findings.append(
+                                    {
+                                        "title": f"SQL Injection (error-based) via '{param}'",
+                                        "description": (
+                                            f"SQL error detected in response when injecting '{param}'.\n"
+                                            f"Payload: {p['payload']}\n"
+                                            f"Error indicator: '{err_pattern}'\n"
+                                            f"URL: {test_url}"
+                                        ),
+                                        "severity": "critical",
+                                        "type": "sqli",
+                                        "param": param,
+                                        "payload_type": p["type"],
+                                        "url": test_url,
+                                    }
+                                )
+                                break
+
+                    # Boolean-based: compare OR true vs OR false
+                    if p["type"] == "or_true":
+                        true_len = len(resp.text)
+                        false_url = _inject_param(url, param, "' OR '1'='2")
+                        false_resp = session.get(false_url, timeout=_TIMEOUT)
+                        false_len = len(false_resp.text)
+
+                        if abs(true_len - false_len) > 100 and true_len != baseline_len:
                             findings.append(
                                 {
-                                    "title": f"SQL Injection (error-based) via '{param}'",
+                                    "title": f"SQL Injection (boolean-based) via '{param}'",
                                     "description": (
-                                        f"SQL error detected in response when injecting '{param}'.\n"
-                                        f"Payload: {p['payload']}\n"
-                                        f"Error indicator: '{err_pattern}'\n"
+                                        "Significant response difference between true/false conditions.\n"
+                                        f"TRUE payload length: {true_len}, FALSE: {false_len}, Baseline: {baseline_len}\n"
                                         f"URL: {test_url}"
                                     ),
                                     "severity": "critical",
                                     "type": "sqli",
                                     "param": param,
-                                    "payload_type": p["type"],
+                                    "payload_type": "boolean",
                                     "url": test_url,
                                 }
                             )
-                            break
 
-                # Boolean-based: compare OR true vs OR false
-                if p["type"] == "or_true":
-                    true_len = len(resp.text)
-                    false_url = _inject_param(url, param, "' OR '1'='2")
-                    false_resp = session.get(false_url, timeout=_TIMEOUT)
-                    false_len = len(false_resp.text)
+                except Exception:
+                    continue
 
-                    if abs(true_len - false_len) > 100 and true_len != baseline_len:
-                        findings.append(
-                            {
-                                "title": f"SQL Injection (boolean-based) via '{param}'",
-                                "description": (
-                                    "Significant response difference between true/false conditions.\n"
-                                    f"TRUE payload length: {true_len}, FALSE: {false_len}, Baseline: {baseline_len}\n"
-                                    f"URL: {test_url}"
-                                ),
-                                "severity": "critical",
-                                "type": "sqli",
-                                "param": param,
-                                "payload_type": "boolean",
-                                "url": test_url,
-                            }
-                        )
+            # Deduplicate per param
+            seen_params = set()
+            unique = []
+            for f in findings:
+                key = f"{f['param']}:{f['type']}"
+                if key not in seen_params:
+                    seen_params.add(key)
+                    unique.append(f)
+            findings = unique
 
-            except Exception:
-                continue
-
-        # Deduplicate per param
-        seen_params = set()
-        unique = []
-        for f in findings:
-            key = f"{f['param']}:{f['type']}"
-            if key not in seen_params:
-                seen_params.add(key)
-                unique.append(f)
-        findings = unique
-
-    session.close()
-    return findings
+        return findings
+    finally:
+        session.close()
 
 
 def test_ssti(url: str, params: Optional[List[str]] = None) -> List[Dict]:
     """Test URL parameters for SSTI."""
     findings = []
     session = _make_session()
+    try:
+        parsed = urlparse(url)
+        existing_params = list(parse_qs(parsed.query).keys())
+        test_params = params or existing_params or ["name", "template", "input", "q"]
 
-    parsed = urlparse(url)
-    existing_params = list(parse_qs(parsed.query).keys())
-    test_params = params or existing_params or ["name", "template", "input", "q"]
+        payloads = _ssti_payloads()
 
-    payloads = _ssti_payloads()
+        for param in test_params:
+            for p in payloads:
+                try:
+                    test_url = _inject_param(url, param, p["payload"])
+                    resp = session.get(test_url, timeout=_TIMEOUT)
 
-    for param in test_params:
-        for p in payloads:
-            try:
-                test_url = _inject_param(url, param, p["payload"])
-                resp = session.get(test_url, timeout=_TIMEOUT)
-
-                detected = False
-                if "detect" in p and p["detect"] in resp.text:
-                    # Make sure it's not just the payload being echoed back
-                    if p["payload"] not in resp.text:
-                        detected = True
-                if "detect_any" in p:
-                    for d in p["detect_any"]:
-                        if d in resp.text:
+                    detected = False
+                    if "detect" in p and p["detect"] in resp.text:
+                        # Make sure it's not just the payload being echoed back
+                        if p["payload"] not in resp.text:
                             detected = True
-                            break
+                    if "detect_any" in p:
+                        for d in p["detect_any"]:
+                            if d in resp.text:
+                                detected = True
+                                break
 
-                if detected:
-                    findings.append(
-                        {
-                            "title": f"SSTI ({p['type']}) via '{param}'",
-                            "description": (
-                                f"Server evaluated template expression in parameter '{param}'.\n"
-                                f"Payload: {p['payload']}\n"
-                                f"URL: {test_url}"
-                            ),
-                            "severity": "critical",
-                            "type": "ssti",
-                            "param": param,
-                            "payload_type": p["type"],
-                            "url": test_url,
-                        }
-                    )
-                    break
-            except Exception:
-                continue
+                    if detected:
+                        findings.append(
+                            {
+                                "title": f"SSTI ({p['type']}) via '{param}'",
+                                "description": (
+                                    f"Server evaluated template expression in parameter '{param}'.\n"
+                                    f"Payload: {p['payload']}\n"
+                                    f"URL: {test_url}"
+                                ),
+                                "severity": "critical",
+                                "type": "ssti",
+                                "param": param,
+                                "payload_type": p["type"],
+                                "url": test_url,
+                            }
+                        )
+                        break
+                except Exception:
+                    continue
 
-    session.close()
-    return findings
+        return findings
+    finally:
+        session.close()
 
 
 def test_lfi(url: str, params: Optional[List[str]] = None) -> List[Dict]:
     """Test URL parameters for LFI/Path Traversal."""
     findings = []
     session = _make_session()
+    try:
+        parsed = urlparse(url)
+        existing_params = list(parse_qs(parsed.query).keys())
+        test_params = (
+            params
+            or existing_params
+            or ["file", "path", "page", "include", "template", "doc", "view", "load"]
+        )
 
-    parsed = urlparse(url)
-    existing_params = list(parse_qs(parsed.query).keys())
-    test_params = (
-        params
-        or existing_params
-        or ["file", "path", "page", "include", "template", "doc", "view", "load"]
-    )
+        payloads = _lfi_payloads()
 
-    payloads = _lfi_payloads()
+        for param in test_params:
+            for p in payloads:
+                try:
+                    test_url = _inject_param(url, param, p["payload"])
+                    resp = session.get(test_url, timeout=_TIMEOUT)
 
-    for param in test_params:
-        for p in payloads:
-            try:
-                test_url = _inject_param(url, param, p["payload"])
-                resp = session.get(test_url, timeout=_TIMEOUT)
+                    for indicator in p["detect_any"]:
+                        if indicator in resp.text:
+                            findings.append(
+                                {
+                                    "title": f"LFI/Path Traversal via '{param}' ({p['type']})",
+                                    "description": (
+                                        f"Server returned sensitive file contents when traversing via '{param}'.\n"
+                                        f"Payload: {p['payload']}\n"
+                                        f"Indicator: '{indicator}' found in response.\n"
+                                        f"URL: {test_url}"
+                                    ),
+                                    "severity": "critical",
+                                    "type": "lfi",
+                                    "param": param,
+                                    "payload_type": p["type"],
+                                    "url": test_url,
+                                }
+                            )
+                            break
+                except Exception:
+                    continue
 
-                for indicator in p["detect_any"]:
-                    if indicator in resp.text:
-                        findings.append(
-                            {
-                                "title": f"LFI/Path Traversal via '{param}' ({p['type']})",
-                                "description": (
-                                    f"Server returned sensitive file contents when traversing via '{param}'.\n"
-                                    f"Payload: {p['payload']}\n"
-                                    f"Indicator: '{indicator}' found in response.\n"
-                                    f"URL: {test_url}"
-                                ),
-                                "severity": "critical",
-                                "type": "lfi",
-                                "param": param,
-                                "payload_type": p["type"],
-                                "url": test_url,
-                            }
-                        )
-                        break
-            except Exception:
-                continue
-
-    session.close()
-    return findings
+        return findings
+    finally:
+        session.close()
 
 
 def test_open_redirect(url: str, params: Optional[List[str]] = None) -> List[Dict]:
     """Test URL parameters for Open Redirect."""
     findings = []
     session = _make_session()
+    try:
+        parsed = urlparse(url)
+        existing_params = list(parse_qs(parsed.query).keys())
+        test_params = (
+            params
+            or existing_params
+            or ["redirect", "url", "next", "return", "returnTo", "goto", "continue", "callback"]
+        )
 
-    parsed = urlparse(url)
-    existing_params = list(parse_qs(parsed.query).keys())
-    test_params = (
-        params
-        or existing_params
-        or ["redirect", "url", "next", "return", "returnTo", "goto", "continue", "callback"]
-    )
+        payloads = _open_redirect_payloads()
 
-    payloads = _open_redirect_payloads()
+        for param in test_params:
+            for p in payloads:
+                try:
+                    test_url = _inject_param(url, param, p["payload"])
+                    resp = session.get(test_url, timeout=_TIMEOUT, allow_redirects=False)
 
-    for param in test_params:
-        for p in payloads:
-            try:
-                test_url = _inject_param(url, param, p["payload"])
-                resp = session.get(test_url, timeout=_TIMEOUT, allow_redirects=False)
+                    if resp.status_code in (301, 302, 303, 307, 308):
+                        location = resp.headers.get("Location", "")
+                        if "evil.com" in location:
+                            findings.append(
+                                {
+                                    "title": f"Open Redirect via '{param}' ({p['type']})",
+                                    "description": (
+                                        "Server redirects to attacker-controlled domain.\n"
+                                        f"Payload: {p['payload']}\n"
+                                        f"Redirect Location: {location}\n"
+                                        f"URL: {test_url}"
+                                    ),
+                                    "severity": "medium",
+                                    "type": "open_redirect",
+                                    "param": param,
+                                    "payload_type": p["type"],
+                                    "url": test_url,
+                                }
+                            )
+                            break
+                except Exception:
+                    continue
 
-                if resp.status_code in (301, 302, 303, 307, 308):
-                    location = resp.headers.get("Location", "")
-                    if "evil.com" in location:
-                        findings.append(
-                            {
-                                "title": f"Open Redirect via '{param}' ({p['type']})",
-                                "description": (
-                                    "Server redirects to attacker-controlled domain.\n"
-                                    f"Payload: {p['payload']}\n"
-                                    f"Redirect Location: {location}\n"
-                                    f"URL: {test_url}"
-                                ),
-                                "severity": "medium",
-                                "type": "open_redirect",
-                                "param": param,
-                                "payload_type": p["type"],
-                                "url": test_url,
-                            }
-                        )
-                        break
-            except Exception:
-                continue
-
-    session.close()
-    return findings
+        return findings
+    finally:
+        session.close()
 
 
 # ─────────────────────────────────────────────────

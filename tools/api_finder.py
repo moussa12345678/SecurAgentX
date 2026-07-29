@@ -92,16 +92,18 @@ def find_api_docs(url: str) -> List[Dict]:
     session = _make_session()
     found: List[Dict] = []
 
-    with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:
-        futures = {pool.submit(_probe, session, url, ep): ep for ep in API_ENDPOINTS}
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                found.append(result)
-                logger.info(f"API endpoint found: {result['url']}")
+    try:
+        with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:
+            futures = {pool.submit(_probe, session, url, ep): ep for ep in API_ENDPOINTS}
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    found.append(result)
+                    logger.info(f"API endpoint found: {result['url']}")
 
-    session.close()
-    return sorted(found, key=lambda x: x["url"])
+        return sorted(found, key=lambda x: x["url"])
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":

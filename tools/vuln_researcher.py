@@ -130,20 +130,33 @@ class VulnerabilityResearcher:
         """Initialize researcher with optional AI client."""
         self.ai_client = ai_client
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "User-Agent": "SecurAgentX-Security-Research/2.0",
-                "Accept": "application/json",
-            }
-        )
+        _ok = False
+        try:
+            self.session.headers.update(
+                {
+                    "User-Agent": "SecurAgentX-Security-Research/2.0",
+                    "Accept": "application/json",
+                }
+            )
 
-        # Ensure cache directory exists
-        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            # Ensure cache directory exists
+            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Load local vulnerability patterns
-        self.vuln_patterns = self._load_vulnerability_patterns()
+            # Load local vulnerability patterns
+            self.vuln_patterns = self._load_vulnerability_patterns()
 
-        logger.info("VulnerabilityResearcher initialized")
+            logger.info("VulnerabilityResearcher initialized")
+            _ok = True
+        finally:
+            if not _ok:
+                self.session.close()
+
+    def close(self) -> None:
+        """Close the underlying requests session."""
+        try:
+            self.session.close()
+        except Exception as e:  # pragma: no cover - best effort
+            logger.debug("Suppressed Exception: %s", e)
 
     def _load_vulnerability_patterns(self) -> Dict[str, Any]:
         """Load known vulnerability exploitation patterns."""
