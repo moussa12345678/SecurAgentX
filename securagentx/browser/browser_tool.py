@@ -237,7 +237,20 @@ class BrowserTool:
         ``screenshot`` (base64 PNG or ``None``), and action-specific
         extra keys (e.g. ``url``, ``title``, ``links``).
         """
-        resolved = _resolve_action(action)
+        try:
+            resolved = _resolve_action(action)
+        except ValueError as exc:
+            # Unknown/invalid action — return a structured failure so callers
+            # using the (success, output) protocol can branch on it instead of
+            # needing to wrap every handle() call in try/except.
+            logger.error("browser action resolve failed: %s", exc)
+            return {
+                "success": False,
+                "error": str(exc),
+                "output": "",
+                "screenshot": None,
+                "action": action,
+            }
         logger.info("browser action: %s (url=%r selector=%r)", resolved.value, url, selector)
 
         try:
