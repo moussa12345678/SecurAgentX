@@ -809,8 +809,6 @@ def _delegate_via_primary_agent(
     Coder, ...) in a later phase without touching ``_tool_delegate`` again.
     """
     import asyncio
-    import json as _json
-    import os as _os
 
     from securagentx.agents.primary_agent import PrimaryAgent
     from securagentx.paths import find_env as _find_env
@@ -837,8 +835,8 @@ def _delegate_via_primary_agent(
                                     ai_config = {
                                         "provider": _provider,
                                         "api_key": _v,
-                                        "base_url": _pcfg.get("base_url", ""),
-                                        "model": _pcfg.get("default_model", ""),
+                                        "base_url": _pcfg.get("base_url", ""),  # type: ignore[attr-defined]
+                                        "model": _pcfg.get("default_model", ""),  # type: ignore[attr-defined]
                                     }
                                     break
                         except Exception as e:  # noqa: BLE001

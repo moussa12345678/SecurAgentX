@@ -650,7 +650,7 @@ class _PrimaryToolExecutor:
         try:
             from securagentx.types import AIAction  # type: ignore[import]
         except Exception:  # noqa: BLE001 — best-effort
-            AIAction = None  # type: ignore[assignment]
+            AIAction = None  # type: ignore
 
         try:
             if AIAction is not None:
@@ -667,7 +667,7 @@ class _PrimaryToolExecutor:
                 # importable — only the ``.action_type`` / ``.tool`` /
                 # ``.risk_level`` / ``.parameters`` attributes are read by the
                 # governance gate.
-                action = _MinimalAction(  # type: ignore[call-arg]
+                action = _MinimalAction(  # type: ignore[assignment]
                     action_type=action_type,
                     tool=name,
                     parameters=params,

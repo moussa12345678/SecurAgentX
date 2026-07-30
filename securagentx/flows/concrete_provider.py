@@ -371,7 +371,6 @@ class ConcreteFlowProvider:
             from securagentx.agents.base import (
                 AgentContext,
                 AgentType,
-                PerformResult,
             )
             from securagentx.agents.primary_agent import PrimaryAgent
 
@@ -389,7 +388,7 @@ class ConcreteFlowProvider:
             # leaving the specialist wiring to the application bootstrap.
             tool_handlers: dict[str, Any] = {}
             agent = PrimaryAgent(
-                llm_client=self._llm_client,
+                llm_client=self._llm_client,  # type: ignore[arg-type]
                 tool_handlers=tool_handlers,
                 governance=self._governance,
                 memory=self._memory,
