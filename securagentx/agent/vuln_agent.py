@@ -785,8 +785,176 @@ if __name__ == "__main__":
 """
 
 
+def _delegate_via_primary_agent(
+    task: str,
+    targets: list,
+    max_steps: int,
+    timeout: int,
+) -> Dict[str, Any]:
+    """In-process multi-agent delegation via :class:`PrimaryAgent`.
+
+    Lazily imports PrimaryAgent; builds a minimal specialist-handler set;
+    runs one PrimaryAgent per target inside the current process (no
+    subprocess spawn). Mirrors :func:`_tool_delegate`'s output shape so the
+    parent AI consumes both paths identically.
+
+    Raises on any import / construction error so :func:`_tool_delegate` can
+    fall back to the subprocess path. Per-target runtime errors are captured
+    into ``results[target]["error"]`` and never bubble up — only the wiring
+    itself is allowed to fail loudly.
+
+    Note: the specialist handlers are intentionally minimal stubs in P5. The
+    point of this path is to exercise the PrimaryAgent orchestrator
+    in-process so callers can swap in real specialists (Searcher, Pentester,
+    Coder, ...) in a later phase without touching ``_tool_delegate`` again.
+    """
+    import asyncio
+    import json as _json
+    import os as _os
+
+    from securagentx.agents.primary_agent import PrimaryAgent
+    from securagentx.paths import find_env as _find_env
+
+    # ------------------------------------------------------------------
+    # Detect AI config from .env (mirrors the subprocess path's logic).
+    # ------------------------------------------------------------------
+    ai_config: Optional[Dict[str, str]] = None
+    _env_path = _find_env()
+    if _env_path and _env_path.exists():
+        try:
+            with open(_env_path) as _ef:
+                for _line in _ef:
+                    _line = _line.strip()
+                    if not _line or _line.startswith("#") or "=" not in _line:
+                        continue
+                    _k, _v = _line.split("=", 1)
+                    if _k.endswith("_API_KEY") and _v and "placeholder" not in _v:
+                        _provider = _k.replace("_API_KEY", "").lower()
+                        try:
+                            from tools.universal_ai_client import UniversalAIClient
+                            for _pname, _pcfg in UniversalAIClient.PROVIDER_CONFIGS.items():
+                                if _pname == _provider:
+                                    ai_config = {
+                                        "provider": _provider,
+                                        "api_key": _v,
+                                        "base_url": _pcfg.get("base_url", ""),
+                                        "model": _pcfg.get("default_model", ""),
+                                    }
+                                    break
+                        except Exception as e:  # noqa: BLE001
+                            logger.debug("UniversalAIClient provider scan failed: %s", e)
+                        if ai_config:
+                            break
+        except Exception as e:  # noqa: BLE001
+            logger.debug("AI config detection failed: %s", e)
+
+    # ------------------------------------------------------------------
+    # Build the LLM client.
+    # ------------------------------------------------------------------
+    llm_client: Any = None
+    if ai_config:
+        try:
+            from tools.universal_ai_client import UniversalAIClient
+            llm_client = UniversalAIClient(
+                provider=ai_config["provider"],
+                api_key=ai_config["api_key"],
+                base_url=ai_config.get("base_url", ""),
+                model=ai_config.get("model", ""),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("UniversalAIClient construction failed: %s", exc)
+
+    if llm_client is None:
+        raise RuntimeError(
+            "no LLM client available for PrimaryAgent multi-agent path"
+        )
+
+    # ------------------------------------------------------------------
+    # Minimal specialist handlers — P5 wiring only. Real specialists are
+    # injected later by callers who construct PrimaryAgent directly.
+    # ------------------------------------------------------------------
+    def _specialist_handler(args_json: str, ctx: Any) -> str:
+        return f"[P5 stub specialist] received: {args_json[:200]}"
+
+    def _barrier_handler(tool_name: str, args_json: str, ctx: Any) -> str:
+        return f"[P5 barrier:{tool_name}] {args_json[:200]}"
+
+    tool_handlers = {
+        "search":   _specialist_handler,
+        "pentest":  _specialist_handler,
+        "code":     _specialist_handler,
+        "advice":   _specialist_handler,
+        "memorize": _specialist_handler,
+        "maintain": _specialist_handler,
+        "barrier":  _barrier_handler,
+    }
+
+    # ------------------------------------------------------------------
+    # Run one PrimaryAgent per target — serially to keep memory bounded.
+    # ------------------------------------------------------------------
+    results: Dict[str, Any] = {}
+    errors: List[str] = []
+
+    for target in targets:
+        subtask = f"{task} (target={target})"
+        try:
+            agent = PrimaryAgent(
+                llm_client=llm_client,
+                tool_handlers=tool_handlers,
+                max_iterations=max_steps,
+            )
+            perf = asyncio.run(agent.run(subtask))
+            done = getattr(perf, "value", str(perf)) == "done"
+            results[target] = {
+                "target": target,
+                "success": done,
+                "steps_used": agent.stats.iterations,
+                "summary": f"PrimaryAgent result: {perf}",
+                "findings": [],
+            }
+        except Exception as exc:  # noqa: BLE001 — per-target isolation
+            results[target] = {
+                "target": target,
+                "success": False,
+                "error": str(exc)[:300],
+            }
+            errors.append(target)
+
+    # ------------------------------------------------------------------
+    # Aggregate — mirror _tool_delegate's output shape.
+    # ------------------------------------------------------------------
+    summary_lines = [
+        f"Delegate (multi-agent): {task}",
+        f"Targets: {len(targets)}  |  Max steps per PrimaryAgent: {max_steps}",
+        "",
+    ]
+    success_count = sum(1 for r in results.values() if r.get("success"))
+    for t in targets:
+        info = results.get(t, {"success": False, "error": "No result"})
+        if info.get("success"):
+            summary_lines.append(f"  OK {t}: {info.get('summary', '')[:100]}")
+        else:
+            summary_lines.append(
+                f"  FAIL {t}: {info.get('error', 'unknown error')[:100]}"
+            )
+    summary_lines.append(
+        f"\nResults: {success_count}/{len(targets)} PrimaryAgents completed"
+    )
+
+    return {
+        "success": len(errors) < len(targets),
+        "output": "\n".join(summary_lines),
+        "aggregated": results,
+        "total_findings": 0,
+    }
+
+
 def _tool_delegate(
-    task: str, targets: list, max_steps: int = 5, timeout: int = 120
+    task: str,
+    targets: list,
+    max_steps: int = 5,
+    timeout: int = 120,
+    multi_agent: bool = False,
 ) -> Dict[str, Any]:
     """Spawn TRUE VulnAgent instances per target — each child is an independent AI agent
     with its own THINK -> ACT -> ANALYZE loop, full tool access, and freedom to pivot.
@@ -799,7 +967,23 @@ def _tool_delegate(
 
     Returns aggregated results with per-target findings, ports, and summary.
     The parent AI can then merge insights across targets.
+
+    When ``multi_agent=True``, an in-process :class:`PrimaryAgent` orchestrator
+    is attempted per target instead of spawning subprocess children. This is
+    strictly optional — any failure (missing dependencies, missing specialist
+    handlers, async runtime issues) falls back to the existing subprocess path.
     """
+    # ------------------------------------------------------------------
+    # Multi-agent path: try PrimaryAgent in-process; fall back on any error.
+    # ------------------------------------------------------------------
+    if multi_agent:
+        try:
+            return _delegate_via_primary_agent(task, targets, max_steps, timeout)
+        except Exception as exc:  # noqa: BLE001 — multi-agent is best-effort
+            logger.warning(
+                "multi-agent delegate failed (%s) — falling back to subprocess", exc
+            )
+
     import concurrent.futures
     import json
     import os
@@ -1963,6 +2147,7 @@ class VulnAgent:
         governance: Any = None,
         report_dir: Optional[Path] = None,
         memory: Any = None,
+        multi_agent: bool = False,
     ):
         self.client = client
         self.target = target
@@ -1970,6 +2155,13 @@ class VulnAgent:
         self.governance = governance
         self.report_dir = report_dir or get_reports_path()
         self.memory = memory  # AgentMemory instance (optional)
+        # Multi-agent delegation: when True, _tool_delegate prefers the
+        # in-process PrimaryAgent orchestrator over spawning subprocesses.
+        self._multi_agent = bool(multi_agent)
+        # KnowledgeGraph lazy-init handle (None until first use). The KG is
+        # imported lazily so vuln_agent.py stays import-safe even if
+        # networkx / kg_store are unavailable.
+        self._kg: Any = None
 
         # Initialize ~/.securagentx/ user-space directories (pip-safe)
         _securagentx_home = Path("~/.securagentx").expanduser()
@@ -1987,6 +2179,26 @@ class VulnAgent:
         self._conclusion: str = ""
         self._consecutive_failures: int = 0
         self._reflections: List[Dict[str, Any]] = []
+
+    # ------------------------------------------------------------------
+    # Knowledge Graph (optional, lazy, import-safe)
+    # ------------------------------------------------------------------
+
+    def _get_kg(self) -> Any:
+        """Lazy-init and return the KnowledgeGraph instance.
+
+        Returns ``None`` if the KG module or its ``networkx`` dependency is
+        unavailable — every caller must null-check the return value. This keeps
+        the KG feature strictly optional and never bricks the hunt loop.
+        """
+        if self._kg is None:
+            try:
+                from securagentx.knowledge_graph.kg_store import KnowledgeGraph
+                self._kg = KnowledgeGraph()
+            except Exception as exc:  # noqa: BLE001 — KG must never break the scan
+                logger.debug("KnowledgeGraph unavailable: %s", exc)
+                self._kg = None
+        return self._kg
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -2275,6 +2487,14 @@ class VulnAgent:
         if not handler:
             return {"success": False, "error": f"Unknown tool: {tool_name}"}
 
+        # Multi-agent delegation: when VulnAgent was constructed with
+        # ``multi_agent=True`` and the AI invoked the ``delegate`` tool,
+        # transparently inject ``multi_agent=True`` so the in-process
+        # PrimaryAgent path is attempted before subprocess spawning.
+        if tool_name == "delegate" and self._multi_agent:
+            arguments = dict(arguments)
+            arguments.setdefault("multi_agent", True)
+
         # Governance gate
         if self.governance:
             try:
@@ -2318,6 +2538,21 @@ class VulnAgent:
             timestamp=time.time(),
         )
         self.scan_history.append(step_record)
+
+        # Knowledge Graph: log every tool execution as an observation so
+        # future hunts / searches can recover what was tried and what came
+        # back. Lazy + try/except — KG is strictly optional.
+        kg = self._get_kg()
+        if kg is not None:
+            try:
+                tool_name = action.get("tool", "?")
+                result_snippet = str(result)[:200]
+                kg.add_observation(
+                    f"Tool: {tool_name}, Result: {result_snippet}",
+                    metadata={"target": self.target, "step": self.step},
+                )
+            except Exception as exc:  # noqa: BLE001 — KG must not brick the scan
+                logger.debug("KG add_observation failed: %s", exc)
 
         # If successful, extract knowledge
         if result.get("success"):
@@ -2501,6 +2736,19 @@ class VulnAgent:
         duration = time.time() - self.start_time
         confirmed = [h for h in self.hypotheses if h.status == "confirmed"]
         tested = [h for h in self.hypotheses if h.status in ("confirmed", "rejected")]
+
+        # Knowledge Graph: persist the target domain + every finding as
+        # entities, and link them via ``has_vulnerability`` relationships.
+        # Lazy + try/except — KG is strictly optional.
+        kg = self._get_kg()
+        if kg is not None:
+            try:
+                kg.add_entity(self.target, "domain")
+                for f in self.findings:
+                    kg.add_entity(f.title, "vulnerability")
+                    kg.add_relationship(self.target, f.title, "has_vulnerability")
+            except Exception as exc:  # noqa: BLE001 — KG must not brick the report
+                logger.debug("KG report-side update failed: %s", exc)
 
         report = VulnReport(
             target=self.target,

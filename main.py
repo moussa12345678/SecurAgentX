@@ -235,7 +235,108 @@ def show_banner():
     show_main_banner()
 
 
+def _run_multi_agent_flow(target: str, *, title_prefix: str = "Hunt") -> str:
+    """Run a hunt via the multi-agent FlowManager (P2 wiring).
+
+    Bridges the synchronous CLI into the async-only
+    :class:`securagentx.flows.manager.FlowManager` API:
+
+      1. Build a :class:`FlowProvider` via ``ConcreteFlowProvider``
+         (the P3 follow-up — the agent-layer specialists wiring).
+      2. ``FlowManager.create_flow()`` — inserts the Flow row + spawns
+         its :class:`FlowWorker` + submits the initial user input. The
+         worker auto-runs in the background; there is no separate
+         ``run_flow`` call.
+      3. ``FlowManager.wait_task_completion()`` — block until the
+         initial task settles (finished / failed / waiting).
+      4. ``FlowManager.get_flow_report()`` — assemble a Markdown report
+         from the flow's task / subtask / msglog rows.
+      5. ``FlowManager.shutdown()`` — stop workers + close the DB.
+
+    Args:
+        target: The hunt target string (already validated for shell
+            metacharacters by the caller).
+        title_prefix: Prefix for the flow title (``"Hunt"`` or
+            ``"Vuln-Hunt"``).
+
+    Returns:
+        The assembled Markdown report from
+        :meth:`FlowManager.get_flow_report`.
+    """
+    import asyncio
+
+    async def _run() -> str:
+        from securagentx.agent.memory import AgentMemory
+        from securagentx.flows.manager import FlowManager
+        from tools.universal_ai_client import create_default_client
+
+        # Lazy import ConcreteFlowProvider — the agent-layer wiring that
+        # turns the FlowProvider Protocol into actual Generator / Refiner
+        # / Reporter / PrimaryAgent calls. If the module is ever moved /
+        # renamed, fail with a clear error instead of a cryptic ImportError.
+        try:
+            from securagentx.flows.concrete_provider import (
+                ConcreteFlowProvider,
+            )
+        except ImportError as exc:  # defensive — module should always exist
+            raise NotImplementedError(
+                "Multi-agent mode requires ConcreteFlowProvider "
+                "(securagentx.flows.concrete_provider). "
+                "Re-install the securagentx package or wire up the "
+                "Generator / Refiner / Reporter / PrimaryAgent specialists "
+                "and re-run with --multi-agent."
+            ) from exc
+
+        client = create_default_client()
+        memory = AgentMemory()
+        gate = GovernanceGate()
+
+        async def provider_factory(ctx):
+            """Async factory — FlowManager calls this once per flow.
+
+            ConcreteFlowProvider's first positional arg is the
+            :class:`FlowContext` (carries the DB handle, flow / user IDs,
+            trace ID); the LLM client / memory / governance are kwargs.
+            """
+            return ConcreteFlowProvider(
+                ctx,
+                llm_client=client,
+                memory=memory,
+                governance=gate,
+            )
+
+        # Construct the manager *inside* the running loop so the
+        # asyncio.Lock instances it creates bind to this loop.
+        manager = FlowManager(provider_factory=provider_factory)
+        await manager.start()
+        try:
+            flow = await manager.create_flow(
+                user_id=0,
+                title=f"{title_prefix} {target}",
+                input=f"Find vulnerabilities in {target}",
+                model=getattr(client, "model", None) or "gpt-4o",
+            )
+            # Block until the initial task completes (no timeout — the
+            # CLI handler wraps the whole call in try/except for
+            # KeyboardInterrupt).
+            await manager.wait_task_completion(flow.id, timeout=None)
+            return await manager.get_flow_report(flow.id)
+        finally:
+            await manager.shutdown()
+
+    return asyncio.run(_run())
+
+
 def main():
+    # Setup observability (optional — silent fallback if deps not installed)
+    try:
+        from securagentx.observability import setup_all
+        setup_all(service_name="securagentx", environment="production")
+    except ImportError:
+        pass  # Silent fallback to stdlib logging
+    except Exception:
+        pass  # Silent fallback
+
     # Depth guard for recursive profile expansion (max 3 levels)
     _main_depth = getattr(main, "_depth", 0) + 1
     main._depth = _main_depth
@@ -364,6 +465,12 @@ def main():
         "-q",
         action="store_true",
         help="Suppress phase-by-phase output; show only summary and report path (P3.2)",
+    )
+    parser.add_argument(
+        "--multi-agent",
+        action="store_true",
+        default=False,
+        help="Use multi-agent FlowManager instead of single VulnAgent (hunt / vuln-hunt)",
     )
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Bind address for API server")
     parser.add_argument("--port", type=int, default=8443, help="Port for API server")
@@ -923,6 +1030,36 @@ def main():
                 if not require_authorized_scan_target(target):
                     continue
 
+                safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
+
+                if args.multi_agent:
+                    # Multi-agent mode: FlowManager (P2 wiring).
+                    # _run_multi_agent_flow bridges sync→async and drives
+                    # FlowManager.create_flow → wait_task_completion →
+                    # get_flow_report → shutdown. The ConcreteFlowProvider
+                    # supplies the Generator / Refiner / Reporter /
+                    # PrimaryAgent specialists.
+                    print_info("Starting multi-agent hunt (FlowManager)...")
+                    print_info(f"Target: {target}")
+                    console.print("")
+                    try:
+                        report_text = _run_multi_agent_flow(
+                            target, title_prefix="Hunt"
+                        )
+                        print_success("Hunt complete!")
+                        console.print(report_text)
+                        report_path = get_reports_path(f"hunt_{safe_name}.md")
+                        report_path.parent.mkdir(parents=True, exist_ok=True)
+                        report_path.write_text(report_text)
+                        print_info(f"Full report: {report_path}")
+                    except KeyboardInterrupt:
+                        print_info("Hunt interrupted by user")
+                        break
+                    except Exception as e:
+                        print_error(f"Hunt error: {e}")
+                    continue
+
+                # Single-agent mode: existing VulnAgent path (default).
                 memory = AgentMemory()
                 client = create_default_client()
                 gate = GovernanceGate()
@@ -938,7 +1075,6 @@ def main():
                     print_success("Hunt complete!")
                     console.print(report_text)
 
-                    safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
                     report_path = get_reports_path(f"hunt_{safe_name}.md")
                     report_path.parent.mkdir(parents=True, exist_ok=True)
                     report_path.write_text(report_text)
@@ -983,6 +1119,36 @@ def main():
                     print_error(f"Invalid target {target!r}: contains shell metacharacters")
                     continue
 
+                safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
+
+                if args.multi_agent:
+                    # Multi-agent mode: FlowManager (P2 wiring).
+                    # _run_multi_agent_flow bridges sync→async and drives
+                    # FlowManager.create_flow → wait_task_completion →
+                    # get_flow_report → shutdown. The ConcreteFlowProvider
+                    # supplies the Generator / Refiner / Reporter /
+                    # PrimaryAgent specialists.
+                    print_info("Starting multi-agent vuln-hunt (FlowManager)...")
+                    print_info(f"Target: {target}")
+                    console.print("")
+                    try:
+                        report_text = _run_multi_agent_flow(
+                            target, title_prefix="Vuln-Hunt"
+                        )
+                        print_success("Hunt finished!")
+                        console.print(report_text)
+                        report_path = get_reports_path(f"vuln-hunt_{safe_name}.md")
+                        report_path.parent.mkdir(parents=True, exist_ok=True)
+                        report_path.write_text(report_text)
+                        print_info(f"Full report: {report_path}")
+                    except KeyboardInterrupt:
+                        print_info("Hunt interrupted by user")
+                        break
+                    except Exception as e:
+                        print_error(f"Hunt error: {e}")
+                    continue
+
+                # Single-agent mode: existing VulnAgent path (default).
                 # Initialize cross-session memory (silent fail if unavailable)
                 memory = AgentMemory()
                 client = create_default_client()
@@ -1002,7 +1168,6 @@ def main():
                     console.print(report_text)
 
                     # Save report
-                    safe_name = re.sub(r"[^a-zA-Z0-9.-]", "_", target)[:40]
                     report_path = get_reports_path(f"vuln-hunt_{safe_name}.md")
                     report_path.parent.mkdir(parents=True, exist_ok=True)
                     report_path.write_text(report_text)
@@ -1253,12 +1418,25 @@ def main():
             host = getattr(args, "host", "127.0.0.1")
             port = getattr(args, "port", 8443)
             try:
-                from tools.api_server import run_server
+                # Try new FastAPI app first, fallback to legacy api_server
+                try:
+                    from securagentx.api.app import create_app
+                    import uvicorn
 
-                print_success(f"Starting API server on {host}:{port}")
-                print_info(f"  Dashboard: http://{host}:{port}/")
-                print_info(f"  API Docs:  http://{host}:{port}/docs")
-                run_server(host=host, port=port)
+                    app = create_app()
+                    print_success(f"Starting API server on {host}:{port}")
+                    print_info(f"  Dashboard: http://{host}:{port}/")
+                    print_info(f"  API Docs:  http://{host}:{port}/api/v1/docs")
+                    print_info(f"  GraphQL:   http://{host}:{port}/graphql")
+                    uvicorn.run(app, host=host, port=port)
+                except ImportError:
+                    # Fallback to legacy api_server
+                    from tools.api_server import run_server
+
+                    print_success(f"Starting API server on {host}:{port}")
+                    print_info(f"  Dashboard: http://{host}:{port}/")
+                    print_info(f"  API Docs:  http://{host}:{port}/docs")
+                    run_server(host=host, port=port)
             except ImportError as e:
                 from cli.ui_components import print_error
 

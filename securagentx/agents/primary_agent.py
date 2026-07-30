@@ -84,6 +84,23 @@ SpecialistHandler = Callable[[str, "AgentContext | None"], Union[Awaitable[str],
 # -> result str. A single handler dispatches both ``done`` and ``ask``.
 BarrierHandler = Callable[[str, str, "AgentContext | None"], Union[Awaitable[str], str]]
 
+# ---------------------------------------------------------------------------
+# Tool-name → action-type mapping for governance pre-checks.
+# ---------------------------------------------------------------------------
+# Maps each specialist tool name to the ``ActionType`` wire string used by
+# ``securagentx.governance.GovernanceGate`` (see ``securagentx/types.py``).
+# Barrier tools (``done`` / ``ask``) are intentionally NOT in this map — they
+# only terminate the chain and so bypass the governance gate (mirrors the
+# original Go behaviour where ``Barrier`` calls were not policy-checked).
+_TOOL_ACTION_TYPES: dict[str, str] = {
+    SEARCH_TOOL_NAME: "recon",          # Searcher → information gathering
+    PENTESTER_TOOL_NAME: "exploit",     # Pentester → exploitation
+    CODER_TOOL_NAME: "planning",        # Coder → tool / exploit development
+    ADVICE_TOOL_NAME: "decision",       # Adviser → strategic consultation
+    MEMORIST_TOOL_NAME: "learning",     # Memorist → memory recall
+    MAINTENANCE_TOOL_NAME: "planning",  # Installer → environment setup
+}
+
 
 # ---------------------------------------------------------------------------
 # System prompt template — ports the XML-delimited structure from
@@ -512,15 +529,50 @@ class _PrimaryToolExecutor:
       ``(tool_name, args_json, ctx) -> str`` — the same handler dispatches
       both ``done`` and ``ask`` (mirrors the original single ``Barrier`` func
       in ``PrimaryExecutorConfig``).
+
+    Optional infrastructure (Phase 3 / VulnAgent-tool wiring):
+
+    * ``governance`` — a ``securagentx.governance.GovernanceGate`` instance.
+      When supplied, every specialist tool call is policy-checked before
+      dispatch; a ``DENY`` decision short-circuits the call and returns a
+      human-readable error string instead of invoking the specialist.
+      Barrier tools (``done`` / ``ask``) bypass the gate.
+    * ``memory`` — an ``securagentx.agent.memory.AgentMemory`` instance,
+      exposed to specialist handlers via :meth:`get_infra` so they can recall
+      past context / store findings without each specialist re-instantiating
+      its own memory engine.
+    * ``docker_sandbox`` — a ``securagentx.docker.sandbox.DockerSandbox``
+      instance; when ``None`` specialists fall back to ``safe_exec`` host
+      execution.
+    * ``safe_exec_fn`` — a callable matching ``tools.safe_exec.execute_safely``
+      (``(command_str, timeout=..., cwd=...) -> dict``). Defaults to the real
+      ``execute_safely`` imported lazily so the module stays importable in
+      Docker-less / ChromaDB-less test environments.
+    * ``search_registry`` — a
+      ``securagentx.search_providers.registry.SearchProviderRegistry`` instance
+      used by the default ``search`` handler factory when the caller does not
+      inject one (kept here for symmetry; the registry is also reachable via
+      :meth:`get_infra`).
     """
 
     def __init__(
         self,
         tool_handlers: dict[str, Any],
         tool_schemas: list[dict[str, Any]] | None = None,
+        *,
+        governance: Any | None = None,
+        memory: Any | None = None,
+        docker_sandbox: Any | None = None,
+        safe_exec_fn: Any | None = None,
+        search_registry: Any | None = None,
     ) -> None:
         self._handlers = tool_handlers
         self._schemas = tool_schemas if tool_schemas is not None else _default_tool_schemas()
+        self._governance = governance
+        self._memory = memory
+        self._docker_sandbox = docker_sandbox
+        self._safe_exec_fn = safe_exec_fn
+        self._search_registry = search_registry
 
         # Validate that all required handlers are present.
         required_keys = set(SPECIALIST_TOOL_NAMES) | {"barrier"}
@@ -528,13 +580,162 @@ class _PrimaryToolExecutor:
         if missing:
             raise ValueError(f"PrimaryAgent missing required tool handlers: {sorted(missing)}")
 
+    # ------------------------------------------------------------------
+    # Infrastructure accessor — specialist handlers can call this to reach
+    # the wired VulnAgent tools (memory, sandbox, safe_exec, registry)
+    # without each specialist re-importing them.
+    # ------------------------------------------------------------------
+
+    def get_infra(self) -> dict[str, Any]:
+        """Return the wired VulnAgent infrastructure bundle.
+
+        Specialist handlers receive ``(args_json, ctx)`` — they cannot reach
+        the executor directly. To bridge that gap, ``PrimaryAgent`` injects
+        the infra bundle into the ``AgentContext`` ``context`` dict (see
+        :meth:`PrimaryAgent.run`) OR handlers can fetch it from the executor
+        if they hold a reference. The bundle contains:
+
+        * ``governance``   — GovernanceGate | None
+        * ``memory``       — AgentMemory | None
+        * ``docker_sandbox`` — DockerSandbox | None
+        * ``safe_exec``    — callable | None (``execute_safely``)
+        * ``search_registry`` — SearchProviderRegistry | None
+        """
+        return {
+            "governance": self._governance,
+            "memory": self._memory,
+            "docker_sandbox": self._docker_sandbox,
+            "safe_exec": self._safe_exec_fn,
+            "search_registry": self._search_registry,
+        }
+
+    # ------------------------------------------------------------------
+    # Governance pre-check.
+    # ------------------------------------------------------------------
+
+    def _check_governance(
+        self,
+        name: str,
+        arguments: str,
+        context: AgentContext | None,
+    ) -> str | None:
+        """Return a denial message string if governance DENYs the call.
+
+        Returns ``None`` when the call is allowed (or when no governance gate
+        is wired). The check is intentionally defensive — any exception in
+        the gate is swallowed and treated as ALLOW (the call proceeds) so a
+        misbehaving policy module can't brick the whole agent chain. The
+        decision is logged via :data:`logger`.
+
+        Barrier tools (``done`` / ``ask``) bypass the gate entirely.
+        """
+        if self._governance is None:
+            return None
+        if name in BARRIER_TOOL_NAMES:
+            return None
+
+        action_type = _TOOL_ACTION_TYPES.get(name, "recon")
+
+        # Parse args defensively — specialists accept JSON, but the gate just
+        # needs the dict for ``parameters``.
+        try:
+            params = json.loads(arguments) if arguments else {}
+            if not isinstance(params, dict):
+                params = {"_raw": arguments}
+        except json.JSONDecodeError:
+            params = {"_raw": arguments}
+
+        # Lazy import keeps the module importable when ``securagentx.types``
+        # isn't on the path (e.g. isolated unit tests).
+        try:
+            from securagentx.types import AIAction  # type: ignore[import]
+        except Exception:  # noqa: BLE001 — best-effort
+            AIAction = None  # type: ignore[assignment]
+
+        try:
+            if AIAction is not None:
+                action = AIAction(
+                    action_type=action_type,
+                    tool=name,
+                    target="",
+                    parameters=params,
+                    risk_level="safe",
+                    description=f"PrimaryAgent delegation: {name}",
+                )
+            else:
+                # Minimal duck-typed stand-in if ``securagentx.types`` is not
+                # importable — only the ``.action_type`` / ``.tool`` /
+                # ``.risk_level`` / ``.parameters`` attributes are read by the
+                # governance gate.
+                action = _MinimalAction(  # type: ignore[call-arg]
+                    action_type=action_type,
+                    tool=name,
+                    parameters=params,
+                )
+
+            decision = self._governance.gate(
+                mission_id="",
+                target="",
+                action=action,
+            )
+
+            # ``GovernanceGate.gate`` returns a ``GateResult`` (despite the
+            # misleading return-type annotation in ``governance.py``). We
+            # tolerate either shape.
+            decision_val = getattr(decision, "decision", decision)
+            decision_str = (
+                decision_val.value
+                if hasattr(decision_val, "value")
+                else str(decision_val)
+            )
+            rationale = getattr(decision, "rationale", "") or ""
+
+            if decision_str == "deny":
+                msg = (
+                    f"Governance DENIED tool {name!r}: {rationale}".strip()
+                )
+                logger.warning("primary_agent_governance_deny tool=%s rationale=%s", name, rationale)
+                return msg
+            if decision_str == "needs_approval":
+                msg = (
+                    f"Governance NEEDS_APPROVAL for tool {name!r}: "
+                    f"{rationale}".strip()
+                )
+                logger.info(
+                    "primary_agent_governance_needs_approval tool=%s rationale=%s",
+                    name,
+                    rationale,
+                )
+                return msg
+        except Exception as exc:  # noqa: BLE001 — never let governance brick the chain
+            logger.warning(
+                "primary_agent_governance_check_failed tool=%s err=%s",
+                name,
+                exc,
+            )
+            return None
+        return None
+
     async def execute(
         self,
         name: str,
         arguments: str,
         context: AgentContext | None = None,
     ) -> str:
-        """Route the tool call to the appropriate handler."""
+        """Route the tool call to the appropriate handler.
+
+        For specialist tools (``search`` / ``pentest`` / ``code`` / ``advice``
+        / ``memorize`` / ``maintain``) a governance pre-check is performed;
+        a ``DENY`` (or ``NEEDS_APPROVAL``) decision short-circuits the call
+        and returns a human-readable error string to the LLM without invoking
+        the specialist handler. Barrier tools (``done`` / ``ask``) bypass the
+        gate.
+        """
+        # Governance pre-check (specialists only).
+        denial = self._check_governance(name, arguments, context)
+        if denial is not None:
+            return denial
+
         if name in SPECIALIST_TOOL_NAMES:
             handler: SpecialistHandler = self._handlers[name]
             result = handler(arguments, context)
@@ -635,6 +836,10 @@ class PrimaryAgent:
         tool_schemas: list[dict[str, Any]] | None = None,
         docker_image: str = "debian:latest",
         cwd: str = "/work",
+        use_sandbox: bool = False,
+        sandbox: Any | None = None,
+        safe_exec_fn: Any | None = None,
+        search_registry: Any | None = None,
     ) -> None:
         """Initialise the PrimaryAgent.
 
@@ -649,12 +854,18 @@ class PrimaryAgent:
             max_iterations: Iteration cap for the chain (default 100, the
                 SecurAgentX general-agent cap).
             governance: Optional governance gate (e.g. an
-                ``securagentx.governance.GovernanceGate`` instance) — currently
-                stored for downstream specialists to consult; not invoked
-                directly here.
-            memory: Optional memory manager (e.g. a
-                ``CognitiveMemoryManager``) — passed through to specialists
-                via the handlers dict if needed.
+                ``securagentx.governance.GovernanceGate`` instance). When
+                supplied, every specialist tool call is policy-checked before
+                dispatch; a ``DENY`` decision short-circuits the call and
+                returns a human-readable error string to the LLM. Barrier
+                tools (``done`` / ``ask``) bypass the gate.
+            memory: Optional memory manager. If a ``securagentx.agent.memory.
+                AgentMemory`` instance is supplied it is forwarded to the
+                executor and exposed via :meth:`get_infra` so specialist
+                handlers can recall/store context. If ``None``, an
+                ``AgentMemory`` is constructed lazily on first use via
+                :meth:`_get_agent_memory` (best-effort; silently returns
+                ``None`` when ChromaDB is unavailable).
             reflector: Optional :class:`Reflector` for no-tool-call repair.
                 If ``None``, any no-tool-call response terminates the chain
                 with ``PerformResult.ERROR``.
@@ -668,6 +879,25 @@ class PrimaryAgent:
             tool_schemas: Optional override for the JSON-schema tool list.
             docker_image: Docker image name injected into the prompt.
             cwd: Working-directory path injected into the prompt.
+            use_sandbox: When ``True``, lazily construct a
+                ``securagentx.docker.sandbox.DockerSandbox`` on first
+                ``run()`` and forward it to the executor (specialists can
+                then run commands inside the container via the wired
+                infrastructure). Defaults to ``False`` (host execution via
+                ``safe_exec``).
+            sandbox: Optional pre-built ``DockerSandbox`` instance. When
+                ``None`` and ``use_sandbox`` is ``True``, one is constructed
+                lazily. When ``None`` and ``use_sandbox`` is ``False``, no
+                sandbox is wired.
+            safe_exec_fn: Optional callable matching
+                ``tools.safe_exec.execute_safely``. When ``None``, the real
+                ``execute_safely`` is imported lazily on first use via
+                :meth:`_get_safe_exec`.
+            search_registry: Optional
+                ``securagentx.search_providers.registry.SearchProviderRegistry``
+                instance. When ``None``, the default singleton is fetched
+                lazily via :meth:`_get_search_registry` (best-effort; silently
+                returns ``None`` when no providers are configured).
         """
         self._llm_client = llm_client
         self._tool_handlers = tool_handlers
@@ -682,11 +912,214 @@ class PrimaryAgent:
         self._tool_schemas = tool_schemas
         self._docker_image = docker_image
         self._cwd = cwd
+        self._use_sandbox = bool(use_sandbox)
+        self._sandbox_override = sandbox
+        self._safe_exec_fn_override = safe_exec_fn
+        self._search_registry_override = search_registry
         self._log = logger.getChild("PrimaryAgent")
+
+        # Lazily-initialised VulnAgent infrastructure — all ``None`` until
+        # first access via the corresponding ``_get_*`` helper. Keeping them
+        # lazy means the module imports cleanly even when Docker / ChromaDB /
+        # httpx are not installed (e.g. in unit tests).
+        self._sandbox_cache: Any | None = None
+        self._sandbox_initialised: bool = False
+        self._agent_memory_cache: Any | None = None
+        self._agent_memory_initialised: bool = False
+        self._safe_exec_cache: Any | None = None
+        self._safe_exec_initialised: bool = False
+        self._search_registry_cache: Any | None = None
+        self._search_registry_initialised: bool = False
 
         # Per-run state — reset at the start of each run() call.
         self._chain: list[Message] = []
         self._stats: PrimaryAgentRunStats = PrimaryAgentRunStats()
+
+    # ------------------------------------------------------------------
+    # VulnAgent infrastructure — lazy initialisers (sandbox / memory /
+    # safe_exec / search registry). All silent-fallback so test envs without
+    # Docker / ChromaDB / httpx keep working.
+    # ------------------------------------------------------------------
+
+    def _get_safe_exec(self) -> Any | None:
+        """Return a callable matching ``tools.safe_exec.execute_safely``.
+
+        Resolution order:
+
+        1. Caller-supplied ``safe_exec_fn`` (constructor arg).
+        2. Lazy import of ``tools.safe_exec.execute_safely``.
+        3. ``None`` (silent fallback — specialists fall back to plain
+           ``subprocess``).
+        """
+        if self._safe_exec_initialised:
+            return self._safe_exec_cache
+        self._safe_exec_initialised = True
+        if self._safe_exec_fn_override is not None:
+            self._safe_exec_cache = self._safe_exec_fn_override
+            return self._safe_exec_cache
+        try:
+            from tools.safe_exec import execute_safely  # type: ignore[import]
+            self._safe_exec_cache = execute_safely
+        except Exception as exc:  # noqa: BLE001
+            self._log.debug("safe_exec_unavailable err=%s", exc)
+            self._safe_exec_cache = None
+        return self._safe_exec_cache
+
+    def _get_agent_memory(self) -> Any | None:
+        """Return an ``AgentMemory`` instance (cached, lazy).
+
+        Resolution order:
+
+        1. Caller-supplied ``memory`` (constructor arg) if it looks like an
+           ``AgentMemory`` (duck-typed by ``pre_hunt`` attribute).
+        2. Lazy construction of ``securagentx.agent.memory.AgentMemory``.
+        3. ``None`` (silent fallback — ChromaDB unavailable).
+        """
+        if self._agent_memory_initialised:
+            return self._agent_memory_cache
+        self._agent_memory_initialised = True
+        if self._memory is not None and hasattr(self._memory, "pre_hunt"):
+            self._agent_memory_cache = self._memory
+            return self._agent_memory_cache
+        try:
+            from securagentx.agent.memory import AgentMemory  # type: ignore[import]
+            self._agent_memory_cache = AgentMemory()
+        except Exception as exc:  # noqa: BLE001
+            self._log.debug("agent_memory_unavailable err=%s", exc)
+            self._agent_memory_cache = None
+        return self._agent_memory_cache
+
+    def _get_search_registry(self) -> Any | None:
+        """Return a ``SearchProviderRegistry`` instance (cached, lazy).
+
+        Resolution order:
+
+        1. Caller-supplied ``search_registry`` (constructor arg).
+        2. ``securagentx.search_providers.registry.get_default_registry()``
+           (process-wide singleton).
+        3. ``None`` (silent fallback — no providers configured).
+        """
+        if self._search_registry_initialised:
+            return self._search_registry_cache
+        self._search_registry_initialised = True
+        if self._search_registry_override is not None:
+            self._search_registry_cache = self._search_registry_override
+            return self._search_registry_cache
+        try:
+            from securagentx.search_providers.registry import (  # type: ignore[import]
+                get_default_registry,
+            )
+            self._search_registry_cache = get_default_registry()
+        except Exception as exc:  # noqa: BLE001
+            self._log.debug("search_registry_unavailable err=%s", exc)
+            self._search_registry_cache = None
+        return self._search_registry_cache
+
+    def _get_sandbox(self) -> Any | None:
+        """Return a ``DockerSandbox`` instance (cached, lazy).
+
+        Resolution order:
+
+        1. Caller-supplied ``sandbox`` (constructor arg).
+        2. Lazy construction of ``securagentx.docker.sandbox.DockerSandbox``
+           — only when ``use_sandbox=True``.
+        3. ``None`` (silent fallback — specialists use ``safe_exec`` on the
+           host instead).
+        """
+        if self._sandbox_initialised:
+            return self._sandbox_cache
+        self._sandbox_initialised = True
+        if self._sandbox_override is not None:
+            self._sandbox_cache = self._sandbox_override
+            return self._sandbox_cache
+        if not self._use_sandbox:
+            self._sandbox_cache = None
+            return self._sandbox_cache
+        try:
+            from securagentx.docker.sandbox import DockerSandbox  # type: ignore[import]
+            self._sandbox_cache = DockerSandbox(default_image=self._docker_image)
+        except Exception as exc:  # noqa: BLE001
+            self._log.warning("docker_sandbox_unavailable err=%s -- falling back to host", exc)
+            self._sandbox_cache = None
+        return self._sandbox_cache
+
+    # ------------------------------------------------------------------
+    # Public convenience wrappers — expose the wired VulnAgent tools to
+    # specialist handlers / external callers. All silent-fallback.
+    # ------------------------------------------------------------------
+
+    def safe_execute_command(
+        self,
+        command: str,
+        timeout: int = 300,
+        cwd: str | None = None,
+    ) -> dict[str, Any]:
+        """Run ``command`` via ``tools.safe_exec.execute_safely``.
+
+        Returns the structured ``{success, stdout, stderr, exit_code, error}``
+        dict. When ``safe_exec`` is unavailable (e.g. in unit tests), returns
+        an error-shaped dict with ``success=False`` so callers can branch on
+        the ``success`` flag without try/except.
+        """
+        fn = self._get_safe_exec()
+        if fn is None:
+            return {
+                "success": False,
+                "stdout": "",
+                "stderr": "",
+                "exit_code": -1,
+                "error": "safe_exec unavailable",
+            }
+        try:
+            return fn(command, timeout=timeout, cwd=cwd)
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "success": False,
+                "stdout": "",
+                "stderr": "",
+                "exit_code": -1,
+                "error": f"safe_exec raised: {exc}",
+            }
+
+    async def search(self, query: str, max_results: int = 5) -> dict[str, str]:
+        """Fan ``query`` out to every available search provider.
+
+        Returns the ``{provider_name: result_string}`` dict from
+        ``SearchProviderRegistry.search_all``. Returns ``{}`` when no
+        registry is wired / no providers are configured.
+        """
+        registry = self._get_search_registry()
+        if registry is None:
+            return {}
+        try:
+            return await registry.search_all(query, max_results=max_results)
+        except Exception as exc:  # noqa: BLE001
+            self._log.warning("search_failed query=%r err=%s", query[:80], exc)
+            return {}
+
+    def recall_memory(self, target: str) -> dict[str, Any]:
+        """Recall past memories / learned skills for ``target``.
+
+        Thin wrapper around ``AgentMemory.pre_hunt``. Returns the
+        ``{memories, learned_skills, context}`` dict, or an empty-shaped dict
+        when no memory engine is wired.
+        """
+        memory = self._get_agent_memory()
+        if memory is None:
+            return {"memories": [], "learned_skills": [], "context": ""}
+        try:
+            return memory.pre_hunt(target)
+        except Exception as exc:  # noqa: BLE001
+            self._log.warning("memory_recall_failed target=%r err=%s", target, exc)
+            return {"memories": [], "learned_skills": [], "context": ""}
+
+    def get_sandbox(self) -> Any | None:
+        """Return the wired ``DockerSandbox`` (or ``None`` if not configured)."""
+        return self._get_sandbox()
+
+    def get_governance(self) -> Any | None:
+        """Return the wired ``GovernanceGate`` (or ``None`` if not configured)."""
+        return self._governance
 
     # ------------------------------------------------------------------
     # Read-only views for callers / tests.
@@ -789,9 +1222,19 @@ class PrimaryAgent:
         self._chain.append(Message(role="user", content=subtask_description))
 
         # Build the executor and barrier callback.
+        # Wire VulnAgent infrastructure (governance / memory / sandbox /
+        # safe_exec / search registry) into the executor so specialist
+        # handlers can reach them via ``executor.get_infra()``. All are
+        # lazy / silent-fallback — specialists degrade to host execution
+        # when Docker / ChromaDB / httpx are unavailable.
         executor = _PrimaryToolExecutor(
             tool_handlers=self._tool_handlers,
             tool_schemas=self._tool_schemas,
+            governance=self._governance,
+            memory=self._get_agent_memory(),
+            docker_sandbox=self._get_sandbox(),
+            safe_exec_fn=self._get_safe_exec(),
+            search_registry=self._get_search_registry(),
         )
         barrier_callback = self._make_barrier_callback()
 
@@ -836,6 +1279,33 @@ class PrimaryAgent:
             self._stats.barrier_hit,
         )
         return result
+
+
+# ---------------------------------------------------------------------------
+# Minimal duck-typed stand-in for ``securagentx.types.AIAction`` — used by
+# ``_PrimaryToolExecutor._check_governance`` when ``securagentx.types`` is
+# not importable (e.g. isolated unit tests). Only the attributes the
+# governance gate reads are populated.
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _MinimalAction:
+    """Duck-typed AIAction stand-in for governance checks.
+
+    The ``GovernanceGate.gate`` method reads ``action.action_type`` (via
+    ``.value`` if it has one, else ``str()``), ``action.tool``,
+    ``action.risk_level``, and ``action.parameters``. This dataclass
+    populates those fields with the right shape so governance works without
+    a hard dependency on ``securagentx.types``.
+    """
+
+    action_type: str = "recon"
+    tool: str = ""
+    target: str = ""
+    parameters: dict[str, Any] = field(default_factory=dict)
+    risk_level: str = "safe"
+    description: str = ""
 
 
 __all__ = [
