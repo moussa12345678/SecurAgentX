@@ -8,6 +8,8 @@
 
 ### Autonomous AI Security Research Framework
 
+> **Attribution:** This project is a modified derivative of [Elengenix](https://github.com/Ashveil1/Elengenix) by [Ashveil1](https://github.com/Ashveil1), licensed under GPL-3.0.
+
 *Reasoning-driven vulnerability discovery that thinks like a penetration tester.*
 
 [![Python](https://img.shields.io/badge/Python-3.10+-white?style=for-the-badge&logo=python&logoColor=red)](https://python.org)
@@ -382,6 +384,8 @@ See [SECURITY.md](SECURITY.md) for responsible-disclosure and [CODE_OF_CONDUCT.m
 <img src="assets/red-divider.svg" width="100%">
 
 ## Acknowledgments
+
+SecurAgentX is a derivative work of **Elengenix** (https://github.com/Ashveil1/Elengenix) by **Ashveil1**, originally licensed under GPL-3.0. We gratefully acknowledge the original work.
 
 SecurAgentX builds on ideas and tooling from the broader security-research community:
 

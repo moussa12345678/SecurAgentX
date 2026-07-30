@@ -1,6 +1,15 @@
 SecurAgentX
 Copyright (C) 2026 moussa12345678
 
-SecurAgentX is licensed under GPL-3.0-only.
+This project is a derivative work of Elengenix (https://github.com/Ashveil1/Elengenix)
+originally created by Ashveil1, licensed under GPL-3.0.
+
+Modifications include: rebranding, security hardening, browser automation,
+knowledge graph integration, MCP protocol support, and multi-agent architecture.
+
+Original copyright: Copyright (C) 2026 Ashveil1
+Derivative copyright: Copyright (C) 2026 moussa12345678
+
+Both the original work and this derivative are licensed under GPL-3.0-only.
 
 For licensing inquiries: AAAAAACD@proton.me

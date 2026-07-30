@@ -2,6 +2,8 @@
                        Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Copyright (C) 2026 Ashveil1 (original Elengenix project)
+ Copyright (C) 2026 moussa12345678 (SecurAgentX derivative)
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
 
@@ -653,7 +655,8 @@ Also add information on how to contact you by electronic and paper mail.
   If the program does terminal interaction, make it output a short
 notice like this when it starts in an interactive mode:
 
-    <program>  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+    <program>  Copyright (C) 2026 Ashveil1 (Elengenix) — original work
+<program>  Copyright (C) 2026 moussa12345678 (SecurAgentX) — modified derivative
     This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
