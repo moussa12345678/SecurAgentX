@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from securagentx.paths import get_data_dir, get_reports_path
+
 logger = logging.getLogger("securagentx.universal")
 
 

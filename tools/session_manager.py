@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 from securagentx.paths import get_data_dir
 
 logger = logging.getLogger("securagentx.session")

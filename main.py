@@ -2346,7 +2346,7 @@ def main():
                 try:
                     loop = _asyncio.new_event_loop()
                     _asyncio.set_event_loop(loop)
-                    exit_code = loop.run_until_complete(_cmd_reg.dispatch(args.command, args))
+                    loop.run_until_complete(_cmd_reg.dispatch(args.command, args))
                     loop.close()
                 except Exception as e:
                     _console.print(f"[red][FAIL] {args.command}: {e}[/red]")

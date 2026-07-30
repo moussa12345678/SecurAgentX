@@ -251,10 +251,6 @@ def __dir__() -> list[str]:  # pragma: no cover
 
 
 __all__ = [
-    "User",
-    "Role",
-    "APIToken",
-    "APITokenClaims",
     "make_user_hash",
     "ROLE_USER_ID",
     "USER_TYPE_LOCAL",

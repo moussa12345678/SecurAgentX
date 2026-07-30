@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from securagentx.paths import get_data_dir
 from tools.adaptive_planner import AdaptivePlanner
 from tools.chaining_engine import ChainingEngine
 from tools.escalation_engine import EscalationEngine

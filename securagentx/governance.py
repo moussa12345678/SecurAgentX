@@ -209,10 +209,8 @@ class GovernanceGate:
         tool_risk = {
             "sqlmap": "high",
             "nmap": "low",
-            "sqlmap": "high",
             "nuclei": "medium",
             "ffuf": "low",
-            "sqlmap": "high",
             "metasploit": "critical",
         }.get(action.tool.lower(), "medium")
 

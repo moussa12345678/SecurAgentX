@@ -35,7 +35,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from securagentx.paths import get_data_path, get_data_dir
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("securagentx.learning_engine")
 

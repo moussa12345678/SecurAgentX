@@ -794,7 +794,6 @@ def _build_install_command(tool_name: str, sudo_password: Optional[str] = None) 
         "nuclei": "nuclei",
         "amass": "amass",
         "ffuf": "ffuf",
-        "ffuf": "ffuf",
         "masscan": "masscan",
         "zmap": "zmap",
         "crackmapexec": "crackmapexec",
