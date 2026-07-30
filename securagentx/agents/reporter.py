@@ -34,6 +34,7 @@ from securagentx.agents.base import (
     AgentContext,
     AgentType,
     perform_agent_chain,
+    run_specialist_chain,
 )
 
 logger = logging.getLogger("securagentx.agents.reporter")
@@ -414,6 +415,8 @@ class Reporter:
         planned_subtasks: list[dict[str, Any]] | None = None,
         execution_state: str | None = None,
         execution_logs: str | None = None,
+        *,
+        llm_client: Any = None,
     ) -> dict[str, Any]:
         """Synthesize the final task report (barrier termination).
 
@@ -491,15 +494,15 @@ class Reporter:
             ReportResultToolName: _report_result_handler,
         }
 
-        await perform_agent_chain(
-            ctx=ctx,
+        await run_specialist_chain(
             agent_type=self.agent_type,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            llm_client=llm_client,
             completion_tools=completion_tools,
             auxiliary_tools=(SearchInMemoryToolName,),
             barrier_tools=(ReportResultToolName,),
-        )  # type: ignore[call-arg]
+        )
 
         result: TaskResult | None = captured["result"]
         if result is None:

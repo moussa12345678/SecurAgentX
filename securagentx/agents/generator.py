@@ -27,6 +27,7 @@ from securagentx.agents.base import (
     AgentContext,
     AgentType,
     perform_agent_chain,
+    run_specialist_chain,
 )
 
 logger = logging.getLogger("securagentx.agents.generator")
@@ -396,6 +397,8 @@ class Generator:
         task: dict[str, Any],
         previous_tasks: list[dict[str, Any]] | None = None,
         previous_subtasks: list[dict[str, Any]] | None = None,
+        *,
+        llm_client: Any = None,
     ) -> list[dict[str, Any]]:
         """Decompose ``task`` into an ordered subtask list.
 
@@ -471,14 +474,14 @@ class Generator:
             SubtaskListToolName: _subtask_list_handler,
         }
 
-        await perform_agent_chain(
-            ctx=ctx,
+        await run_specialist_chain(
             agent_type=self.agent_type,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            llm_client=llm_client,
             completion_tools=completion_tools,
             auxiliary_tools=(SearchToolName,),
-        )  # type: ignore[call-arg]
+        )
 
         result: SubtaskList | None = captured["list"]
         if result is None:

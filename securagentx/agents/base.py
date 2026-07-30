@@ -29,6 +29,8 @@ expected to be supplied by callers via the Protocol interfaces.
 from __future__ import annotations
 
 import asyncio
+import inspect
+import json
 import logging
 import uuid
 from contextvars import ContextVar, Token
@@ -677,6 +679,151 @@ async def perform_agent_chain(
         AgentContext.reset(token)
 
 
+# ---------------------------------------------------------------------------
+# Specialist chain helper — bridges the old-style call signature
+# (ctx=, system_prompt=, user_prompt=, completion_tools=, auxiliary_tools=,
+#  barrier_tools=) to the new perform_agent_chain signature
+# (agent_type=, chain=, llm_client=, executor=, on_barrier=).
+# ---------------------------------------------------------------------------
+
+
+class _SpecialistToolExecutor:
+    """Generic :class:`ToolExecutor` for specialist agents.
+
+    Wraps a ``{tool_name: handler}`` dict and a set of barrier tool names.
+    Each handler is a callable ``(name, args) -> str`` or ``(args) -> str``
+    (async or sync). When a barrier tool is dispatched, the executor returns
+    the handler's ack string; the chain's ``on_barrier`` callback then
+    terminates the loop with :data:`PerformResult.DONE`.
+    """
+
+    def __init__(
+        self,
+        handlers: dict[str, Callable[..., Any]],
+        *,
+        barriers: tuple[str, ...] = (),
+        tool_schemas: list[dict[str, Any]] | None = None,
+    ) -> None:
+        self._handlers = handlers
+        self._barriers = frozenset(barriers)
+        self._schemas = list(tool_schemas) if tool_schemas else []
+
+    async def execute(
+        self,
+        name: str,
+        arguments: str,
+        context: "AgentContext | None" = None,
+    ) -> str:
+        """Route the tool call to the registered handler."""
+        handler = self._handlers.get(name)
+        if handler is None:
+            return (
+                f"Error: tool '{name}' is not available. "
+                f"Available: {sorted(self._handlers.keys())}"
+            )
+        try:
+            # Handlers may accept (name, args) or (args,) — try 2-arg first.
+            sig = inspect.signature(handler)
+            n_params = len(
+                [
+                    p
+                    for p in sig.parameters.values()
+                    if p.kind
+                    in (
+                        inspect.Parameter.POSITIONAL_ONLY,
+                        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    )
+                ]
+            )
+            if n_params >= 2:
+                result = handler(name, arguments)
+            else:
+                result = handler(arguments)
+            if asyncio.iscoroutine(result):
+                result = await result
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("specialist.tool_failed name=%s err=%s", name, exc)
+            return f"Error: tool '{name}' raised: {exc}"
+        if not isinstance(result, str):
+            try:
+                result = json.dumps(result, ensure_ascii=False, default=str)
+            except (TypeError, ValueError):
+                result = str(result)
+        return result or ""
+
+    def is_barrier(self, name: str) -> bool:
+        """Return True for barrier tools (completion tools)."""
+        return name in self._barriers
+
+    def get_tools(self) -> list[dict[str, Any]]:
+        """Return tool schemas (shallow-copied)."""
+        return [dict(s) for s in self._schemas]
+
+
+async def run_specialist_chain(
+    *,
+    agent_type: AgentType,
+    system_prompt: str,
+    user_prompt: str,
+    llm_client: LLMClient,
+    completion_tools: dict[str, Callable[..., Any]],
+    auxiliary_tools: tuple[str, ...] = (),
+    barrier_tools: tuple[str, ...] = (),
+    max_iterations: int | None = None,
+    execution_context: str = "",
+) -> PerformResult:
+    """Build ``chain`` + ``executor`` + ``on_barrier`` and delegate to
+    :func:`perform_agent_chain`.
+
+    This helper bridges the old-style specialist call signature
+    (``ctx=``, ``system_prompt=``, ``user_prompt=``, ``completion_tools=``,
+    ``auxiliary_tools=``, ``barrier_tools=``) to the new
+    :func:`perform_agent_chain` signature
+    (``agent_type=``, ``chain=``, ``llm_client=``, ``executor=``, ``on_barrier=``).
+
+    Args:
+        agent_type: Which agent is running (controls iteration cap).
+        system_prompt: System message content.
+        user_prompt: User message content.
+        llm_client: LLM client implementing :class:`LLMClient`.
+        completion_tools: ``{tool_name: handler}`` dict of completion tools.
+            Each handler is ``(name, args) -> str`` or ``(args) -> str``.
+        auxiliary_tools: Names of auxiliary (non-barrier) tools — for future
+            wiring; currently informational only.
+        barrier_tools: Names of barrier tools that terminate the chain.
+            Defaults to all ``completion_tools`` keys if empty.
+        max_iterations: Override the default iteration cap.
+        execution_context: XML execution-context string for the reflector.
+
+    Returns:
+        ``PerformResult.DONE`` on successful barrier hit, ``ERROR`` otherwise.
+    """
+    chain: list[Message] = [
+        Message(role="system", content=system_prompt),
+        Message(role="user", content=user_prompt),
+    ]
+
+    barriers = barrier_tools if barrier_tools else tuple(completion_tools.keys())
+
+    executor = _SpecialistToolExecutor(
+        handlers=completion_tools,
+        barriers=barriers,
+    )
+
+    async def _on_barrier(name: str, args_json: str) -> PerformResult:
+        return PerformResult.DONE
+
+    return await perform_agent_chain(
+        agent_type=agent_type,
+        chain=chain,
+        llm_client=llm_client,
+        executor=executor,
+        max_iterations=max_iterations,
+        execution_context=execution_context,
+        on_barrier=_on_barrier,
+    )
+
+
 __all__ = [
     "AgentType",
     "PerformResult",
@@ -697,4 +844,5 @@ __all__ = [
     "is_limited_agent",
     "default_max_iterations",
     "perform_agent_chain",
+    "run_specialist_chain",
 ]

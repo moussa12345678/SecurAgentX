@@ -1120,17 +1120,15 @@ class TestSearcher:
         assert "LANGUAGE POLICY" in sys_p or "language_policy" in sys_p
 
     async def test_searcher_run_with_empty_question_does_not_prevalidate(self) -> None:
-        """Searcher.run does NOT pre-validate the question — it goes straight to building the (broken) ctx.
+        """Searcher.run with an empty question returns a string (no pre-validation).
 
-        This brutal test documents that the current Searcher.run implementation
-        constructs an AgentContext with kwargs the dataclass does not accept
-        (system_prompt, user_prompt, question, ...) and so raises TypeError
-        before any LLM call. The original contract is that the Searcher pre-
-        validates the question; this assertion documents the divergence.
+        After the signature-mismatch fix, Searcher.run no longer raises TypeError.
+        It builds the chain, calls run_specialist_chain, and returns a result
+        string (empty when the chain fails to invoke the completion tool).
         """
         s = Searcher(llm_client=FakeLLMClient())
-        with pytest.raises(TypeError):
-            await s.run(question="")
+        result = await s.run(question="")
+        assert isinstance(result, str)
 
 
 # ===========================================================================
@@ -1192,10 +1190,15 @@ class TestPentester:
         assert "弩级" in user_p
 
     async def test_pentester_run_with_10kb_question_raises_typeerror(self) -> None:
-        """Pentester.run with a 10KB question hits the AgentContext signature mismatch (TypeError)."""
+        """Pentester.run with a 10KB question returns a string (no TypeError after fix).
+
+        After the signature-mismatch fix, Pentester.run no longer raises TypeError.
+        It builds the chain, calls run_specialist_chain, and returns a result
+        string (empty when the chain fails to invoke the completion tool).
+        """
         p = Pentester(llm_client=FakeLLMClient())
-        with pytest.raises(TypeError):
-            await p.run(question="x" * 10240)
+        result = await p.run(question="x" * 10240)
+        assert isinstance(result, str)
 
 
 # ===========================================================================
@@ -1257,10 +1260,15 @@ class TestCoder:
         assert "弩级" in user_p
 
     async def test_coder_run_with_unicode_question_raises_typeerror(self) -> None:
-        """Coder.run with a unicode question hits the AgentContext signature mismatch (TypeError)."""
+        """Coder.run with a unicode question returns a string (no TypeError after fix).
+
+        After the signature-mismatch fix, Coder.run no longer raises TypeError.
+        It builds the chain, calls run_specialist_chain, and returns a result
+        string (empty when the chain fails to invoke the completion tool).
+        """
         c = Coder(llm_client=FakeLLMClient())
-        with pytest.raises(TypeError):
-            await c.run(question="弩级コードを書いて")
+        result = await c.run(question="弩级コードを書いて")
+        assert isinstance(result, str)
 
 
 # ===========================================================================
@@ -1324,10 +1332,15 @@ class TestInstaller:
         assert "弩级" in user_p
 
     async def test_installer_run_with_empty_question_raises_typeerror(self) -> None:
-        """Installer.run with an empty question hits the AgentContext signature mismatch (TypeError)."""
+        """Installer.run with an empty question returns a string (no TypeError after fix).
+
+        After the signature-mismatch fix, Installer.run no longer raises TypeError.
+        It builds the chain, calls run_specialist_chain, and returns a result
+        string (empty when the chain fails to invoke the completion tool).
+        """
         i = Installer(llm_client=FakeLLMClient())
-        with pytest.raises(TypeError):
-            await i.run(question="")
+        result = await i.run(question="")
+        assert isinstance(result, str)
 
 
 # ===========================================================================
@@ -1763,23 +1776,29 @@ class TestGeneratorSchemas:
         assert Generator(tasks_number_limit=-5).tasks_number_limit == 1
 
     async def test_generator_run_returns_subtask_list(self) -> None:
-        """Generator.run parses the barrier payload into a list of dicts."""
+        """Generator.run raises RuntimeError when the chain fails to call the completion tool.
+
+        After the signature-mismatch fix, Generator.run no longer raises TypeError.
+        When no LLM client is provided (or the LLM never calls the completion
+        tool), the chain terminates with RuntimeError.
+        """
         g = Generator()
-        # The Generator's run() depends on a different perform_agent_chain signature
-        # (it passes ctx=, system_prompt=, etc.) which the base.py function does not
-        # accept. Document that mismatch with TypeError.
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError):
             await g.run(
-                ctx=AgentContext(),  # type: ignore[call-arg]
+                ctx=AgentContext(),
                 task={"id": "T1", "input": "do thing"},
             )
 
     async def test_generator_run_truncates_over_limit(self) -> None:
-        """Generator clamps tasks_number_limit defensively — but run() itself hits the signature mismatch."""
+        """Generator clamps tasks_number_limit defensively; run() raises RuntimeError on chain failure.
+
+        After the signature-mismatch fix, Generator.run no longer raises TypeError.
+        When no LLM client is provided, the chain terminates with RuntimeError.
+        """
         g = Generator(tasks_number_limit=2)
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError):
             await g.run(
-                ctx=AgentContext(),  # type: ignore[call-arg]
+                ctx=AgentContext(),
                 task={"id": "T1", "input": "do thing"},
             )
 

@@ -213,6 +213,7 @@ class ConcreteFlowProvider:
                     task=task_dict,
                     previous_tasks=previous_tasks,
                     previous_subtasks=previous_subtasks,
+                    llm_client=self._llm_client,
                 )
             finally:
                 AgentContext.reset(token)
@@ -294,6 +295,7 @@ class ConcreteFlowProvider:
                     completed_subtasks=completed,
                     planned_subtasks=planned,
                     previous_tasks=previous_tasks,
+                    llm_client=self._llm_client,
                 )
             finally:
                 AgentContext.reset(token)
@@ -544,6 +546,7 @@ class ConcreteFlowProvider:
                     previous_tasks=previous_tasks,
                     completed_subtasks=completed,
                     planned_subtasks=planned,
+                    llm_client=self._llm_client,
                 )
             finally:
                 AgentContext.reset(token)

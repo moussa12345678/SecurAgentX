@@ -106,17 +106,18 @@ def make_user_hash(name: str) -> str:
     (nanosecond precision, padded with trailing zeros to 9 digits).
 
     .. note::
-       The task description parenthetically notes "SHA256", but the actual
-       SecurAgentX Go source uses **MD5** (see ``rdb.MakeMD5Hash``). To stay
-       byte-compatible with the upstream Go implementation — which is the
-       hard constraint — we use MD5 here. If/when SecurAgentX migrates the
-       algorithm, this function must be updated in lockstep.
+       The upstream SecurAgentX Go source uses **MD5** (see
+       ``rdb.MakeMD5Hash``). This Python port intentionally diverges and
+       uses **SHA-256** as a security hardening (P2-A security fix); the
+       Python hash is therefore NOT byte-compatible with the upstream Go
+       hash. If/when SecurAgentX migrates the upstream algorithm, this
+       function must be reconciled in lockstep.
 
     Args:
         name: User name/email to hash.
 
     Returns:
-        32-character lowercase hex MD5 digest.
+        64-character lowercase hex SHA-256 digest.
     """
     # Go's time.Now().Format("2006-01-02 15:04:05.000000000") is the
     # equivalent of Python's strftime("%Y-%m-%d %H:%M:%S.") followed by
@@ -171,7 +172,7 @@ def _build_models() -> dict[str, Any]:
             default=USER_STATUS_CREATED,
             description="One of: created, active, blocked",
         )
-        hash: str = Field(default="", description="32-char MD5 user hash")
+        hash: str = Field(default="", description="64-char SHA-256 user hash")
         created_at: Optional[datetime] = None
 
         model_config = {"populate_by_name": True, "extra": "ignore"}
@@ -212,7 +213,7 @@ def _build_models() -> dict[str, Any]:
         tid: str = Field(..., min_length=10, max_length=10, description="Token ID")
         rid: int = Field(..., ge=0, le=10000, description="Role ID")
         uid: int = Field(..., ge=0, le=10000, description="User ID")
-        uhash: str = Field(..., description="User hash (MD5 hex)")
+        uhash: str = Field(..., description="User hash (SHA-256 hex)")
         exp: int = Field(..., description="Expiration time (Unix seconds)")
         iat: int = Field(..., description="Issued-at time (Unix seconds)")
         sub: str = Field(default="api_token")

@@ -20,6 +20,7 @@ Two-channel language policy (ported verbatim from the Go original):
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -29,6 +30,7 @@ from securagentx.agents.base import (
     AgentType,
     MAX_LIMITED_ITERATIONS,
     perform_agent_chain,
+    run_specialist_chain,
 )
 
 logger = logging.getLogger("securagentx.agents.installer")
@@ -491,23 +493,36 @@ class Installer:
         )
         system_prompt, user_prompt = self._render_prompts(question, execution_context)
 
-        ctx = AgentContext(
+        # Build a completion-tool handler that captures the result field.
+        captured: dict[str, Any] = {"result": ""}
+
+        def _completion_handler(name: str, args: str) -> str:
+            """Barrier completion-tool handler: capture the result field."""
+            try:
+                parsed = json.loads(args) if isinstance(args, str) else args
+            except (TypeError, ValueError):
+                parsed = args
+            if isinstance(parsed, dict):
+                captured["result"] = parsed.get("result", "") or parsed.get("message", "")
+            else:
+                captured["result"] = str(parsed)
+            return f"{self.COMPLETION_TOOL} successfully processed"
+
+        completion_tools: dict[str, Any] = {
+            self.COMPLETION_TOOL: _completion_handler,
+        }
+
+        await run_specialist_chain(
             agent_type=self.AGENT_TYPE,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            question=question,
-            execution_context=execution_context,
             llm_client=self.llm_client,
-            docker_executor=self.docker_executor,
-            memory=self.memory,
-            governance=self.governance,
-            search_providers=self.search_providers,
+            completion_tools=completion_tools,
+            barrier_tools=(self.COMPLETION_TOOL,),
             max_iterations=self.max_iterations,
-            completion_tool=self.COMPLETION_TOOL,
-            lang=self.lang,
-        )  # type: ignore[call-arg]
-
-        result = await perform_agent_chain(ctx)  # type: ignore[call-arg, arg-type]
+            execution_context=execution_context,
+        )
+        result: str = captured["result"]
         logger.info(
             "Installer run complete (result_len=%d)", len(result or "")
         )

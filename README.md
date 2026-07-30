@@ -242,7 +242,7 @@ securagentx hunt "example.com, api.example.com"
 │  (Autonomous AI Agent) │          │  (Background daemon)     │
 │                      │          │                          │
 │   AVAILABLE_TOOLS    │          │  stdio transport         │
-│   ├─ 15 builtin     │          │  HTTP transport          │
+│   ├─ 14 builtin     │          │  HTTP transport          │
 │   ├─ browser        │          │  27 dynamic tools        │
 │   ├─ delegate       │          │  REST API + GraphQL      │
 │   ├─ knowledge_graph│          └──────────────────────────┘
