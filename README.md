@@ -14,7 +14,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-white?style=for-the-badge&logo=python&logoColor=red)](https://python.org)
 [![License](https://img.shields.io/badge/License-GPL_3.0-red?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-3000%2B%20passing-white?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX/actions)
+[![Tests](https://img.shields.io/badge/Tests-2600%2B%20passing-white?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX/actions)
 [![MCP](https://img.shields.io/badge/MCP-Supported-red?style=for-the-badge)](https://modelcontextprotocol.io)
 [![Security](https://img.shields.io/badge/Security-Governance-red?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX)
 
@@ -31,7 +31,7 @@ User: "Find vulnerabilities in example.com"
     │
     ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  VulnAgent — Autonomous AI Agent (tool-selection autonomy, 25 tools) │
+│  VulnAgent — Autonomous AI Agent (tool-selection autonomy, 27 tools) │
 │  ├── Reasons about target and builds strategy                │
 │  ├── Selects tools from AVAILABLE_TOOLS (freedom to skip)    │
 │  ├── Creates new tools on the fly (edit_own_tool)            │
@@ -44,7 +44,7 @@ User: "Find vulnerabilities in example.com"
 │  Governance Layer                                            │
 │  ├── SAFE → Execute immediately                              │
 │  ├── PRIVILEGED → Ask user approval                          │
-│  └── DESTRUCTIVE → Block with popup                          │
+│  └── DESTRUCTIVE → Auto-deny (blocked by default)            │
 └──────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -98,7 +98,7 @@ securagentx hunt example.com
 │  [INFO] Target: example.com                                  │
 │  [INFO] Cross-session memory: ACTIVE                         │
 │                                                              │
-│  VulnAgent uses 25 available tools...                        │
+│  VulnAgent uses 27 available tools...                        │
 │  ├── Reasoning: Reconnaissance needed first                  │
 │  ├── Scanning subdomains...                                  │
 │  ├── Testing endpoints for common vulnerabilities...         │
@@ -131,9 +131,12 @@ The original uses **VulnAgent** — an autonomous AI agent with **tool-selection
 ```
 
 - **No script chains** — AI decides every step, no locked phase ordering
-- **25 built-in tools** — from port scanning to fuzzing, all described for AI consumption
+- **27 built-in tools** — from port scanning to fuzzing, browser automation, knowledge graph, delegate, plus `create_tool` / `edit_own_tool` for runtime tool authoring
 - **`edit_own_tool`** — AI can create and modify its own tools at runtime
 - **`create_tool`** — AI can author arbitrary Python tools on the fly
+- **`delegate`** — AI can delegate sub-tasks to specialist agents in `--multi-agent` mode
+- **`browser`** — Playwright headless Chromium for JS-rendered pages (navigate, click, type, screenshot)
+- **`knowledge_graph`** — Build and query a graph of targets, assets, findings, and CVEs across sessions
 - **Cross-session Memory** — Remembers what worked (ChromaDB + Skills JSON store)
 - **MCP Auto-start** — MCP server boots in background with every command
 
@@ -171,7 +174,7 @@ main() ──► show_banner() ──► start_mcp_if_enabled() ──► MCPSer
                                                      ┌──────────┴──────────┐
                                                      ▼                     ▼
                                               stdio (Claude Desktop)   HTTP (port 8080)
-                                              25 dynamic tools         REST API
+                                              27 dynamic tools         REST API
 ```
 
 Configure MCP servers via:
@@ -196,12 +199,16 @@ Default MCP servers included:
 securagentx hunt <target>       # Autonomous AI vulnerability hunt (VulnAgent)
 securagentx scan <target>        # AI-driven scan (equivalent to hunt)
 securagentx vuln-hunt <target>   # Full autonomous vulnerability hunting
+securagentx hunt <target> --multi-agent   # Multi-agent FlowManager mode (specialists + Docker sandbox)
 securagentx tui                  # Textual TUI (chat interface)
 securagentx configure            # Setup wizard
 securagentx doctor               # System health check
+securagentx api                  # Start REST API + GraphQL server (FastAPI)
 ```
 
-**All scan/hunt commands now use VulnAgent** — the same AI agent with 25 tools, memory, and tool-selection autonomy. No script chains, no forced phases.
+**All scan/hunt commands now use VulnAgent** — the same AI agent with 27 tools, memory, and tool-selection autonomy. No script chains, no forced phases.
+
+Pass `--multi-agent` to `hunt` or `vuln-hunt` to switch from single-agent mode to the multi-agent `FlowManager` (uses `securagentx/flows/` + `ConcreteFlowProvider` + specialist agents + Docker sandbox).
 
 ### Multi-target
 
@@ -236,8 +243,11 @@ securagentx hunt "example.com, api.example.com"
 │                      │          │                          │
 │   AVAILABLE_TOOLS    │          │  stdio transport         │
 │   ├─ 15 builtin     │          │  HTTP transport          │
-│   ├─ 4 memory       │          │  25 dynamic tools        │
-│   ├─ 4 skill        │          └──────────────────────────┘
+│   ├─ browser        │          │  27 dynamic tools        │
+│   ├─ delegate       │          │  REST API + GraphQL      │
+│   ├─ knowledge_graph│          └──────────────────────────┘
+│   ├─ 4 memory       │
+│   ├─ 4 skill        │
 │   ├─ create_tool    │
 │   └─ edit_own_tool  │
 └──────────┬───────────┘
@@ -315,14 +325,14 @@ SecurAgentX loads YAML config from `~/.securagentx/config.yaml` (auto-created fr
 ## Testing
 
 ```bash
-# Full test suite (3000+ tests)
+# Full test suite (2600+ tests)
 python3 -m pytest tests/ -v
 
 # Stable suite (no network required)
 python3 -m pytest tests/test_securagentx_paths.py tests/test_securagentx_scope.py tests/test_securagentx_governance.py -v
 ```
 
-**3000+ tests** covering: governance, shell execution, target validation, MCP protocol, VulnAgent tools, agent memory, agent skills, the SecurAgentX path/scope/governance layer, and more.
+**2600+ tests** covering: governance, shell execution, target validation, MCP protocol, VulnAgent tools (including `browser`, `knowledge_graph`, `delegate`), agent memory, agent skills, the SecurAgentX path/scope/governance layer, REST API, GraphQL, flows, Docker sandbox, observability, and more.
 
 <img src="assets/red-divider.svg" width="100%">
 
@@ -337,10 +347,18 @@ SecurAgentX/
 ├── securagentx/              # Canonical module location
 │   ├── agent/              # Autonomous AI agent (VulnAgent)
 │   │   ├── __init__.py     # Exports VulnAgent
-│   │   ├── vuln_agent.py   # Main agent + 25 tools
+│   │   ├── vuln_agent.py   # Main agent + 27 tools
 │   │   ├── agent_memory.py # JSON-backed memory store
 │   │   ├── agent_skills.py # JSON-backed skill store
 │   │   └── memory.py       # ChromaDB + FTS5 memory
+│   ├── agents/             # Multi-agent specialists + PrimaryAgent (used with --multi-agent)
+│   ├── flows/              # FlowManager + ConcreteFlowProvider (multi-agent orchestration)
+│   ├── api/                # REST API (FastAPI) — `securagentx api`
+│   ├── graphql/            # GraphQL schema (mounted at /graphql)
+│   ├── observability/      # OpenTelemetry + Langfuse tracing (auto-setup in main.py)
+│   ├── docker/             # Docker sandbox for privileged agent shell execution
+│   ├── browser/            # Playwright headless Chromium tool
+│   ├── knowledge_graph/    # Cross-session target/asset/CVE graph
 │   ├── scope.py            # Target validation & scope
 │   ├── paths.py            # Path resolution (SECURAGENTX_HOME / SECURAGENTX_DIRS)
 │   ├── governance.py       # Governance layer
@@ -348,7 +366,7 @@ SecurAgentX/
 │   ├── brain.py            # Hybrid brain (deprecated)
 │   └── loop.py             # Main agent loop
 ├── mcp/                    # MCP integration
-│   ├── server.py           # MCP server (25 dynamic tools)
+│   ├── server.py           # MCP server (27 dynamic tools)
 │   ├── client.py           # MCP client
 │   ├── config.py           # MCP configuration
 │   └── manager.py          # MCP lifecycle
@@ -356,7 +374,7 @@ SecurAgentX/
 ├── cli/                    # UI components + TUI (textual.py)
 ├── core/                   # Legacy (deprecated stubs)
 ├── pipeline/               # LEGACY: only scope.py remains
-├── tests/                  # 3000+ tests
+├── tests/                  # 2600+ tests (+ brutal/ integration suite)
 ```
 
 <img src="assets/red-divider.svg" width="100%">
@@ -376,7 +394,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 1. Fork `moussa12345678/SecurAgentX` and create a feature branch.
 2. Run `securagentx doctor` to confirm your dev environment.
 3. Add or update tests under `tests/` — SecurAgentX requires new behaviour to be covered.
-4. Run `python3 -m pytest tests/ -v` before pushing; all collected tests must pass (3121).
+4. Run `python3 -m pytest tests/ -v` before pushing; all collected tests must pass (2600+).
 5. Open a pull request against `main`; CI runs the full SecurAgentX test matrix.
 
 See [SECURITY.md](SECURITY.md) for responsible-disclosure and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
