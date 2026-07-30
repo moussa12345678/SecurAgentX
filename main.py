@@ -288,6 +288,17 @@ def _run_multi_agent_flow(target: str, *, title_prefix: str = "Hunt") -> str:
             ) from exc
 
         client = create_default_client()
+        # Wrap the UniversalAIClient in an LLMClient-Protocol adapter so the
+        # multi-agent flow (ConcreteFlowProvider → Generator/Refiner/Reporter/
+        # PrimaryAgent → perform_agent_chain) can call `await client.call(
+        # chain, tools, agent_type)`. The raw UniversalAIClient only exposes
+        # sync `.chat()` and would otherwise raise:
+        #   AttributeError: 'UniversalAIClient' object has no attribute 'call'
+        # Single-agent mode (VulnAgent) talks to the raw client directly via
+        # `.chat()` and is unaffected by this wrapper.
+        from securagentx.agents.llm_adapter import UniversalAIClientAdapter
+
+        client = UniversalAIClientAdapter(client)
         memory = AgentMemory()
         gate = GovernanceGate()
 
