@@ -91,11 +91,13 @@ def _vulnagent_scan(
     # ── Build AI agent mission ──
     from securagentx.agent import VulnAgent
     from securagentx.agent.memory import AgentMemory
+    from securagentx.governance import GovernanceGate
     from tools.universal_ai_client import create_default_client
 
     memory = AgentMemory()
     client = create_default_client()
-    agent = VulnAgent(target=target, client=client, memory=memory)
+    gate = GovernanceGate()
+    agent = VulnAgent(target=target, client=client, memory=memory, governance=gate)
 
     print_info("Starting AI-driven vulnerability scan...")
     print_info(f"Target: {target}")

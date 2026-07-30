@@ -439,21 +439,31 @@ def _tool_edit_file(path: str, old_string: str, new_string: str) -> Dict[str, An
 def _tool_search_files(pattern: str, path: str = ".", file_glob: str = "", limit: int = 20) -> Dict[str, Any]:
     """Search file contents using regex. Returns matching lines with context.
     Use this to find hardcoded credentials, API keys, vulnerable patterns,
-    or any text across the filesystem."""
-    import subprocess as _sp
+    or any text across the filesystem.
 
+    Routed through ``tools.safe_exec.execute_safely`` so the governance
+    gate (CWE-78 hardening, timeout & output size limits) is enforced
+    on the spawned ``grep`` process."""
     try:
+        from tools.safe_exec import execute_safely
 
         cmd = ["grep", "-rn", "--color=never", pattern]
         if file_glob:
             cmd.extend(["--include", file_glob])
         cmd.append(path)
 
-        result = _sp.run(cmd, capture_output=True, text=True, timeout=15)
-        if result.returncode == 1 and not result.stdout:
+        # Execute via safe_exec so governance gate + CWE-78 hardening apply.
+        # safe_exec expects a command string (applies shlex.split internally)
+        # so build a shell-quoted string from the argv list.
+        result = execute_safely(shlex.join(cmd), timeout=15)
+        # grep returns exit_code 1 with empty stdout when no matches — that
+        # is not an error, just "no hits". Preserve the legacy contract.
+        # ``execute_safely`` is typed ``Dict[str, Union[str, int, bool]]`` so we
+        # coerce stdout/stderr to ``str`` defensively before string ops.
+        if result.get("exit_code") == 1 and not str(result.get("stdout") or "").strip():
             return {"success": True, "output": "No matches found."}
 
-        lines = result.stdout.strip().splitlines()
+        lines = str(result.get("stdout") or "").strip().splitlines()
         truncated = len(lines) > limit
         output = "\n".join(lines[:limit])
         info = f"Searched '{pattern}' in {path}"
@@ -465,8 +475,6 @@ def _tool_search_files(pattern: str, path: str = ".", file_glob: str = "", limit
         info += "\n"
 
         return {"success": True, "output": info + output, "total_matches": len(lines)}
-    except _sp.TimeoutExpired:
-        return {"success": False, "error": "Search timed out (15s)"}
     except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
@@ -474,33 +482,40 @@ def _tool_search_files(pattern: str, path: str = ".", file_glob: str = "", limit
 def _tool_run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
     """Run a shell command and return its output. Use this to execute
     security tools, scripts, git commands, or any CLI program.
-    WARNING: commands run directly on the host."""
-    import subprocess as _sp
+    WARNING: commands run directly on the host.
 
+    Routed through ``tools.safe_exec.execute_safely`` so the governance
+    gate (CWE-78 hardening: shlex.split + shell=False, timeout & output
+    size limits) is enforced. ``execute_safely`` itself uses
+    ``subprocess.run`` internally — that is intentional; the point of
+    this indirection is to centralise command execution behind the
+    governance layer rather than calling ``subprocess.run`` directly
+    from agent code."""
     try:
+        from tools.safe_exec import execute_safely
 
-        # CWE-78 hardening (issue 28): tokenise with shlex.split() and
-        # execute with shell=False so metacharacters cannot inject commands.
-        cmd_list = shlex.split(command) if isinstance(command, str) else command
-        result = _sp.run(
-            cmd_list,
-            shell=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        output = result.stdout.strip()
-        if result.stderr:
-            output += "\n[stderr]\n" + result.stderr.strip()[:2000]
-
+        # execute_safely expects a command string (it applies shlex.split
+        # internally). Normalise list inputs to a shell-quoted string so
+        # callers may pass either form, matching the legacy signature.
+        if not isinstance(command, str):
+            command = shlex.join(list(command))
+        result = execute_safely(command, timeout=timeout)
+        # Map safe_exec shape -> legacy tool shape consumed by the agent loop:
+        #   safe_exec: {success, stdout, stderr, exit_code, error}
+        #   legacy:    {success, output, exit_code} (or {success, error} on hard fail)
+        # ``execute_safely`` is typed ``Dict[str, Union[str, int, bool]]`` so we
+        # coerce stdout/stderr to ``str`` defensively before string ops.
+        stdout = str(result.get("stdout") or "").strip()
+        stderr = str(result.get("stderr") or "").strip()
+        output = stdout
+        if stderr:
+            output += "\n[stderr]\n" + stderr[:2000]
         truncated = len(output) > 5000
         return {
-            "success": result.returncode == 0,
+            "success": bool(result.get("success", False)),
             "output": output[:5000] + ("\n...[truncated]" if truncated else ""),
-            "exit_code": result.returncode,
+            "exit_code": result.get("exit_code", -1),
         }
-    except _sp.TimeoutExpired:
-        return {"success": False, "error": f"Command timed out ({timeout}s)"}
     except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
@@ -514,41 +529,49 @@ def _tool_run_python(code: str, timeout: int = 30) -> Dict[str, Any]:
     - Write and test exploit PoCs
     - Analyze data programmatically beyond simple grep
     - Generate reports or visualizations
-    """
-    import subprocess as _sp
+
+    Routed through ``tools.safe_exec.execute_safely`` so the governance
+    gate (CWE-78 hardening, timeout & output size limits) is enforced
+    on the spawned ``python3`` process."""
     import tempfile as _tf
 
     _tmp = None
     try:
+        from tools.safe_exec import execute_safely
+
         _tmp = _tf.NamedTemporaryFile(mode="w", suffix=".py", delete=False)
         _tmp.write(code)
         _tmp.close()
 
-        result = _sp.run(
-            ["python3", _tmp.name],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        output = result.stdout.strip()
-        if result.stderr:
-            output += "\n[stderr]\n" + result.stderr.strip()[:2000]
-
+        # Execute via safe_exec so governance gate + CWE-78 hardening apply.
+        # safe_exec expects a command string (applies shlex.split internally)
+        # so build a shell-quoted string from the argv list.
+        cmd_str = shlex.join(["python3", _tmp.name])
+        result = execute_safely(cmd_str, timeout=timeout)
+        # Map safe_exec shape -> legacy tool shape.
+        # ``execute_safely`` is typed ``Dict[str, Union[str, int, bool]]`` so we
+        # coerce stdout/stderr to ``str`` defensively before string ops.
+        stdout = str(result.get("stdout") or "").strip()
+        stderr = str(result.get("stderr") or "").strip()
+        output = stdout
+        if stderr:
+            output += "\n[stderr]\n" + stderr[:2000]
         truncated = len(output) > 5000
         return {
-            "success": result.returncode == 0,
+            "success": bool(result.get("success", False)),
             "output": output[:5000] + ("\n...[truncated]" if truncated else ""),
-            "exit_code": result.returncode,
+            "exit_code": result.get("exit_code", -1),
         }
-    except _sp.TimeoutExpired:
-        return {"success": False, "error": f"Python timed out ({timeout}s)"}
     except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
     finally:
         if _tmp:
             import os as _os
 
-            _os.unlink(_tmp.name)
+            try:
+                _os.unlink(_tmp.name)
+            except OSError:
+                pass
 
 
 def _tool_analyze_security(source: str, context: str = "") -> Dict[str, Any]:
@@ -610,6 +633,7 @@ def _run_child_agent(target: str, output_path: str) -> None:
     """Entry point called by delegate subprocess."""
     try:
         from securagentx.agent.vuln_agent import VulnAgent
+        from securagentx.governance import GovernanceGate
         from tools.universal_ai_client import UniversalAIClient
 
         client = UniversalAIClient()
@@ -618,6 +642,7 @@ def _run_child_agent(target: str, output_path: str) -> None:
             target=target,
             max_steps=8,
             report_dir=_Path(_tempfile.mkdtemp(prefix="securagentx_delegate_")),
+            governance=GovernanceGate(),
         )
         report = agent.hunt(verbose=False)
 
@@ -663,6 +688,7 @@ def _run_child_agent(target: str, output_path: str) -> None:  # type: ignore[no-
     """Entry point called by delegate subprocess."""
     try:
         from securagentx.agent.vuln_agent import VulnAgent
+        from securagentx.governance import GovernanceGate
         from tools.universal_ai_client import UniversalAIClient
 
         client = UniversalAIClient()
@@ -671,6 +697,7 @@ def _run_child_agent(target: str, output_path: str) -> None:  # type: ignore[no-
             target=target,
             max_steps=8,
             report_dir=_Path(_tempfile.mkdtemp(prefix="securagentx_delegate_")),
+            governance=GovernanceGate(),
         )
         report = agent.hunt(verbose=False)
 
@@ -731,8 +758,9 @@ def _make_client():
 def _run_child(target: str, output_path: str) -> None:
     try:
         from securagentx.agent.vuln_agent import VulnAgent
+        from securagentx.governance import GovernanceGate
         client = _make_client()
-        agent = VulnAgent(client=client, target=target, max_steps=8, report_dir=Path("/tmp/securagentx_delegate"))
+        agent = VulnAgent(client=client, target=target, max_steps=8, report_dir=Path("/tmp/securagentx_delegate"), governance=GovernanceGate())
         report = agent.hunt(verbose=False)
         result = {
             "target": target,
@@ -2249,13 +2277,27 @@ class VulnAgent:
 
         # Governance gate
         if self.governance:
-            gate = self.governance.gate(
-                mission_id="vuln-hunt",
-                target=self.target,
-                action=tool_name,
-            )
-            if hasattr(gate, "decision") and gate.decision in ("deny",):
-                return {"success": False, "error": f"Blocked by governance: {gate.rationale}"}
+            try:
+                from securagentx.types import AIAction
+                gov_action = AIAction(
+                    action_type="scan",
+                    tool=tool_name,
+                    target=self.target,
+                    risk_level="safe",
+                )
+                gate = self.governance.gate(
+                    mission_id="vuln-hunt",
+                    target=self.target,
+                    action=gov_action,
+                )
+                if gate is not None and hasattr(gate, "decision"):
+                    _decision = gate.decision
+                    _decision_val = _decision.value if hasattr(_decision, "value") else str(_decision)
+                    if _decision_val == "deny":
+                        _rationale = getattr(gate, "rationale", "blocked by governance")
+                        return {"success": False, "error": f"Blocked by governance: {_rationale}"}
+            except Exception as gov_exc:  # noqa: BLE001 — governance must not brick the scan
+                logger.warning("Governance gate error for %s (fail-open): %s", tool_name, gov_exc)
 
         logger.info("Executing: %s(%s)", tool_name, arguments)
         try:

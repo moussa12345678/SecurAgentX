@@ -1,11 +1,15 @@
 """securagentx/reports/markdown.py — Markdown report assembly.
 
-This module turns a Flow → Task → Subtask hierarchy (see
-:mod:`securagentx.flows.models`) into a GitHub-Flavored-Markdown report.
+This module turns a Flow → Task → Subtask hierarchy (duck-typed objects
+exposing the expected ``title``/``input``/``result``/``status``/``subtasks``
+attributes) into a GitHub-Flavored-Markdown report.
 The primary entry point is :func:`generate_report_markdown`, which is
-invoked by the REST API (``GET /flows/{id}/report?format=markdown``) and
-by the multi-format export pipeline (see
+invoked by the multi-format export pipeline (see
 :mod:`securagentx.reports.export`).
+
+(The historical ``securagentx.flows`` package and the
+``GET /flows/{id}/report`` REST route have been removed as dead code;
+this module now operates purely on structural duck-typed inputs.)
 
 The report layout is::
 

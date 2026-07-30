@@ -1,12 +1,9 @@
-"""DEPRECATED: This module is kept for backward compatibility.
+"""DEPRECATED: This module is the canonical SecurAgentX FastAPI server.
 
-New code should use ``securagentx.api.app`` instead — the canonical
-FastAPI application factory (``create_app()``) lives in the package at
-``securagentx/api/app.py`` and supersedes this standalone module.
-
-This file will be removed in a future release once ``main.py`` and
-``commands/system.py`` have been migrated off the ``run_server`` shim
-(see issue #43 / P11-B).
+(The historical ``securagentx.api`` package — a parallel, unused FastAPI
+factory — was removed as dead code; see ``securagentx/api/`` removal.
+This ``tools/api_server.py`` module remains the live API surface used by
+``main.py`` and ``commands/system.py`` via the ``run_server`` shim.)
 
 --- legacy docstring below (for historical context) -----------------------
 
@@ -37,13 +34,15 @@ from __future__ import annotations
 
 import warnings
 
-# Issue #43 / P11-B: This module is deprecated. New code should import
-# ``create_app`` from ``securagentx.api.app`` instead. The warning is
+# Note: the parallel ``securagentx.api.app`` factory was removed as dead
+# code (see the securagentx/api/ deletion). This ``tools/api_server.py``
+# module is the live FastAPI surface and is invoked lazily by ``main.py``
+# and ``commands/system.py`` via the ``run_server`` shim. The warning is
 # emitted at the very top of the module (before any heavy imports) so
-# downstream callers (main.py, commands/system.py) surface the
-# deprecation in their logs even if an optional dependency is missing.
+# downstream callers surface the deprecation in their logs even if an
+# optional dependency is missing.
 warnings.warn(
-    "tools.api_server is deprecated; use securagentx.api.app instead",
+    "tools.api_server is the canonical API server; the parallel securagentx.api package has been removed",
     DeprecationWarning,
     stacklevel=2,
 )

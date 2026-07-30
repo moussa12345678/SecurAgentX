@@ -41,11 +41,13 @@ def run_standard_scan(
     try:
         from securagentx.agent import VulnAgent
         from securagentx.agent.memory import AgentMemory
+        from securagentx.governance import GovernanceGate
         from tools.universal_ai_client import create_default_client
 
         memory = AgentMemory()
         client = create_default_client()
-        agent = VulnAgent(target=target, client=client, memory=memory)
+        gate = GovernanceGate()
+        agent = VulnAgent(target=target, client=client, memory=memory, governance=gate)
         report = agent.hunt()
         return report.render()
     except Exception as e:
@@ -80,12 +82,14 @@ class Orchestrator:
         if self._agent is None:
             from securagentx.agent import VulnAgent
             from securagentx.agent.memory import AgentMemory
+            from securagentx.governance import GovernanceGate
             from tools.universal_ai_client import create_default_client
 
             self._agent = VulnAgent(
                 target=self.target,
                 client=create_default_client(),
                 memory=AgentMemory(),
+                governance=GovernanceGate(),
             )
         return self._agent
 

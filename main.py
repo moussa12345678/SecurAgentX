@@ -19,6 +19,7 @@ import sys
 import time
 from pathlib import Path
 from securagentx.paths import get_data_dir, get_reports_path
+from securagentx.governance import GovernanceGate
 
 
 def _ensure_config_files():
@@ -924,7 +925,8 @@ def main():
 
                 memory = AgentMemory()
                 client = create_default_client()
-                agent = VulnAgent(target=target, client=client, memory=memory)
+                gate = GovernanceGate()
+                agent = VulnAgent(target=target, client=client, memory=memory, governance=gate)
 
                 print_info("Starting autonomous AI hunt...")
                 print_info(f"Target: {target}")
@@ -984,7 +986,8 @@ def main():
                 # Initialize cross-session memory (silent fail if unavailable)
                 memory = AgentMemory()
                 client = create_default_client()
-                agent = VulnAgent(target=target, client=client, memory=memory)
+                gate = GovernanceGate()
+                agent = VulnAgent(target=target, client=client, memory=memory, governance=gate)
 
                 print_info("Starting autonomous vulnerability hunt...")
                 print_info(f"Target: {target}")
