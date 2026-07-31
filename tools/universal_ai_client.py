@@ -353,7 +353,7 @@ class UniversalAIClient:
         api_key: Optional[str] = None,
         model: Optional[str] = None,
         timeout: int = 150,
-        max_retries: int = 3,
+        max_retries: int = 20,
     ):
         """
         Initialize universal AI client.
@@ -637,16 +637,40 @@ class UniversalAIClient:
                 )
 
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 401:  # type: ignore[union-attr]
+                status_code = e.response.status_code if e.response is not None else 0  # type: ignore[union-attr]
+                if status_code == 401:  # type: ignore[union-attr]
                     logger.error("Authentication failed - check API key")
                     raise
+                elif status_code == 429:
+                    # Rate limited — wait 60s (or Retry-After header) and retry up to 20 times
+                    retry_after = 60
+                    if e.response is not None:  # type: ignore[union-attr]
+                        ra_header = e.response.headers.get("Retry-After") or e.response.headers.get("X-RateLimit-Reset")  # type: ignore[union-attr]
+                        if ra_header:
+                            try:
+                                retry_after = int(ra_header)
+                            except (ValueError, TypeError):
+                                retry_after = 60
+                    if attempt < self.max_retries - 1:
+                        logger.warning(
+                            "429 Too Many Requests — attempt %d/%d, waiting %ds before retry...",
+                            attempt + 1, self.max_retries, retry_after,
+                        )
+                        time.sleep(retry_after)
+                        continue
+                    logger.error("429 rate limit: exhausted all %d retries", self.max_retries)
+                    raise
                 elif attempt < self.max_retries - 1:
-                    time.sleep(2**attempt)  # Exponential backoff
+                    wait = min(2**attempt, 60)  # Cap at 60s
+                    logger.warning("HTTP %d — retry %d/%d in %ds", status_code, attempt + 1, self.max_retries, wait)
+                    time.sleep(wait)
                     continue
                 raise
-            except Exception:
+            except Exception as e:
                 if attempt < self.max_retries - 1:
-                    time.sleep(2**attempt)
+                    wait = min(2**attempt, 60)
+                    logger.warning("Error: %s — retry %d/%d in %ds", str(e)[:100], attempt + 1, self.max_retries, wait)
+                    time.sleep(wait)
                     continue
                 raise
 

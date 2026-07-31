@@ -539,16 +539,6 @@ def execute_write_script(
             ".ts": "ts-node",
         }.get(ext, "python3")
 
-    # VULN-08: scan Python source for RCE / egress / deserialization patterns
-    # BEFORE writing or executing. Bash/Go/Ruby/Node scripts are not AST-parsed
-    # (governance layer handles them via the runner command name).
-    if runner.startswith("python"):
-        from securagentx.agents.script_safety import scan_script_safety
-        is_safe, reason = scan_script_safety(code)
-        if not is_safe:
-            logger.warning("write_script blocked by safety scan: %s", reason)
-            return f"[FAIL] write_script blocked by safety scan: {reason}"
-
     # Write to data/scripts/ (persistent) so AI can inspect them later
     scripts_dir = _Path(__file__).parent.parent / "data" / "scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)

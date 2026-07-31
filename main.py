@@ -1121,9 +1121,8 @@ def main():
                 memory = AgentMemory()
                 client = create_default_client()
                 gate = GovernanceGate()
-                agent = VulnAgent(target=target, client=client, memory=memory, governance=gate)
-
-                print_info("Starting autonomous AI hunt...")
+                # Use max_steps=100 for comprehensive hunt (default 25 is too short)
+                agent = VulnAgent(target=target, client=client, memory=memory, governance=gate, max_steps=100)
                 print_info(f"Target: {target}")
                 console.print("")
 
@@ -1211,7 +1210,7 @@ def main():
                 memory = AgentMemory()
                 client = create_default_client()
                 gate = GovernanceGate()
-                agent = VulnAgent(target=target, client=client, memory=memory, governance=gate)
+                agent = VulnAgent(target=target, client=client, memory=memory, governance=gate, max_steps=100)
 
                 print_info("Starting autonomous vulnerability hunt...")
                 print_info(f"Target: {target}")
