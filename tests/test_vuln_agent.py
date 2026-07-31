@@ -375,26 +375,32 @@ class TestVulnAgentHypothesis:
 
 
 class TestToolPortScan:
-    @patch("tools.omni_scan.run_scan", create=True)
+    @patch("tools.omni_scan.run_omni_scan", create=True)
     def test_tries_omni_scan_fallback(self, mock_run):
-        mock_run.return_value = "port results"
+        """Port scan falls back to run_omni_scan when nmap tool is unavailable."""
+        mock_run.return_value = None  # run_omni_scan returns None
         result = _tool_port_scan("test.com")
         assert result["success"] is True
-        assert result["output"] == "port results"
+        assert "Omni scan completed" in result["output"]
 
-    @patch("tools.omni_scan.run_scan", side_effect=ImportError("no module"), create=True)
+    @patch("tools.omni_scan.run_omni_scan", side_effect=ImportError("no module"), create=True)
     def test_handles_no_tools(self, mock_run):
+        """Port scan returns failure when omni_scan import fails."""
         result = _tool_port_scan("test.com")
         assert result["success"] is False
 
 
 class TestToolWebRecon:
-    @patch("tools.omni_scan.run_scan", create=True)
-    def test_calls_omni_scan(self, mock_run):
-        mock_run.return_value = "web results"
+    @patch("securagentx.agent.vuln_agent.requests", create=True)
+    def test_calls_requests(self, mock_requests):
+        """Web recon uses requests library to fetch HTTP headers."""
+        mock_resp = mock_requests.get.return_value
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Server": "nginx"}
+        mock_resp.text = "<html>hello</html>"
         result = _tool_web_recon("example.com")
         assert result["success"] is True
-        mock_run.assert_called_with("example.com", scan_type="web")
+        assert result["status_code"] == 200
 
 
 class TestToolSearchCve:

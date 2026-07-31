@@ -167,11 +167,11 @@ def _tool_port_scan(target: str, ports: str = "common") -> Dict[str, Any]:
             result = tool.handler(target)  # type: ignore[attr-defined]
             return {"success": True, "output": result.output if hasattr(result, "output") else str(result), "port_count": 0}
 
-        # Fallback: use omni_scan
-        from tools.omni_scan import run_scan  # type: ignore[attr-defined]
+        # Fallback: use omni_scan (run_omni_scan runs the full pipeline)
+        from tools.omni_scan import run_omni_scan
 
-        result = run_scan(target, scan_type="port")
-        return {"success": True, "output": str(result), "port_count": 0}
+        run_omni_scan(target, rate_limit=5)
+        return {"success": True, "output": f"Omni scan completed for {target}", "port_count": 0}
     except Exception as exc:  # noqa: BLE001 — logged
         logger.debug("port scan failed: %s", exc)
         return {"success": False, "error": str(exc)}
@@ -180,10 +180,17 @@ def _tool_port_scan(target: str, ports: str = "common") -> Dict[str, Any]:
 def _tool_web_recon(target: str, path: str = "/") -> Dict[str, Any]:
     """Perform web recon on target (HTTP headers, technologies, endpoints)."""
     try:
-        from tools.omni_scan import run_scan  # type: ignore[attr-defined]
+        import requests
 
-        result = run_scan(target, scan_type="web")
-        return {"success": True, "output": str(result)}
+        url = f"http://{target.rstrip('/')}/{path.lstrip('/')}".rstrip("/")
+        resp = requests.get(url, timeout=10, verify=False, allow_redirects=True)
+        headers = dict(resp.headers)
+        return {
+            "success": True,
+            "output": f"HTTP {resp.status_code}\nHeaders: {headers}\nBody preview: {resp.text[:500]}",
+            "status_code": resp.status_code,
+            "headers": headers,
+        }
     except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 
@@ -217,10 +224,26 @@ def _tool_search_cve(service: str, version: str = "") -> Dict[str, Any]:
 def _tool_analyze_target(target: str) -> Dict[str, Any]:
     """Gather initial target intelligence (DNS, whois, technologies)."""
     try:
-        from tools.omni_scan import run_scan  # type: ignore[attr-defined]
+        import socket
+        import subprocess
 
-        result = run_scan(target, scan_type="recon")
-        return {"success": True, "output": str(result)}
+        info = {}
+        # DNS resolution
+        try:
+            ip = socket.gethostbyname(target)
+            info["ip"] = ip
+        except Exception:
+            info["ip"] = "unresolved"
+        # HTTP headers
+        try:
+            result = subprocess.run(
+                ["curl", "-sI", "--max-time", "10", f"http://{target}"],
+                capture_output=True, text=True, timeout=15
+            )
+            info["http_headers"] = result.stdout[:500]
+        except Exception:
+            info["http_headers"] = "unavailable"
+        return {"success": True, "output": str(info), "ip": info.get("ip", "")}
     except Exception as exc:  # noqa: BLE001 — graceful fallback
         return {"success": False, "error": str(exc)}
 

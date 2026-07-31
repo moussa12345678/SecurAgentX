@@ -505,6 +505,13 @@ def main():
         default=False,
         help="Use multi-agent FlowManager instead of single VulnAgent (hunt / vuln-hunt)",
     )
+    parser.add_argument(
+        "--yolo",
+        action="store_true",
+        default=False,
+        help="YOLO mode: disable all AI script safety scanning. ONLY use with "
+             "explicit written authorization — the AI can run ANY code.",
+    )
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Bind address for API server")
     parser.add_argument("--port", type=int, default=8443, help="Port for API server")
 
@@ -525,6 +532,24 @@ def main():
     )
 
     args, _ = parser.parse_known_args()
+
+    # YOLO mode: disable all AI script safety scanning
+    if getattr(args, "yolo", False):
+        os.environ["SECURAGENTX_YOLO"] = "1"
+        try:
+            from cli.ui_components import console as _console
+            _console.print(
+                "[bold red]⚠  YOLO MODE ACTIVATED[/bold red] — "
+                "AI script safety scanning is DISABLED."
+            )
+            _console.print(
+                "[bold red]   The AI can now run ANY Python code without restriction.[/bold red]"
+            )
+            _console.print(
+                "[bold red]   ONLY use this with explicit written authorization![/bold red]"
+            )
+        except Exception:
+            print("⚠ YOLO MODE ACTIVATED — AI safety scanning DISABLED")
 
     # Set environment variable for smart scan mode (propagates to watchman/bot)
     if args.smart_scan:
