@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 from securagentx.paths import get_data_dir, get_reports_path
 from securagentx.governance import GovernanceGate
 
@@ -302,7 +303,7 @@ def _run_multi_agent_flow(target: str, *, title_prefix: str = "Hunt") -> str:
         # `.chat()` and is unaffected by this wrapper.
         from securagentx.agents.llm_adapter import UniversalAIClientAdapter
 
-        client = UniversalAIClientAdapter(client)
+        client: Any = UniversalAIClientAdapter(client)
         memory = AgentMemory()
         gate = GovernanceGate()
 

@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Callable
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Callable
 import yaml
 
 from .types import (
@@ -61,7 +61,7 @@ class GovernanceGate:
         self.approval_callbacks: Dict[str, Callable] = {}
         self.audit_log: List[Dict] = []
         # VULN-03: lazy-instantiate ScopeManager on first _check_scope call.
-        self._scope_manager = None
+        self._scope_manager: Optional[Any] = None
         # VULN-03: simple in-memory sliding-window rate limiter.
         self._rate_limiter: Dict[str, List[float]] = {}
         self._rate_limit_max_actions: int = 10

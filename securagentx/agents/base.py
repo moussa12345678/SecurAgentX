@@ -312,6 +312,7 @@ class Summarizer(Protocol):
 # ``perform_agent_chain`` so callers (e.g. ``PrimaryAgent``) can translate
 # barrier hits into the correct result without hardcoding tool names in the
 # universal loop.
+# Note: the callback may be sync OR async — perform_agent_chain handles both.
 BarrierCallback = Callable[[str, str], PerformResult]
 
 
@@ -810,7 +811,7 @@ async def run_specialist_chain(
         barriers=barriers,
     )
 
-    async def _on_barrier(name: str, args_json: str) -> PerformResult:
+    def _on_barrier(name: str, args_json: str) -> PerformResult:
         return PerformResult.DONE
 
     return await perform_agent_chain(
