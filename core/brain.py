@@ -892,7 +892,12 @@ class SecurAgentXAgent:
                         target=loop_target or "unknown",
                         action={"action": act, "tool": tool, "command": raw[:100]},
                     )
-                    if hasattr(gate, "decision") and gate.decision == "deny":
+                    if hasattr(gate, "decision"):
+                        _d = gate.decision
+                        _d_str = _d.value if hasattr(_d, "value") else str(_d)
+                    else:
+                        _d_str = ""
+                    if _d_str == "deny":
                         msg = f"[Governance gate: blocked. {gate.rationale or 'denied'}]"
                         self._last_responses.append(msg)
                         self._activity_log(msg)
@@ -1080,7 +1085,12 @@ class SecurAgentXAgent:
                 target=target,
                 action=user_input,
             )
-            if hasattr(gate, "decision") and gate.decision == "deny":
+            if hasattr(gate, "decision"):
+                _d = gate.decision
+                _d_str = _d.value if hasattr(_d, "value") else str(_d)
+            else:
+                _d_str = ""
+            if _d_str == "deny":
                 return {
                     "success": False,
                     "output": "",

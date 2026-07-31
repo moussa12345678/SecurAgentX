@@ -36,6 +36,8 @@ import time
 from typing import Any, Optional
 from urllib.parse import urlparse
 
+from securagentx.utils.url import validate_url_scheme
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -108,6 +110,12 @@ def is_ssrf_target(url: str) -> bool:
     fetch). The current guard blocks the common cases: cloud-metadata
     exfiltration and direct internal-address probes.
     """
+    # Check 1 — scheme allowlist (raises ValueError on disallowed scheme).
+    try:
+        validate_url_scheme(url)
+    except ValueError:
+        return True
+
     try:
         parsed = urlparse(url)
     except (ValueError, TypeError):
@@ -128,9 +136,16 @@ def is_ssrf_target(url: str) -> bool:
             ip_obj = ipaddress.ip_address(ip_str)
         except ValueError:
             continue
-        for network in BLOCKED_RANGES:
-            if ip_obj in network:
-                return True
+        # Check the resolved IP against every blocked range. For IPv6
+        # addresses that are IPv4-mapped (e.g. ::ffff:127.0.0.1), also
+        # unwrap to the IPv4 form and re-check (C-002 fix).
+        candidates = [ip_obj]
+        if isinstance(ip_obj, ipaddress.IPv6Address) and ip_obj.ipv4_mapped is not None:
+            candidates.append(ip_obj.ipv4_mapped)
+        for cand in candidates:
+            for network in BLOCKED_RANGES:
+                if cand in network:
+                    return True
     return False
 
 

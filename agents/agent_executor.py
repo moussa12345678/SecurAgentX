@@ -205,8 +205,10 @@ def execute_shell_command(
             governance=governance,
         )
         if enable_auto:
+            import time as _time
             governance.auto_approve_privileged = True
-            logger.info("[OK] Auto-approve mode enabled for this session.")
+            governance.auto_approve_expires_at = _time.time() + 300
+            logger.info("[OK] Auto-approve mode enabled for this session (TTL=300s).")
         if not approved:
             return "[SKIP] Command rejected by user."
 
@@ -403,6 +405,16 @@ def execute_write_script(
             ".js": "node",
             ".ts": "ts-node",
         }.get(ext, "python3")
+
+    # VULN-08: scan Python source for RCE / egress / deserialization patterns
+    # BEFORE writing or executing. Bash/Go/Ruby/Node scripts are not AST-parsed
+    # (governance layer handles them via the runner command name).
+    if runner.startswith("python"):
+        from securagentx.agents.script_safety import scan_script_safety
+        is_safe, reason = scan_script_safety(code)
+        if not is_safe:
+            logger.warning("write_script blocked by safety scan: %s", reason)
+            return f"[FAIL] write_script blocked by safety scan: {reason}"
 
     # Write to data/scripts/ (persistent) so AI can inspect them later
     scripts_dir = _Path(__file__).parent.parent / "data" / "scripts"
@@ -607,22 +619,24 @@ def detect_and_install_missing_tool(
         except (EOFError, KeyboardInterrupt):
             sudo_password = None
 
-    # Build install command
-    install_cmd = _build_install_command(tool_name, sudo_password)
+    # Build install command — returns (cmd_str, stdin_input) tuple (VULN-05)
+    install_tuple = _build_install_command(tool_name, sudo_password)
 
-    if not install_cmd:
+    if not install_tuple:
         console.print(
             f"  [red]Don't know how to install {tool_name}. Please install manually.[/red]"
         )
         return None
 
+    install_cmd, stdin_input = install_tuple
+    # Note: install_cmd never contains the password (VULN-05 fix).
     console.print(f"  [dim]Running: {install_cmd}[/dim]")
 
     # Execute installation
     try:
         from tools.safe_exec import execute_safely
 
-        result = execute_safely(install_cmd, timeout=120)
+        result = execute_safely(install_cmd, timeout=120, stdin_input=stdin_input)
         if result.get("success"):
             console.print(f"  [green][OK] {tool_name} installed successfully[/green]")
             return result.get("stdout", "")  # type: ignore[return-value]
@@ -634,7 +648,9 @@ def detect_and_install_missing_tool(
         return None
 
 
-def _build_install_command(tool_name: str, sudo_password: Optional[str] = None) -> Optional[str]:
+def _build_install_command(
+    tool_name: str, sudo_password: Optional[str] = None,
+) -> Optional[tuple[str, Optional[str]]]:
     """Build install command for a tool.
 
     Args:
@@ -642,7 +658,10 @@ def _build_install_command(tool_name: str, sudo_password: Optional[str] = None) 
         sudo_password: Optional sudo password.
 
     Returns:
-        Install command string or None if unknown.
+        (command_str, stdin_input) tuple, or None if unknown.
+        stdin_input is set ONLY when sudo_password is provided — the password
+        is piped to sudo -S via subprocess.run(input=...), never in cmd string
+        (VULN-05 fix).
     """
     # Common tool → package mappings
     _TOOL_PACKAGES = {
@@ -661,7 +680,6 @@ def _build_install_command(tool_name: str, sudo_password: Optional[str] = None) 
         "nuclei": "nuclei",
         "amass": "amass",
         "ffuf": "ffuf",
-        "ffuf": "ffuf",
         "masscan": "masscan",
         "zmap": "zmap",
         "crackmapexec": "crackmapexec",
@@ -674,15 +692,16 @@ def _build_install_command(tool_name: str, sudo_password: Optional[str] = None) 
 
     if package:
         if sudo_password:
-            # Use echo to pipe password to sudo
-            return f"echo '{sudo_password}' | sudo -S apt-get install -y {package}"
+            # VULN-05: password travels via stdin (subprocess.run input=),
+            # never in the command string. Prevents leaks to logs / /proc/cmdline.
+            return (f"sudo -S apt-get install -y {package}", sudo_password)
         else:
-            return f"sudo apt-get install -y {package}"
+            return (f"sudo apt-get install -y {package}", None)
 
     # Try pip for Python tools
     if tool_name.endswith("-py") or tool_name.startswith("python-"):
         pip_name = tool_name.replace("-py", "").replace("python-", "")
-        return f"pip install {pip_name}"
+        return (f"pip install {pip_name}", None)
 
     # Unknown tool — return None
     return None

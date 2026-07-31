@@ -538,6 +538,14 @@ def _tool_run_python(code: str, timeout: int = 30) -> Dict[str, Any]:
     _tmp = None
     try:
         from tools.safe_exec import execute_safely
+        from securagentx.agents.script_safety import scan_script_safety
+
+        # VULN-08: scan code BEFORE writing/executing. Governance only sees
+        # 'python3 /tmp/tmpXXXX.py' (risk_level=safe) so content scanning is
+        # the only effective control here.
+        is_safe, reason = scan_script_safety(code)
+        if not is_safe:
+            return {"success": False, "error": f"Blocked by safety scan: {reason}"}
 
         _tmp = _tf.NamedTemporaryFile(mode="w", suffix=".py", delete=False)
         _tmp.write(code)
@@ -1145,6 +1153,14 @@ def _register_dynamic_tool(
     except SyntaxError as exc:
         return {"success": False, "error": f"Syntax error in handler code: {exc}"}
 
+    # 1.5. VULN-08: scan handler_code BEFORE writing or importing it.
+    # importlib.import_module() runs the code IN-PROCESS (no subprocess,
+    # no governance gate) so content scanning is the only control here.
+    from securagentx.agents.script_safety import scan_script_safety
+    is_safe, reason = scan_script_safety(handler_code)
+    if not is_safe:
+        return {"success": False, "error": f"Blocked by safety scan: {reason}"}
+
     # 2. Write to ~/.securagentx/tools/ for persistence
     gen_dir = Path("~/.securagentx/tools").expanduser()
     gen_dir.mkdir(parents=True, exist_ok=True)
@@ -1281,6 +1297,12 @@ def _tool_edit_own_tool(name: str, handler_code: str) -> Dict[str, Any]:
         compile(handler_code, f"<{name}>", "exec")
     except SyntaxError as exc:
         return {"success": False, "error": f"Syntax error in handler code: {exc}"}
+
+    # VULN-08: scan handler_code BEFORE writing or importing it.
+    from securagentx.agents.script_safety import scan_script_safety
+    is_safe, reason = scan_script_safety(handler_code)
+    if not is_safe:
+        return {"success": False, "error": f"Blocked by safety scan: {reason}"}
 
     # Write new handler to disk
     gen_dir = Path("~/.securagentx/tools").expanduser()

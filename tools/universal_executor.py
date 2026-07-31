@@ -310,11 +310,11 @@ class PackageManager:
 
     MANAGERS = {
         "pip": {
-            "install": "pip install {package} --quiet",
-            "uninstall": "pip uninstall {package} -y",
+            "install": "pip install --quiet -- {package}",
+            "uninstall": "pip uninstall -y -- {package}",
             "search": "pip search {package}",
             "list": "pip list",
-            "update": "pip install --upgrade {package}",
+            "update": "pip install --upgrade -- {package}",
         },
         "npm": {
             "install": "npm install {package} --silent",
@@ -324,15 +324,14 @@ class PackageManager:
             "update": "npm update {package}",
         },
         "apt": {
-            "install": "apt-get install -y {package}",
-            "uninstall": "apt-get remove -y {package}",
+            "install": "apt-get install -y -- {package}",
+            "uninstall": "apt-get remove -y -- {package}",
             "search": "apt-cache search {package}",
             "list": "dpkg -l",
-            "update": "apt-get upgrade -y {package}",
+            "update": "apt-get upgrade -y -- {package}",
         },
         "go": {
             "install": "go install {package}@latest",
-            "uninstall": "rm $(which {binary})",
             "list": "go list -m all",
         },
         "gem": {
@@ -360,6 +359,16 @@ class PackageManager:
 
         cmd_template = self.MANAGERS[manager][action]
         safe_package = (package or "").strip()
+        # SECURITY (VULN-01): Validate package name against allowlist.
+        _PACKAGE_NAME_RE = re.compile(r"^[A-Za-z0-9_.\-+/]+$")
+        if safe_package and not _PACKAGE_NAME_RE.match(safe_package):
+            return ExecutionResult(
+                False,
+                "",
+                f"Invalid package name (contains forbidden characters): {package!r}",
+                "package",
+                {"manager": manager, "action": action, "package": package},
+            )
         # Build command using list form — NOT string formatting — to prevent injection.
         cmd_str = cmd_template.format(
             package=safe_package,
@@ -464,7 +473,9 @@ class UniversalExecutor:
                 approved, enable_auto = False, False
 
             if enable_auto:
+                import time as _time
                 self._governance.auto_approve_privileged = True
+                self._governance.auto_approve_expires_at = _time.time() + 300
             if not approved:
                 return False, "Command rejected by user."
 

@@ -1087,13 +1087,16 @@ class TestDetectAndInstallMissingTool:
     def test_install_with_sudo_password(
         self, mock_safe, mock_console, mock_which, mock_getpass, mock_input, governance, callback
     ):
-        """Install with sudo password uses echo piping."""
+        """Install with sudo password uses stdin piping (VULN-05: no echo in cmd)."""
         mock_which.return_value = None
         mock_safe.return_value = {"success": True, "stdout": "installed", "stderr": "", "exit_code": 0}
         result = detect_and_install_missing_tool("nmap -h", governance, callback)
-        call_cmd = mock_safe.call_args[0][0]
-        assert "echo" in call_cmd
+        call_cmd = mock_safe.call_args[0][0]  # first positional arg = command string
+        assert "echo" not in call_cmd  # VULN-05: password must NOT be in cmd string
         assert "sudo" in call_cmd
+        # VULN-05: password should be passed via stdin_input kwarg
+        stdin_input = mock_safe.call_args.kwargs.get("stdin_input")
+        assert stdin_input is not None  # password travels via stdin
 
     @patch("builtins.input", return_value="y")
     @patch("getpass.getpass", return_value="")
@@ -1174,27 +1177,30 @@ class TestDetectAndInstallMissingTool:
 
 
 class TestBuildInstallCommand:
-    """Test the install command builder."""
+    """Test the install command builder (VULN-05: returns tuple)."""
 
     def test_known_tool_without_sudo_password(self):
-        """Known tool returns apt-get command without password."""
+        """Known tool returns (apt-get command, None) tuple without password."""
         cmd = _build_install_command("nmap", sudo_password=None)
-        assert cmd == "sudo apt-get install -y nmap"
+        assert cmd == ("sudo apt-get install -y nmap", None)
 
     def test_known_tool_with_sudo_password(self):
-        """Known tool with password returns echo-piped command."""
+        """Known tool with password returns (command, password) tuple — password in stdin, NOT in cmd string (VULN-05)."""
         cmd = _build_install_command("nmap", sudo_password="pass123")
         assert cmd is not None
-        assert "echo 'pass123'" in cmd
-        assert "sudo -S" in cmd
-        assert "nmap" in cmd
+        cmd_str, stdin_input = cmd
+        assert "echo 'pass123'" not in cmd_str  # VULN-05: password must NOT be in cmd string
+        assert "pass123" not in cmd_str  # VULN-05: password must NOT appear anywhere in cmd
+        assert "sudo -S" in cmd_str
+        assert "nmap" in cmd_str
+        assert stdin_input == "pass123"  # VULN-05: password travels via stdin
 
     def test_python_tool(self):
         """Python tool names get pip install."""
         cmd = _build_install_command("python-toolname")
-        assert cmd == "pip install toolname"
+        assert cmd == ("pip install toolname", None)
         cmd = _build_install_command("toolname-py")
-        assert cmd == "pip install toolname"
+        assert cmd == ("pip install toolname", None)
 
     def test_unknown_tool(self):
         """Unknown tool returns None."""
@@ -1202,7 +1208,7 @@ class TestBuildInstallCommand:
         assert cmd is None
 
     def test_known_tool_mappings(self):
-        """All known tools in _TOOL_PACKAGES produce commands."""
+        """All known tools in _TOOL_PACKAGES produce (command, None) tuples."""
         tools = [
             "nikto", "dirb", "gobuster", "enum4linux", "sslscan",
             "hydra", "sqlmap", "whatweb", "wpscan", "subfinder",
@@ -1212,7 +1218,10 @@ class TestBuildInstallCommand:
         for tool in tools:
             cmd = _build_install_command(tool)
             assert cmd is not None
-            assert tool in cmd
+            assert isinstance(cmd, tuple)  # VULN-05: now returns tuple
+            cmd_str, stdin_input = cmd
+            assert tool in cmd_str
+            assert stdin_input is None  # no sudo password in this test
 
 
 # ===================================================================

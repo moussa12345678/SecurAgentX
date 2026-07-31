@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -59,6 +60,12 @@ class GovernanceGate:
         self.auto_approve_enabled = True
         self.approval_callbacks: Dict[str, Callable] = {}
         self.audit_log: List[Dict] = []
+        # VULN-03: lazy-instantiate ScopeManager on first _check_scope call.
+        self._scope_manager = None
+        # VULN-03: simple in-memory sliding-window rate limiter.
+        self._rate_limiter: Dict[str, List[float]] = {}
+        self._rate_limit_max_actions: int = 10
+        self._rate_limit_window_s: float = 60.0
         self._load_default_policies()
         if config_path:
             self.load_config(config_path)
@@ -127,7 +134,7 @@ class GovernanceGate:
         target: str,
         action: AIAction,
         callback: Optional[Callable] = None
-    ) -> GovernanceGate:
+    ) -> GateResult:
         """
         ประเมินการกระทำผ่านประตูควบคุม
         Returns GovernanceGate decision
@@ -141,7 +148,7 @@ class GovernanceGate:
 
         # 3. Check Scope
         if not self._check_scope(action):
-            return GateResult(  # type: ignore[return-value]
+            return GateResult(
                 decision=GovernanceDecision.DENY,
                 rationale="Target out of authorized scope",
                 risk_level="critical",
@@ -152,7 +159,7 @@ class GovernanceGate:
         policy_decision = self._check_policy(action, risk_assessment)
         if policy_decision != GovernanceDecision.ALLOW:
             action_type_str = action.action_type.value if hasattr(action.action_type, 'value') else str(action.action_type)
-            return GateResult(  # type: ignore[return-value]
+            return GateResult(
                 decision=policy_decision,
                 rationale=f"Policy violation: {action_type_str}",
                 risk_level=risk_assessment.level,
@@ -164,7 +171,7 @@ class GovernanceGate:
 
         # 6. Rate Limiting
         if not self._check_rate_limit(action):
-            return GateResult(  # type: ignore[return-value]
+            return GateResult(
                 decision=GovernanceDecision.DENY,
                 rationale="Rate limit exceeded",
                 risk_level="medium"
@@ -172,14 +179,14 @@ class GovernanceGate:
 
         # 7. Final Decision
         if risk_assessment.level in ["critical", "existential"]:
-            return GateResult(  # type: ignore[return-value]
+            return GateResult(
                 decision=GovernanceDecision.DENY,
                 rationale=f"Risk level {risk_assessment.level} exceeds threshold",
                 risk_level=risk_assessment.level,
                 requires_human=True
             )
 
-        return GateResult(  # type: ignore[return-value]
+        return GateResult(
             decision=GovernanceDecision.ALLOW,
             rationale="Action approved by governance gate",
             risk_level=risk_assessment.level,
@@ -225,9 +232,18 @@ class GovernanceGate:
         )
 
     def _check_scope(self, action: AIAction) -> bool:
-        """ตรวจสอบขอบเขต - ใช้ MissionContext จาก context"""
-        # This would check against mission scope
-        return True
+        """Check scope — delegate to securagentx.scope.ScopeManager (VULN-03)."""
+        target = (action.target or "").strip()
+        if not target:
+            return False
+        try:
+            if self._scope_manager is None:
+                from .scope import ScopeManager
+                self._scope_manager = ScopeManager()
+            return self._scope_manager.is_in_scope(target)
+        except Exception as e:
+            logger.warning("Scope check failed for target=%r: %s — failing open.", target, e)
+            return True
 
     def _check_policy(self, action: AIAction, risk: "RiskAssessment") -> GovernanceDecision:
         """ตรวจสอบนโยบาย"""
@@ -271,8 +287,18 @@ class GovernanceGate:
         return check(action) if check else False
 
     def _check_rate_limit(self, action: AIAction) -> bool:
-        """ตรวจสอบ Rate Limit"""
-        # Simplified - in production use token bucket or sliding window
+        """Check rate limit — simple in-memory sliding window (VULN-03)."""
+        target = (action.target or "_unknown_").strip() or "_unknown_"
+        now = time.time()
+        window = self._rate_limit_window_s
+        max_actions = self._rate_limit_max_actions
+        recent = [t for t in self._rate_limiter.get(target, []) if now - t < window]
+        if len(recent) >= max_actions:
+            self._rate_limiter[target] = recent
+            logger.info("Rate limit hit for target=%r: %d actions in last %.0fs.", target, len(recent), window)
+            return False
+        recent.append(now)
+        self._rate_limiter[target] = recent
         return True
 
     def audit(self, action: AIAction, decision: GovernanceGate):

@@ -29,6 +29,7 @@ def execute_safely(
     command_str: str,
     timeout: int = 300,
     cwd: str | None = None,
+    stdin_input: Optional[str] = None,
 ) -> Dict[str, Union[str, int, bool]]:
     """
     Execute a shell command with full pipeline support.
@@ -42,6 +43,9 @@ def execute_safely(
         command_str: Raw shell command string (may contain |, >, &, etc.).
         timeout: Maximum execution time in seconds.
         cwd: Optional working directory.
+        stdin_input: Optional string piped to the child's stdin (VULN-05 fix:
+            used to pass sudo passwords without embedding them in the command
+            string, where they would leak to logs / /proc/cmdline).
 
     Returns:
         {
@@ -65,14 +69,20 @@ def execute_safely(
     if not command_str or not command_str.strip():
         return error_result("Empty command.")
 
-    logger.info(f"Executing (shell): {command_str}")
+    # VULN-05: when stdin_input is provided (e.g. sudo password), the command
+    # string no longer contains the secret — but defensively redact any
+    # ``sudo -S`` command just in case a future caller forgets.
+    safe_for_log = command_str
+    if stdin_input is not None and "sudo -S" in command_str:
+        safe_for_log = "sudo -S apt-get install -y <package>   [password via stdin]"
+    logger.info(f"Executing (shell): {safe_for_log}")
     # Transparent execution markers for CLI
-    if "sudo " in command_str or "apt " in command_str or "pip " in command_str:
+    if "sudo " in safe_for_log or "apt " in safe_for_log or "pip " in safe_for_log:
         print("\n[THOUGHT] Agent is executing a system-level action")
-        print(f"[COMMAND] {command_str}")
-        if "sudo " in command_str:
+        print(f"[COMMAND] {safe_for_log}")
+        if "sudo " in safe_for_log:
             print(
-                "[RUN]     Privileged action (sudo) requested. Please provide your password if prompted:\n"
+                "[RUN]     Privileged action (sudo) requested. Password supplied via stdin.\n"
             )
     try:
         cmd_list = shlex.split(command_str) if isinstance(command_str, str) else command_str
@@ -83,6 +93,7 @@ def execute_safely(
             text=True,
             timeout=timeout,
             cwd=cwd,
+            input=stdin_input,
         )
         return {
             "success": result.returncode == 0,

@@ -545,7 +545,10 @@ class DecisionEngine:
         allowed = []
         for action in actions:
             gate = self.governance.gate("mission", context.target, action)
-            if gate.decision != "deny":
+            # BUG-06: extract .value for enum-safe comparison
+            _d = gate.decision
+            _d_str = _d.value if hasattr(_d, "value") else str(_d)
+            if _d_str != "deny":
                 action["governance_gate"] = gate
                 allowed.append(action)
         return allowed

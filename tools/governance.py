@@ -17,6 +17,7 @@ import logging
 import re
 import shlex
 import sqlite3
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -155,9 +156,11 @@ class Governance:
     def __init__(self, require_approval_high_risk: bool = True):
         self.require_approval_high_risk = require_approval_high_risk
         #  Session-level auto-approve toggle.
-        #  When True, PRIVILEGED/DESTRUCTIVE commands are allowed without prompting
-        #  for the remainder of the current process session.
+        #  When True, PRIVILEGED commands are allowed without prompting
+        #  — but ONLY until `auto_approve_expires_at` (VULN-02: 5-minute TTL).
+        #  After expiry, the next gate() call resets both fields and re-prompts.
         self.auto_approve_privileged: bool = False
+        self.auto_approve_expires_at: float | None = None
         init_db()
 
     def classify_risk(self, action: Dict[str, Any]) -> str:
@@ -354,16 +357,25 @@ class Governance:
             return decision
 
         if risk == "PRIVILEGED":
-            # Auto-approve mode: user granted blanket approval this session
+            # Auto-approve mode: user granted time-limited blanket approval (VULN-02 TTL).
             if self.auto_approve_privileged:
-                decision = GateDecision(
-                    allowed=True,
-                    risk_level=risk,
-                    decision="allow",
-                    rationale="Auto-approve mode active (user granted session-wide approval).",
+                expired = (
+                    self.auto_approve_expires_at is not None
+                    and time.time() >= self.auto_approve_expires_at
                 )
-                self.audit(mission_id, target, action, decision)
-                return decision
+                if expired:
+                    self.auto_approve_privileged = False
+                    self.auto_approve_expires_at = None
+                    logger.info("Auto-approve TTL (300s) elapsed; re-prompting user.")
+                else:
+                    decision = GateDecision(
+                        allowed=True,
+                        risk_level=risk,
+                        decision="allow",
+                        rationale="Auto-approve mode active (user granted session-wide approval).",
+                    )
+                    self.audit(mission_id, target, action, decision)
+                    return decision
 
             if not self.require_approval_high_risk:
                 decision = GateDecision(

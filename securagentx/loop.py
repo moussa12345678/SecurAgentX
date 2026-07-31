@@ -184,16 +184,19 @@ class TrueAgenticLoop:
         logger.info(f"⚡ Executing: {action.description}")
 
         # Governance Gate
-        gate = await self.governance.gate(  # type: ignore[misc]
+        gate = self.governance.gate(
             mission_id=self.mission_context.mission_id,  # type: ignore[union-attr]
             target=action.target,
             action=action
         )
 
-        if gate.decision == "deny":
+        # BUG-06: GateResult.decision is a GovernanceDecision enum; extract .value
+        _decision = gate.decision
+        _decision_str = _decision.value if hasattr(_decision, "value") else str(_decision)
+        if _decision_str == "deny":
             return {"success": False, "error": "Blocked by governance", "rationale": gate.rationale}
 
-        if gate.decision == "needs_approval":
+        if _decision_str == "needs_approval":
             # In autonomous mode, we might escalate or skip
             logger.warning(f"Action requires approval: {action.description}")
             return {"success": False, "error": "Requires approval", "gate": gate.decision}

@@ -51,13 +51,17 @@ try:
 except ImportError as e:
     logger.debug("Could not import python-dotenv: %s", e)
 
-# --- Suppress urllib3 InsecureRequestWarning (we intentionally use verify=False for hostile targets) ---
-try:
-    import urllib3
+# --- Suppress urllib3 InsecureRequestWarning ONLY when the operator has
+#     explicitly opted into verify=False via SECURAGENTX_INSECURE. Mirrors
+#     the same gate used by securagentx/api/app.py:45 and 18 other modules. ---
+_INSECURE = os.environ.get("SECURAGENTX_INSECURE", "").lower() in ("1", "true", "yes")
+if _INSECURE:
+    try:
+        import urllib3
 
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-except (ImportError, AttributeError) as e:
-    logger.debug("Could not import or configure urllib3 warning suppression: %s", e)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except (ImportError, AttributeError) as e:
+        logger.debug("Could not import or configure urllib3 warning suppression: %s", e)
 
 # --- Rich & Interactive UI ---
 from rich.console import Console
@@ -357,6 +361,23 @@ def main():
         return
     ensure_path_priorities()
     show_banner()
+
+    # VULN-07: bright yellow console warning when scope is empty.
+    try:
+        from securagentx.scope import ScopeManager
+        _sm = ScopeManager()
+        if not _sm.allowed_domains:
+            console.print(
+                "[bold yellow]⚠  WARNING: No scope configured "
+                "(no scope.txt, no SECURAGENTX_SCOPE env var).[/bold yellow]"
+            )
+            console.print(
+                "[bold yellow]   All targets will be treated as in-scope. "
+                "Create scope.txt or set SECURAGENTX_SCOPE=example.com,*.example.com "
+                "to restrict.[/bold yellow]"
+            )
+    except Exception:
+        pass  # Don't block startup on a warning
 
     # ── Auto-start MCP server in background (if enabled in config) ──
     try:

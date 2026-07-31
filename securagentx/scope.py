@@ -76,7 +76,10 @@ class ScopeManager:
                     logger.warning("Failed to read scope file %s: %s", sf, e)
 
         if not domains:
-            logger.debug("No scope configured — all targets allowed")
+            logger.warning(
+                "No scope configured — ALL TARGETS ALLOWED. "
+                "Set SECURAGENTX_SCOPE or create scope.txt to restrict."
+            )
         else:
             logger.debug("Loaded %d domains into scope", len(domains))
 

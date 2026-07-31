@@ -967,6 +967,13 @@ class DockerSandbox:
         Ports SecurAgentX ``CopyToContainer`` semantics. We always pack the data as
         a single-entry TAR (mode 0600) and stream it to the Docker API.
         """
+        # SECURITY (H-001): Path-traversal guard.
+        if ".." in path.split("/"):
+            raise RuntimeError(f"unsafe path rejected (traversal): {path!r}")
+        safe_filename = Path(path).name
+        if not safe_filename or safe_filename.startswith(".."):
+            raise RuntimeError(f"unsafe path rejected (no basename): {path!r}")
+
         if len(data) > MAX_FILE_SIZE_BYTES:
             raise RuntimeError(
                 f"file too large: {len(data)} bytes (max {MAX_FILE_SIZE_BYTES})"
@@ -981,10 +988,10 @@ class DockerSandbox:
             filename = "data"
         elif "/" in path:
             dst_dir = path.rsplit("/", 1)[0] or "/"
-            filename = path.rsplit("/", 1)[1]
+            filename = safe_filename
         else:
             dst_dir = WORK_FOLDER_PATH_IN_CONTAINER
-            filename = path
+            filename = safe_filename
 
         tar_buf = io.BytesIO()
         with tarfile.open(fileobj=tar_buf, mode="w") as tar:
@@ -1014,6 +1021,12 @@ class DockerSandbox:
         Returns the raw file contents as bytes. For directories, the first
         regular file entry is returned. Ports SecurAgentX ``CopyFromContainer``.
         """
+        # SECURITY (H-001): Path-traversal guard.
+        if ".." in path.split("/"):
+            raise RuntimeError(f"unsafe path rejected (traversal): {path!r}")
+        if not Path(path).name or Path(path).name.startswith(".."):
+            raise RuntimeError(f"unsafe path rejected (no basename): {path!r}")
+
         client = await self._get_client()
         if self._use_aiodocker:
             container = client.containers.container(container_id)
@@ -1237,8 +1250,13 @@ class DockerSandbox:
     async def _sync_uploads(self, container_id: str, uploads: dict[str, bytes]) -> None:
         """Copy each (filename → bytes) into the container's ``/work`` dir."""
         for filename, data in uploads.items():
+            # SECURITY (H-001): Sanitize upload name (ports lifecycle.py:602-610).
+            safe_name = Path(filename).name
+            if not safe_name or safe_name.startswith(".."):
+                logger.warning("skipping unsafe upload name: %r", filename)
+                continue
             try:
-                await self.copy_to_container(container_id, f"/work/{filename}", data)
+                await self.copy_to_container(container_id, f"/work/{safe_name}", data)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("failed to sync upload '%s': %s", filename, exc)
 

@@ -280,6 +280,14 @@ def create_app(
         lifespan=lifespan,
     )
 
+    # --- Rate limiting (H-004): in-memory token bucket per IP / per user
+    from ._rate_limit import RateLimitMiddleware
+    rate_limit_routes = {
+        ("POST", "/api/v1/auth/login"): {"capacity": 5, "refill_rate": 5 / 60, "key": "ip"},
+        ("POST", "/api/v1/flows"): {"capacity": 10, "refill_rate": 10 / 60, "key": "user"},
+    }
+    app.add_middleware(RateLimitMiddleware, routes=rate_limit_routes)
+
     # --- Middleware (order matters: outermost last) ---------------------
     # GZip first (innermost) so compressed bodies flow through CORS.
     app.add_middleware(GZipMiddleware, minimum_size=1024)
