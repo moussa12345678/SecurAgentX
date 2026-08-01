@@ -160,18 +160,52 @@ class VulnReport:
 def _tool_port_scan(target: str, ports: str = "common") -> Dict[str, Any]:
     """Scan target for open ports and running services."""
     try:
-        from tools.tool_registry import registry
+        import socket
 
-        tool = registry.get_tool("nmap")
-        if tool and hasattr(tool, "is_available") and tool.is_available:
-            result = tool.handler(target)  # type: ignore[attr-defined]
-            return {"success": True, "output": result.output if hasattr(result, "output") else str(result), "port_count": 0}
+        # Resolve target (strip protocol/path if present)
+        clean = target.replace("http://", "").replace("https://", "").split("/")[0].strip()
+        try:
+            ip = socket.gethostbyname(clean)
+        except socket.gaierror:
+            ip = clean  # might already be an IP
 
-        # Fallback: use omni_scan (run_omni_scan runs the full pipeline)
-        from tools.omni_scan import run_omni_scan
+        # Common ports to scan
+        port_map = {
+            "common": [21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445,
+                       993, 995, 1723, 3306, 3389, 5432, 5900, 6379, 8080, 8443, 8888],
+            "all": list(range(1, 1025)),
+            "web": [80, 443, 8080, 8443, 8000, 8888],
+        }
+        port_list = port_map.get(ports, port_map["common"])
+        if isinstance(ports, str) and ports.isdigit():
+            port_list = [int(ports)]
 
-        run_omni_scan(target, rate_limit=5)
-        return {"success": True, "output": f"Omni scan completed for {target}", "port_count": 0}
+        open_ports = []
+        for port in port_list:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(2)
+                result = sock.connect_ex((ip, port))
+                sock.close()
+                if result == 0:
+                    try:
+                        service = socket.getservbyport(port)
+                    except OSError:
+                        service = "unknown"
+                    open_ports.append({"port": port, "service": service, "state": "open"})
+            except (socket.timeout, OSError):
+                pass
+
+        output_lines = [f"Port scan for {clean} ({ip})", f"Scanned: {len(port_list)} ports", f"Open: {len(open_ports)}"]
+        for p in open_ports:
+            output_lines.append(f"  {p['port']}/tcp  open  {p['service']}")
+
+        return {
+            "success": True,
+            "output": "\n".join(output_lines),
+            "open_ports": [p["port"] for p in open_ports],
+            "port_count": len(open_ports),
+        }
     except Exception as exc:  # noqa: BLE001 — logged
         logger.debug("port scan failed: %s", exc)
         return {"success": False, "error": str(exc)}
