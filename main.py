@@ -68,34 +68,39 @@ if _INSECURE:
 from rich.console import Console
 from rich.panel import Panel
 
+# Module-level fallbacks so these names are always defined. They are overridden
+# below by the import from ``cli.ui_components`` when that package is available;
+# otherwise the no-op fallbacks keep the rest of the module importable.
+console = Console()
+
+
+def show_section(*a, **kw):  # type: ignore[misc]
+    pass
+
+
+def print_error(*a, **kw):  # type: ignore[misc]
+    pass
+
+
+def print_success(*a, **kw):  # type: ignore[misc]
+    pass
+
+
+def print_info(*a, **kw):  # type: ignore[misc]
+    pass
+
+
 try:
-    from cli.ui_components import (
+    from cli.ui_components import (  # noqa: F401
         console,
         print_error,
         print_info,
         print_success,
-        show_progress_bar,
         show_section,
     )
 except ImportError:
-    console = Console()
-
-    def show_section(*a, **kw):  # type: ignore[misc]
-        pass
-
-    def print_error(*a, **kw):  # type: ignore[misc]
-        pass
-
-    def print_success(*a, **kw):  # type: ignore[misc]
-        pass
-
-    def print_info(*a, **kw):  # type: ignore[misc]
-        pass
-
-    def show_progress_bar(*a, **kw):  # type: ignore[misc,no-redef]
-        from rich.progress import Progress
-
-        return Progress(*a, **kw)
+    # Fallbacks already defined above; nothing to do here.
+    pass
 
 
 # ── Logging Setup ─────────────────────────────────────────────────────────────
@@ -358,7 +363,11 @@ def main():
     _main_depth = getattr(main, "_depth", 0) + 1
     main._depth = _main_depth
     if _main_depth > 3:
-        print_error("Profile expansion exceeded maximum depth (3)")
+        # ``print_error`` is also locally imported by some command branches
+        # further down in this function; that shadowing makes pylint emit a
+        # false-positive E0601 here. The module-level binding is always set
+        # (real import or no-op fallback) before main() can be invoked.
+        print_error("Profile expansion exceeded maximum depth (3)")  # pylint: disable=used-before-assignment
         main._depth = 0
         return
     ensure_path_priorities()
@@ -567,7 +576,7 @@ def main():
                 pass
 
         try:
-            import ui_components as _ui
+            from cli import ui_components as _ui
 
             _ui.console = _SilentConsole()
         except Exception as e:
@@ -1256,8 +1265,19 @@ def main():
                 from tools.sast_engine import SASTEngine
 
                 engine = SASTEngine()
-                results = engine.scan(target)
-                all_findings.extend(results.get("findings", []))
+                results = engine.scan_repository(Path(target))
+                # SASTEngine returns critical_vulnerabilities dicts; normalise
+                # them into the shape expected by the all_findings consumer.
+                for v in results.get("critical_vulnerabilities", []):
+                    all_findings.append(
+                        {
+                            "message": f"{v.get('type', '')}: {v.get('description', '')}",
+                            "severity": str(v.get("severity", "Medium")).capitalize(),
+                            "file": v.get("file", ""),
+                            "line": v.get("line", ""),
+                            "snippet": str(v.get("code", ""))[:100],
+                        }
+                    )
             except Exception as e:
                 print_info(f"SASTEngine skipped: {e}")
             # Also run multimodal agent code analysis (secret patterns, eval, SQLi, etc.)
@@ -1321,13 +1341,27 @@ def main():
                         export_report,
                     )
 
+                    # Map SAST finding severities into the ExecutiveSummary
+                    # buckets expected by report_gen.
+                    _sev_lower = [
+                        str(f.get("severity", "Informational")).lower()
+                        for f in all_findings
+                    ]
                     summary = ExecutiveSummary(
                         target=str(target_path),
                         scan_date=datetime.now(timezone.utc).isoformat(),
                         duration_seconds=0,
                         total_findings=len(all_findings),
-                        tool_version="1.0.0",
-                        risk_level="Unknown",
+                        critical=sum(1 for s in _sev_lower if s == "critical"),
+                        high=sum(1 for s in _sev_lower if s == "high"),
+                        medium=sum(1 for s in _sev_lower if s == "medium"),
+                        low=sum(1 for s in _sev_lower if s == "low"),
+                        info=sum(
+                            1
+                            for s in _sev_lower
+                            if s not in {"critical", "high", "medium", "low"}
+                        ),
+                        ai_provider="securagentx",
                     )
                     reports = []
                     for f in all_findings:
@@ -1365,12 +1399,12 @@ def main():
                 from tools.cloud_scanner import CloudScanner
 
                 scanner = CloudScanner()
-                result = scanner.scan(target)
-                for finding in result.get("findings", []):
+                result = scanner.scan_directory(Path(target))
+                for finding in result.get("critical_findings", []):
                     sev = finding.get("severity", "info").upper()
                     color = {"CRITICAL": "red", "HIGH": "red", "MEDIUM": "grey70"}.get(sev, "dim")
-                    console.print(f"[{color}][{sev}][/{color}] {finding.get('message', '')}")
-                total = len(result.get("findings", []))
+                    console.print(f"[{color}][{sev}][/{color}] {finding.get('description', '')}")
+                total = result.get("total_findings", 0)
                 print_success(f"Cloud scan complete — {total} findings")
             except Exception as e:
                 print_error(f"Cloud scan error: {e}")
@@ -1389,13 +1423,13 @@ def main():
             try:
                 from tools.mobile_api_tester import MobileAPITester
 
-                tester = MobileAPITester()
-                result = tester.analyze(target)
-                for finding in result.get("findings", []):
+                tester = MobileAPITester(target)
+                result = tester.run_full_analysis()
+                for finding in result.get("critical_findings", []):
                     console.print(
                         f"[grey70][-][/grey70] {finding.get('type', '')} — {finding.get('description', '')}"
                     )
-                total = len(result.get("findings", []))
+                total = result.get("total_findings", 0)
                 print_success(f"Mobile API analysis complete — {total} findings")
             except Exception as e:
                 print_error(f"Mobile API error: {e}")
@@ -1458,12 +1492,20 @@ def main():
                 from tools.soc_analyzer import SOCAnalyzer
 
                 analyzer = SOCAnalyzer()
-                result = analyzer.analyze(target or None)
-                for alert in result.get("alerts", []):
+                if not target:
+                    print_error("Log file is required for SOC analysis")
+                    return
+                result = analyzer.analyze_log_file(Path(target))
+                for alert in result.get("top_priority_alerts", []):
                     sev = alert.get("severity", "info").upper()
                     color = {"CRITICAL": "red", "HIGH": "red", "MEDIUM": "grey70"}.get(sev, "dim")
-                    console.print(f"[{color}][{sev}][/{color}] {alert.get('message', '')}")
-                print_success(f"SOC analysis complete — {len(result.get('alerts', []))} alerts")
+                    console.print(
+                        f"[{color}][{sev}][/{color}] {alert.get('type', '')} "
+                        f"(priority: {alert.get('priority', 0)})"
+                    )
+                print_success(
+                    f"SOC analysis complete — {result.get('total_alerts', 0)} alerts"
+                )
             except Exception as e:
                 print_error(f"SOC analyzer error: {e}")
             return

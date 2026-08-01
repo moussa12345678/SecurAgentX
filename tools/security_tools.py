@@ -17,9 +17,8 @@ import logging
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import List, Union
 
-import subprocess
 
 from tools.tool_registry import (
     BaseTool,

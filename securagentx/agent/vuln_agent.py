@@ -118,16 +118,16 @@ class VulnReport:
         """Render the report as a human-readable markdown string."""
         lines = [
             f"# Vulnerability Report: {self.target}",
-            f"",
+            "",
             f"**Duration:** {self.scan_duration:.1f}s  |  **Steps:** {self.total_steps}  |  **Findings:** {len(self.findings)}",
-            f"",
+            "",
         ]
         if self.summary:
             lines.append(f"## Summary\n{self.summary}\n")
         if self.findings:
             lines.append(f"## Findings ({len(self.findings)})")
             for i, f in enumerate(self.findings, 1):
-                lines.append(f"")
+                lines.append("")
                 lines.append(f"### {i}. [{f.severity.upper()}] {f.title}")
                 lines.append(f"**Target:** {f.target}  |  **Confidence:** {f.confidence:.0%}")
                 lines.append(f"**Source:** {f.source_tool or 'AI analysis'}")
@@ -141,11 +141,11 @@ class VulnReport:
         if self.open_ports:
             lines.append(f"**Open ports:** {', '.join(str(p) for p in self.open_ports)}")
         if self.services:
-            lines.append(f"**Services detected:**")
+            lines.append("**Services detected:**")
             for svc, ver in self.services.items():
                 lines.append(f"  - {svc} ({ver})")
         if self.recommendations:
-            lines.append(f"\n## Recommendations")
+            lines.append("\n## Recommendations")
             for r in self.recommendations:
                 lines.append(f"- {r}")
         return "\n".join(lines)
@@ -732,11 +732,6 @@ if __name__ == "__main__":
 
 
 CHILD_AGENT_CODE = r"""True multi-AI child: runs as subprocess, has full VulnAgent reasoning loop."""
-
-import sys as _sys
-import json as _json
-import tempfile as _tempfile
-from pathlib import Path as _Path
 
 
 def _run_child_agent(target: str, output_path: str) -> None:  # type: ignore[no-redef]
@@ -2373,7 +2368,7 @@ class VulnAgent:
 
         if verbose:
             sys.stdout.write(f"{'─' * 50}\n")
-            sys.stdout.write(f"📋 Generating report...\n")
+            sys.stdout.write("📋 Generating report...\n")
             sys.stdout.flush()
 
         report = self._generate_report()
@@ -2895,7 +2890,7 @@ class VulnAgent:
             by_sev = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
             for f in self.findings:
                 by_sev[f.severity] = by_sev.get(f.severity, 0) + 1
-            parts.append(f"\n## Summary")
+            parts.append("\n## Summary")
             parts.append(f"Found {len(self.findings)} vulnerabilities:")
             for sev, count in by_sev.items():
                 if count:

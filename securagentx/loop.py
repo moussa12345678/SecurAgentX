@@ -17,7 +17,6 @@ from securagentx.brain import TrueAIBrain, CognitiveState
 from securagentx.memory import CognitiveMemoryManager
 from securagentx.governance import GovernanceGate
 from securagentx.tools import ToolRegistry
-from securagentx.types import MissionContext, ConstitutionalGuidance
 
 logger = logging.getLogger("securagentx.loop")
 
@@ -172,7 +171,7 @@ class TrueAgenticLoop:
         4. Minimize Intrusion, Maximize Learning
         5. Be Accountable for Every Decision
         """
-        logger.info(f"⚖️ Constitutional Oath Taken")
+        logger.info("⚖️ Constitutional Oath Taken")
         await self.memory.remember(
             content=oath,
             category="constitutional_oath",

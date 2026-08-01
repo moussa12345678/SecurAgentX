@@ -342,7 +342,7 @@ Do NOT attempt to run a scan. Respond naturally in the user's language (English 
         lines.append("")
 
         # Add velocity context
-        lines.append(f"### VELOCITY:")
+        lines.append("### VELOCITY:")
         lines.append(f"  - Steps taken: {ctx.step_count}/{ctx.max_steps}")
         lines.append(f"  - Consecutive no-findings: {ctx.consecutive_no_findings}")
         lines.append(f"  - Steps remaining: {ctx.steps_remaining}")

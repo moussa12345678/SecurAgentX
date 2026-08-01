@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable
 import yaml
 
 from .types import (

@@ -32,7 +32,6 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 from securagentx.agents.base import (
     AgentContext,
     AgentType,
-    perform_agent_chain,
     run_specialist_chain,
 )
 from securagentx.agents.generator import SubtaskInfo

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("securagentx.nvd")
 
@@ -425,6 +425,41 @@ def scan_dependencies_for_cves(deps: List[Tuple[str, str]]) -> Dict[str, List[CV
         if cves:
             result[pkg] = cves
     return result
+
+
+def search_cve(query: str, limit: int = 50) -> List[Dict[str, Any]]:
+    """Search the embedded CVE database for matches.
+
+    Args:
+        query: Free-text search query, e.g. ``"apache 2.4.49"`` or
+            ``"CVE-2024-41991"``. The query is split on whitespace and any
+            term that appears in a CVE's id/description/affected products is
+            treated as a match.
+        limit: Maximum number of results to return.
+
+    Returns:
+        List of matching CVE dicts (see :meth:`CVEVuln.to_dict`).
+    """
+    if not query:
+        return []
+    nvd = get_nvd()
+    terms = [t.lower() for t in query.split() if t]
+    if not terms:
+        return []
+    matches: List[Dict[str, Any]] = []
+    for cve in nvd.list_all():
+        searchable = " ".join(
+            [
+                cve.cve_id.lower(),
+                cve.description.lower(),
+                " ".join(cve.affected_products).lower(),
+            ]
+        )
+        if any(term in searchable for term in terms):
+            matches.append(cve.to_dict())
+            if len(matches) >= limit:
+                break
+    return matches
 
 
 if __name__ == "__main__":

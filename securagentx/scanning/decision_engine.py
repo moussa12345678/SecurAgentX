@@ -598,7 +598,7 @@ class DecisionEngine:
 
         # Add reflection context
         if reflection:
-            strategy_context += f"### REFLECTION STATUS:\n"
+            strategy_context += "### REFLECTION STATUS:\n"
             strategy_context += f"  - Status: {reflection.status}\n"
             strategy_context += f"  - Coverage gaps: {reflection.coverage_gaps} untested areas\n"
             strategy_context += f"  - Active beliefs: {reflection.active_beliefs} hypotheses\n"
@@ -618,7 +618,7 @@ class DecisionEngine:
             strategy_context += "\n"
 
         # Add velocity context
-        strategy_context += f"### VELOCITY:\n"
+        strategy_context += "### VELOCITY:\n"
         strategy_context += f"  - Steps taken: {ctx.step_count}/{ctx.max_steps}\n"
         strategy_context += f"  - Consecutive no-findings: {ctx.consecutive_no_findings}\n"
         strategy_context += f"  - Steps remaining: {ctx.steps_remaining}\n\n"

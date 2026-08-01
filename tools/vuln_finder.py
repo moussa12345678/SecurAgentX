@@ -489,7 +489,7 @@ class VulnFinder:
                     confidence=0.8,
                     evidence=finding,
                 )
-            logger.info(f"Saved mission state to SQLite")
+            logger.info("Saved mission state to SQLite")
         except Exception as e:
             logger.debug(f"Could not save mission state: {e}")
 

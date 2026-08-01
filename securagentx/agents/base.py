@@ -799,6 +799,11 @@ async def run_specialist_chain(
     Returns:
         ``PerformResult.DONE`` on successful barrier hit, ``ERROR`` otherwise.
     """
+    # ``auxiliary_tools`` is reserved for future tool-wiring; not yet
+    # consumed by the executor. Bind explicitly so static analyzers do not
+    # flag the parameter as unused.
+    del auxiliary_tools
+
     chain: list[Message] = [
         Message(role="system", content=system_prompt),
         Message(role="user", content=user_prompt),

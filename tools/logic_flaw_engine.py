@@ -675,7 +675,7 @@ class StateMachineBypassDetector(BaseDetector):
                 step_val = params.get("step", params.get("state", ""))
                 findings.append(
                     LogicFinding(
-                        title=f"State-skip risk: step/state controllable via query param",
+                        title="State-skip risk: step/state controllable via query param",
                         target=target,
                         endpoint=url,
                         description=f"Endpoint accepts 'step'/'state' as a client-controlled parameter "
@@ -711,7 +711,7 @@ class StateMachineBypassDetector(BaseDetector):
             if "/admin" in url_lower:
                 findings.append(
                     LogicFinding(
-                        title=f"Admin path accessible without auth check",
+                        title="Admin path accessible without auth check",
                         target=target,
                         endpoint=url,
                         description="Admin endpoint is reachable — verify authorization is enforced.",
@@ -913,7 +913,7 @@ class AuthorizationDetector(BaseDetector):
                 ts_ms = UUIDV1Decoder.extract_timestamp_ms(uuid_val)
                 findings.append(
                     LogicFinding(
-                        title=f"UUID v1 timestamp leak in resource ID",
+                        title="UUID v1 timestamp leak in resource ID",
                         target=target,
                         endpoint=url,
                         description=f"Resource ID '{uuid_val}' is a UUID v1, which embeds a "

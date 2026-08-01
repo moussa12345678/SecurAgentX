@@ -959,7 +959,7 @@ def scan_package_json_scripts(path: Union[str, Path]) -> List[Finding]:
                     component=str(path.name),
                     version="*",
                     title=f"Base64 payload in {hook_name} hook",
-                    details=f"Long base64 string detected in install script.",
+                    details="Long base64 string detected in install script.",
                 )
             )
     return findings
