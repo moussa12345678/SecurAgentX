@@ -266,6 +266,39 @@ SecurAgentX includes a full single-page web dashboard with a terminal-style UI. 
 - Zero console errors (tested with Playwright)
 - 100% client-side — no server, no dependencies
 
+### Live Avatar Chat (Voice + Face)
+
+| Feature | Description |
+|---|---|
+| **Floating Avatar Button** | Click 🎭 button to open interactive assistant panel |
+| **Animated SVG Face** | Eyes blink, mouth moves during speech (lip-sync) |
+| **Voice Recognition** | Full-duplex speech via Web Speech API (`continuous: true, interimResults: true`) |
+| **Text-to-Speech** | Responses spoken via SpeechSynthesis with lip-sync animation |
+| **Voice Commands** | "change provider to OpenAI", "set multi-agent mode", "toggle YOLO", "hunt target.com" |
+| **Smart Responses** | Contextual responses for greetings, help, tools, skills |
+| **Text Input Fallback** | Type commands if microphone unavailable |
+| **Real-time Transcript** | Live interim results shown in yellow, final in green |
+
+### SAST Code Scanner (Browser-Based)
+
+| Tool | Simulated Rules |
+|---|---|
+| **semgrep** | eval(), Function(), innerHTML, document.write patterns |
+| **bandit** | child_process import, command injection patterns |
+| **ruff** | setTimeout with string, console.log (T201) |
+| **pylint** | Empty catch blocks (W0702) |
+| **mypy + pyright** | Missing type annotations |
+| **vulture** | Unused variable detection |
+| **radon** | Cyclomatic complexity analysis |
+| **detect-secrets** | Hardcoded API keys, passwords, tokens |
+| **pip-audit** | Vulnerable dependency patterns |
+
+Features:
+- Scan all skills at once or scan individual code snippets
+- Color-coded results: red (errors), yellow (warnings), blue (info), green (clean)
+- Auto-scan on skill code with detailed findings (tool name, line number, message)
+- Summary stats: errors/warnings/info counts
+
 ### Usage
 ```bash
 # Open in browser

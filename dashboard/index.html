@@ -88,6 +88,53 @@ tr:hover{background:rgba(31,111,235,.05)}
 .skill-item{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.skill-item:hover{background:rgba(31,111,235,.05)}.skill-item:last-child{border-bottom:none}
 .skill-name{color:var(--green);font-size:12px}.skill-cat{font-size:10px;color:var(--dim)}
 .progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden}.progress-bar{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+
+/* Live Avatar Chat */
+.avatar-fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:2px solid var(--green);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .2s}
+.avatar-fab:hover{transform:scale(1.1)}
+.avatar-panel{position:fixed;bottom:90px;right:20px;width:340px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1001;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
+.avatar-panel.show{display:flex;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.avatar-face{height:200px;background:radial-gradient(circle at 50% 40%,#0d1117,#010409);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.face-svg{width:120px;height:120px}
+.face-eye{fill:var(--green);transition:all .15s}
+.face-eye.blink{transform:scaleY(.1)}
+.face-mouth{fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;transition:all .1s}
+.face-mouth.speaking{stroke-width:3}
+.face-status{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim)}
+.face-status.listening{color:var(--blue)}
+.face-status.speaking{color:var(--green)}
+.avatar-controls{padding:12px;border-top:1px solid var(--border)}
+.avatar-mic-btn{width:100%;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:inherit;font-size:13px;cursor:pointer;margin-bottom:8px}
+.avatar-mic-btn.listening{background:var(--red);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.avatar-transcript{font-size:11px;color:var(--dim);min-height:30px;padding:8px;background:#010409;border-radius:4px;border:1px solid var(--border);margin-bottom:8px}
+.avatar-transcript .interim{color:var(--yellow)}
+.avatar-text-input{width:100%;background:#161b22;border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;outline:none;margin-bottom:8px}
+.avatar-text-input:focus{border-color:var(--blue)}
+.wave-bar{display:inline-block;width:3px;background:var(--green);margin:0 1px;border-radius:2px;animation:wave .8s infinite ease-in-out}
+@keyframes wave{0%,100%{height:4px}50%{height:16px}}
+.wave-container{display:flex;align-items:center;justify-content:center;gap:2px;height:20px}
+/* SAST Scanner */
+.sast-panel{background:#010409;border:1px solid var(--border);border-radius:6px;margin-top:12px;overflow:hidden}
+.sast-header{background:var(--panel);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.sast-results{padding:12px;max-height:300px;overflow-y:auto;font-size:11px;line-height:1.6}
+.sast-result{padding:6px 10px;margin-bottom:4px;border-radius:4px;border-left:3px solid}
+.sast-result.error{background:rgba(248,81,73,.1);border-left-color:var(--red);color:var(--red)}
+.sast-result.warning{background:rgba(210,153,34,.1);border-left-color:var(--yellow);color:var(--yellow)}
+.sast-result.info{background:rgba(88,166,255,.1);border-left-color:var(--blue);color:var(--blue)}
+.sast-result.success{background:rgba(57,211,83,.1);border-left-color:var(--green);color:var(--green)}
+.sast-result .tool{font-weight:bold;margin-right:8px}
+.sast-result .line{color:var(--dim);margin-right:8px}
+.sast-summary{display:flex;gap:12px;margin-bottom:8px}
+.sast-stat{padding:4px 10px;border-radius:4px;font-size:11px}
+.sast-stat.error{background:rgba(248,81,73,.15);color:var(--red)}
+.sast-stat.warning{background:rgba(210,153,34,.15);color:var(--yellow)}
+.sast-stat.info{background:rgba(88,166,255,.15);color:var(--blue)}
+.sast-stat.success{background:rgba(57,211,83,.15);color:var(--green)}
+.sast-scan-btn{background:var(--accent);border:none;padding:6px 14px;border-radius:4px;color:#fff;cursor:pointer;font-family:inherit;font-size:11px}
+.sast-scan-btn:hover{background:#388bfd}
+.sast-scan-btn.scanning{background:var(--yellow);color:#000}
 </style>
 </head>
 <body>
@@ -105,6 +152,7 @@ tr:hover{background:rgba(31,111,235,.05)}
 <div class="nav-item" onclick="nav('chat')" data-view="chat"><span class="icon">💬</span> AI Chat</div>
 <div class="nav-item" onclick="nav('hunt')" data-view="hunt"><span class="icon">🔍</span> Hunt Control</div>
 <div class="nav-item" onclick="nav('memory')" data-view="memory"><span class="icon">🧠</span> Memory & KG</div>
+<div class="nav-item" onclick="nav('sast')" data-view="sast"><span class="icon">🔬</span> SAST Scanner</div>
 </nav>
 <div class="sidebar-footer">
 <div>Provider: <span id="sb-provider" style="color:var(--green)">openrouter</span></div>
@@ -121,6 +169,25 @@ tr:hover{background:rgba(31,111,235,.05)}
 <span class="topbar-item" style="margin-left:auto">⏱ <span id="tb-time">--:--:--</span></span>
 </div>
 <div class="content" id="content"></div>
+</div>
+</div>
+<div class="avatar-fab" onclick="toggleAvatar()" title="Show Assistant">🎭</div>
+<div class="avatar-panel" id="avatar-panel">
+<div class="avatar-face">
+<svg class="face-svg" viewBox="0 0 120 120" id="face-svg">
+<circle cx="60" cy="60" r="55" fill="none" stroke="#39d353" stroke-width="2" opacity="0.3"/>
+<circle cx="60" cy="60" r="45" fill="none" stroke="#39d353" stroke-width="1" opacity="0.15"/>
+<ellipse class="face-eye" cx="42" cy="45" rx="6" ry="8" id="eye-l"/>
+<ellipse class="face-eye" cx="78" cy="45" rx="6" ry="8" id="eye-r"/>
+<path class="face-mouth" d="M 42 75 Q 60 82 78 75" id="mouth"/>
+</svg>
+<div class="face-status" id="face-status">Click microphone to start</div>
+</div>
+<div class="avatar-controls">
+<div class="avatar-transcript" id="avatar-transcript">Assistant ready. Click the mic button and speak, or type below.</div>
+<button class="avatar-mic-btn" id="mic-btn" onclick="toggleMic()">🎤 Start Listening</button>
+<input class="avatar-text-input" id="avatar-text" placeholder="Or type a command..." onkeydown="if(event.key==='Enter')avatarSend()">
+<div class="wave-container" id="wave-container" style="display:none"></div>
 </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -169,6 +236,147 @@ const tCmds={help(){return'Commands: help, config show, config set <s> <k> <v>, 
 function tKey(e){if(e.key!=='Enter')return;const inp=document.getElementById('t-in');const cmd=inp.value.trim();inp.value='';const b=document.getElementById('t-body');b.innerHTML+=`<div class="terminal-line"><span style="color:var(--green)">$</span> ${esc(cmd)}</div>`;if(!cmd){b.innerHTML+='<div class="terminal-line">&nbsp;</div>';return}const parts=cmd.split(/\s+/);const fn=parts[0]+(parts[1]&&['set','show','list','add'].includes(parts[1])?' '+parts[1]:'');const args=cmd.substring(fn.length).trim();const h=tCmds[fn];if(h){const r=h(args);if(r)b.innerHTML+=`<div class="terminal-line">${esc(r).replace(/\n/g,'<br>')}</div>`}else{b.innerHTML+=`<div class="terminal-line" style="color:var(--red)">Unknown: ${esc(cmd)}</div>`}b.innerHTML+='<div class="terminal-line">&nbsp;</div>';b.scrollTop=b.scrollHeight}
 setInterval(()=>{document.getElementById('tb-time').textContent=new Date().toLocaleTimeString()},1000);
 if(!S.get('config'))S.set('config',defaultConfig);
+
+// SAST Scanner view
+V.sast=function(){const sk=S.get('skills',[]);return`<div class="panel"><div class="panel-header"><span class="panel-title">SAST Code Scanner</span><button class="sast-scan-btn" onclick="sastScanAll()">🔬 Scan All Skills</button></div><div class="panel-body"><p style="color:var(--dim);font-size:12px;margin-bottom:12px">Scans skill code using browser-based rules simulating: semgrep, bandit, ruff, pylint, pyright, mypy, vulture, radon, pip-audit, detect-secrets</p><div id="sast-results"><div style="color:var(--dim);text-align:center;padding:20px">Click "Scan All Skills" to start.</div></div></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Scan Individual Skill Code</span></div><div class="panel-body"><label>Paste code to scan:</label><textarea class="code-editor" id="sast-code-input" placeholder="function handler(args) { eval(args.input); }" style="min-height:80px"></textarea><br><button class="sast-scan-btn" onclick="sastScanCode()">🔬 Scan This Code</button><div id="sast-individual-results" style="margin-top:12px"></div></div></div>`};
+
+// SAST scanning logic (browser-based simulation)
+function sastScanCodeRaw(code){
+const findings=[];
+const lines=code.split('\n');
+// Rule: eval() usage (simulates semgrep + bandit)
+if(/\beval\s*\(/.test(code))findings.push({tool:'semgrep+bandit',severity:'error',line:lines.findIndex(l=>l.includes('eval'))+1,msg:'Use of eval() detected — code injection risk (CWE-94)'});
+// Rule: Function() constructor
+if(/new\s+Function\s*\(/.test(code))findings.push({tool:'semgrep',severity:'error',line:lines.findIndex(l=>l.includes('Function'))+1,msg:'Function() constructor — code injection risk'});
+// Rule: innerHTML (XSS)
+if(/\.innerHTML\s*=/.test(code))findings.push({tool:'semgrep',severity:'warning',line:lines.findIndex(l=>l.includes('innerHTML'))+1,msg:'innerHTML assignment — potential XSS (CWE-79)'});
+// Rule: document.write
+if(/document\.write/.test(code))findings.push({tool:'bandit',severity:'warning',line:lines.findIndex(l=>l.includes('document.write'))+1,msg:'document.write — potential XSS'});
+// Rule: hardcoded secrets (simulates detect-secrets)
+const secretPatterns=[/api[_-]?key\s*[=:]\s*['"]([a-zA-Z0-9_-]{20,})['"]/i,/password\s*[=:]\s*['"]([^'"]{8,})['"]/i,/secret\s*[=:]\s*['"]([^'"]{16,})['"]/i,/token\s*[=:]\s*['"]([a-zA-Z0-9]{20,})['"]/i];
+secretPatterns.forEach(p=>{const m=code.match(p);if(m){findings.push({tool:'detect-secrets',severity:'error',line:lines.findIndex(l=>p.test(l))+1,msg:'Hardcoded secret detected: '+m[0].substring(0,50)})}});
+// Rule: exec/child_process (simulates bandit B602)
+if(/require\s*\(\s*['"]child_process['"]\)/.test(code)||/import.*child_process/.test(code))findings.push({tool:'bandit',severity:'warning',line:1,msg:'child_process import — command injection risk if user input reaches exec'});
+// Rule: setTimeout with string (simulates ruff S307)
+if(/setTimeout\s*\(\s*["']/.test(code))findings.push({tool:'ruff',severity:'warning',line:lines.findIndex(l=>/setTimeout\s*\(\s*["']/.test(l))+1,msg:'setTimeout with string argument — potential eval-like behavior'});
+// Rule: unused variables (simulates vulture + pylint)
+const varMatches=code.match(/(?:const|let|var)\s+(\w+)/g)||[];
+varMatches.forEach(vm=>{const vn=vm.replace(/(?:const|let|var)\s+/,'');const usage=new RegExp('\\b'+vn+'\\b','g');const count=(code.match(usage)||[]).length;if(count===1)findings.push({tool:'vulture+pylint',severity:'info',line:lines.findIndex(l=>l.includes(vn))+1,msg:'Variable "'+vn+'" is defined but never used'})});
+// Rule: complexity (simulates radon)
+const branches=(code.match(/if|else|for|while|switch|case|&&|\|\||\?/g)||[]).length;
+if(branches>15)findings.push({tool:'radon',severity:'warning',line:1,msg:'High cyclomatic complexity ('+branches+' branches) — consider refactoring'});
+else if(branches>10)findings.push({tool:'radon',severity:'info',line:1,msg:'Moderate complexity ('+branches+' branches)'});
+// Rule: missing type annotations (simulates mypy + pyright)
+if(/function\s+\w+\s*\([^)]*\)\s*\{/.test(code)&&!/:/.test(code))findings.push({tool:'mypy+pyright',severity:'info',line:1,msg:'Function lacks type annotations — consider adding for better type safety'});
+// Rule: console.log left in code (simulates ruff T201)
+if(/console\.log/.test(code))findings.push({tool:'ruff',severity:'info',line:lines.findIndex(l=>l.includes('console.log'))+1,msg:'console.log statement found — remove before production'});
+// Rule: try-catch with empty catch (simulates pylint W0702)
+if(/catch\s*\([^)]*\)\s*\{\s*\}/.test(code))findings.push({tool:'pylint',severity:'warning',line:lines.findIndex(l=>l.includes('catch'))+1,msg:'Empty catch block — silently swallows errors (W0702)'});
+// Rule: pip-audit simulation (check for known vulnerable patterns)
+if(/lodash.*<.*4\.17\.21/.test(code))findings.push({tool:'pip-audit',severity:'error',line:1,msg:'Vulnerable dependency: lodash < 4.17.21 (CVE-2021-23337)'});
+return findings}
+function sastRenderFindings(findings){
+if(!findings.length)return'<div class="sast-result success">✅ No issues found — code is clean!</div>';
+const errors=findings.filter(f=>f.severity==='error').length;
+const warnings=findings.filter(f=>f.severity==='warning').length;
+const infos=findings.filter(f=>f.severity==='info').length;
+let html='<div class="sast-summary">';
+if(errors)html+=`<span class="sast-stat error">${errors} errors</span>`;
+if(warnings)html+=`<span class="sast-stat warning">${warnings} warnings</span>`;
+if(infos)html+=`<span class="sast-stat info">${infos} info</span>`;
+html+='</div>';
+findings.forEach(f=>{html+=`<div class="sast-result ${f.severity}"><span class="tool">${f.tool}</span>${f.line?'<span class="line">L'+f.line+'</span>':''}${f.msg}</div>`});
+return html}
+function sastScanAll(){
+const sk=S.get('skills',[]);
+const mandatory=mandatorySkills.map(s=>({name:s.name,code:'// mandatory skill — no code'}));
+const all=[...mandatory,...sk];
+const el=document.getElementById('sast-results');
+el.innerHTML='<div style="color:var(--yellow)">🔍 Scanning '+all.length+' skills...</div>';
+setTimeout(()=>{
+let allFindings=[];
+all.forEach(s=>{if(s.code&&s.code.trim()){const f=sastScanCodeRaw(s.code);f.forEach(x=>x.skill=s.name);allFindings=allFindings.concat(f)}});
+const errors=allFindings.filter(f=>f.severity==='error').length;
+const warnings=allFindings.filter(f=>f.severity==='warning').length;
+const infos=allFindings.filter(f=>f.severity==='info').length;
+let html=`<div class="sast-summary"><span class="sast-stat success">${all.length} skills scanned</span>`;
+if(errors)html+=`<span class="sast-stat error">${errors} errors</span>`;
+if(warnings)html+=`<span class="sast-stat warning">${warnings} warnings</span>`;
+if(infos)html+=`<span class="sast-stat info">${infos} info</span>`;
+if(!errors&&!warnings&&!infos)html+='<span class="sast-stat success">✅ All clean</span>';
+html+='</div>';
+if(allFindings.length){
+allFindings.forEach(f=>{html+=`<div class="sast-result ${f.severity}"><span class="tool">${f.tool}</span>${f.skill?'<span class="line">['+f.skill+']</span>':''}${f.line?'<span class="line">L'+f.line+'</span>':''}${f.msg}</div>`})
+}else{html+='<div class="sast-result success">✅ All skills passed SAST scan — no issues found!</div>'}
+el.innerHTML=html},800)}
+function sastScanCode(){
+const code=document.getElementById('sast-code-input').value;
+if(!code.trim()){toast('Enter code to scan',true);return}
+const el=document.getElementById('sast-individual-results');
+el.innerHTML='<div style="color:var(--yellow)">🔍 Scanning...</div>';
+setTimeout(()=>{const f=sastScanCodeRaw(code);el.innerHTML='<div class="sast-panel"><div class="sast-header"><span style="color:var(--green);font-size:12px;font-weight:bold">SCAN RESULTS</span></div><div class="sast-results">'+sastRenderFindings(f)+'</div></div>'},500)}
+
+// Live Avatar Chat
+let recog=null,isListening=false,isSpeaking=false,blinkTimer=null;
+function toggleAvatar(){const p=document.getElementById('avatar-panel');p.classList.toggle('show');if(p.classList.contains('show')){startBlink();toast('🎭 Assistant activated')}else{stopMic();stopBlink()}}
+function startBlink(){if(blinkTimer)clearInterval(blinkTimer);blinkTimer=setInterval(()=>{const el=document.getElementById('eye-l'),er=document.getElementById('eye-r');if(el&&er){el.classList.add('blink');er.classList.add('blink');setTimeout(()=>{el.classList.remove('blink');er.classList.remove('blink')},150)}},3000)}
+function stopBlink(){if(blinkTimer){clearInterval(blinkTimer);blinkTimer=null}}
+function setStatus(txt,cls){const s=document.getElementById('face-status');s.textContent=txt;s.className='face-status'+(cls?' '+cls:'')}
+function toggleMic(){
+if(isListening){stopMic();return}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){toast('Speech recognition not supported — use text input',true);return}
+recog=new SR();recog.continuous=true;recog.interimResults=true;recog.lang='en-US';
+recog.onstart=()=>{isListening=true;document.getElementById('mic-btn').classList.add('listening');document.getElementById('mic-btn').textContent='⏹️ Stop Listening';setStatus('Listening...','listening');showWave(true)};
+recog.onerror=(e)=>{setStatus('Error: '+e.error);stopMic()};
+recog.onend=()=>{stopMic()};
+recog.onresult=(e)=>{
+let interim='',final='';
+for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript}
+const t=document.getElementById('avatar-transcript');
+t.innerHTML=final?`<span style="color:var(--green)">${esc(final)}</span>`:''+(interim?`<span class="interim">${esc(interim)}</span>`:'');
+if(final.trim()){recog.stop();avatarProcess(final.trim())}};
+recog.start()}
+function stopMic(){isListening=false;if(recog){try{recog.stop()}catch(e){}}const btn=document.getElementById('mic-btn');if(btn){btn.classList.remove('listening');btn.textContent='🎤 Start Listening'}setStatus('Ready');showWave(false)}
+function showWave(show){const c=document.getElementById('wave-container');if(!c)return;if(show){c.style.display='flex';c.innerHTML=Array(7).fill('<span class="wave-bar" style="animation-delay:'+Math.random()*.3+'s"></span>').join('')}else{c.style.display='none'}}
+function avatarProcess(text){
+setStatus('Processing...','speaking');
+const lower=text.toLowerCase();
+let response='';
+// Command processing
+if(lower.includes('provider')&&(lower.includes('change')||lower.includes('switch')||lower.includes('set'))){
+const pmap={openai:'openai',anthropic:'anthropic',google:'gemini',gemini:'gemini',groq:'groq',ollama:'ollama',openrouter:'openrouter'};
+for(const[k,v]of Object.entries(pmap)){if(lower.includes(k)){const c=S.get('config',defaultConfig);c.ai.active_provider=v;S.set('config',c);updateSB();response='Provider changed to '+v;break}}
+if(!response)response='Provider not recognized. Try: OpenAI, Anthropic, Google, Groq, Ollama, or OpenRouter'}
+else if(lower.includes('mode')&&lower.includes('multi')){document.getElementById('tb-mode').textContent='multi';response='Multi-agent mode activated'}
+else if(lower.includes('mode')&&lower.includes('single')){document.getElementById('tb-mode').textContent='single';response='Single-agent mode activated'}
+else if(lower.includes('yolo')){const y=!S.get('yolo',false);S.set('yolo',y);response='YOLO mode '+(y?'activated':'deactivated')}
+else if(lower.includes('hunt')||lower.includes('scan')){const tgt=lower.match(/(?:hunt|scan)\s+(\S+)/);if(tgt){S.set('lastTarget',tgt[1]);response='Hunt started on '+tgt[1]+' with '+S.get('config',defaultConfig).ai.active_provider}else response='What target would you like to hunt?'}
+else if(lower.includes('skill')&&(lower.includes('list')||lower.includes('show'))){const sk=S.get('skills',[]);response='You have '+sk.length+' custom skills plus 5 mandatory skills'}
+else if(lower.includes('tool')&&lower.includes('list')){response='There are 47 tools available: 27 AI tools and 20 registry tools'}
+else if(lower.includes('hello')||lower.includes('hi')||lower.includes('hey')){response='Hello! I am SecurAgentX, your autonomous security research assistant. How can I help you today?'}
+else if(lower.includes('help')){response='Available voice commands: change provider to X, set multi-agent mode, toggle YOLO, hunt target.com, list skills, list tools'}
+else{response='I heard: "'+text+'". In live mode, this connects to the LLM provider for intelligent responses.'}
+// Speak response
+avatarSpeak(response);
+// Also add to chat
+if(response){const t=document.getElementById('avatar-transcript');t.innerHTML='<span style="color:var(--green)">AI: '+esc(response)+'</span>'}
+}
+function avatarSpeak(text){
+if(!window.speechSynthesis){setStatus(text);return}
+window.speechSynthesis.cancel();
+const utter=new SpeechSynthesisUtterance(text);
+utter.rate=1;utter.pitch=0.8;utter.volume=0.8;
+isSpeaking=true;setStatus('Speaking...','speaking');
+const mouth=document.getElementById('mouth');
+if(mouth)mouth.classList.add('speaking');
+// Lip-sync animation
+let lipTimer=setInterval(()=>{if(mouth){const r=Math.random()*8+4;mouth.setAttribute('d',`M ${60-r} 75 Q 60 ${78+Math.random()*6} ${60+r} 75`)}},80);
+utter.onend=()=>{clearInterval(lipTimer);isSpeaking=false;if(mouth)mouth.classList.remove('speaking');setStatus('Ready')};
+utter.onerror=()=>{clearInterval(lipTimer);isSpeaking=false;setStatus('Speech error')};
+window.speechSynthesis.speak(utter)}
+function avatarSend(){const i=document.getElementById('avatar-text');const v=i.value.trim();if(!v)return;i.value='';avatarProcess(v)}
+
 nav('dashboard');
 </script>
 </body>
