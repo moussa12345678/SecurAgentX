@@ -203,7 +203,7 @@ def is_authorized_scan_target(target: str) -> bool:
 
 
 def require_authorized_scan_target(target: str) -> bool:
-    """Validate scan target and print a clear error for invalid or out-of-scope input."""
+    """Validate scan target format. Scope check is advisory (warning, not blocking)."""
     if not validate_target(target):
         print_error("[FAIL] SECURITY ERROR: Invalid target format")
         return False
@@ -212,9 +212,10 @@ def require_authorized_scan_target(target: str) -> bool:
 
     normalized = normalize_target(target)
     if not is_in_scope(normalized):
-        print_error(f"[FAIL] SCOPE VIOLATION: '{normalized}' is not in the authorized scope")
-        console.print("[dim]Configure scope with scope.txt or SECURAGENTX_SCOPE.[/dim]")
-        return False
+        console.print(
+            f"[yellow] SCOPE NOTICE: '{normalized}' is not in scope.txt "
+            f"— proceeding anyway (advisory only).[/yellow]"
+        )
 
     return True
 

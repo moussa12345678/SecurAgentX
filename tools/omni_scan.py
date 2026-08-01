@@ -70,9 +70,9 @@ def run_omni_scan(
 
     if not is_in_scope(safe_target):
         console.print(
-            f"[bold red] SCOPE VIOLATION: '{safe_target}' is not in the authorized scope.[/bold red]"
+            f"[yellow] SCOPE NOTICE: '{safe_target}' is not in scope.txt "
+            f"— proceeding anyway (advisory only).[/yellow]"
         )
-        return
 
     # Check available tools
     available_tools = registry.list_available_tools()

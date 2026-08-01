@@ -642,13 +642,19 @@ class UniversalAIClient:
                     logger.error("Authentication failed - check API key")
                     raise
                 elif status_code == 429:
-                    # Rate limited — wait 60s (or Retry-After header) and retry up to 20 times
-                    retry_after = 60
+                    # Rate limited — wait and retry up to 20 times
+                    retry_after = 60  # default 60s
                     if e.response is not None:  # type: ignore[union-attr]
                         ra_header = e.response.headers.get("Retry-After") or e.response.headers.get("X-RateLimit-Reset")  # type: ignore[union-attr]
                         if ra_header:
                             try:
-                                retry_after = int(ra_header)
+                                ra_val = int(ra_header)
+                                # OpenRouter sometimes returns milliseconds, not seconds.
+                                # If the value is > 86400 (1 day in seconds), assume ms.
+                                if ra_val > 86400:
+                                    ra_val = ra_val // 1000 if ra_val > 86400000 else ra_val
+                                # Cap at 60s — we want to retry, not wait forever
+                                retry_after = min(ra_val, 60)
                             except (ValueError, TypeError):
                                 retry_after = 60
                     if attempt < self.max_retries - 1:

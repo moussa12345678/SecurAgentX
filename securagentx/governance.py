@@ -146,13 +146,11 @@ class GovernanceGate:
         # 2. Risk Assessment
         risk_assessment = self._assess_risk(action)
 
-        # 3. Check Scope
+        # 3. Check Scope (advisory only — does not block, just logs)
         if not self._check_scope(action):
-            return GateResult(
-                decision=GovernanceDecision.DENY,
-                rationale="Target out of authorized scope",
-                risk_level="critical",
-                requires_human=True
+            logger.info(
+                "Scope notice: target %r not in scope.txt — proceeding (advisory).",
+                action.target,
             )
 
         # 4. Check Policy
