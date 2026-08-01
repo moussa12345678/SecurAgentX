@@ -191,6 +191,54 @@ Default MCP servers included:
 
 <img src="assets/red-divider.svg" width="100%">
 
+## What's New in SecurAgentX (vs. upstream PentAGI/Elengenix)
+
+SecurAgentX builds on the original Elengenix/PentAGI foundation with significant enhancements:
+
+### 🆕 New Features
+
+| Feature | Description |
+|---|---|
+| **47 Security Tools** | 17 original + 30 new CLI tools (nmap, sqlmap, nikto, nuclei, ffuf, gobuster, etc.) |
+| **Multi-Agent Mode** | `--multi-agent` flag activates FlowManager with specialist agents (Generator, Refiner, Reporter, Coder, Pentester, Searcher, Installer) + Docker sandbox |
+| **YOLO Mode** | `--yolo` flag disables all AI script safety scanning — AI can run any code |
+| **Hunt Planning** | 5 mandatory pre-hunt skills loaded before every scan (red team, hacking workflow, bug bounty, OWASP Top 10, pentest checklist) |
+| **500+ Skills Library** | 501 JSON skills across 10 domains (recon, web, network, cloud, mobile, crypto, exploit, post-exploit, reporting, auth, API) |
+| **LLM Adapter** | `UniversalAIClientAdapter` bridges sync `.chat()` to async `.call()` Protocol |
+| **429 Retry/Backoff** | 20 attempts × 60s wait — patient retry on rate limits |
+| **Scope Advisory** | Non-blocking scope checks (proceeds with warning, doesn't block IPs) |
+| **Fast Port Scan** | Socket-based port scanning (25 ports in ~50s, was 5+ min with omni_scan) |
+| **REST API + GraphQL** | FastAPI server with rate limiting (5/min login, 10/min flows) |
+| **Observability** | OpenTelemetry + Langfuse tracing auto-setup |
+| **Knowledge Graph** | Cross-session target/asset/CVE graph with NetworkX + SQLite |
+| **Browser Automation** | Playwright headless Chromium for JS-rendered pages |
+| **Docker Sandbox** | Isolated execution environment for privileged operations |
+| **max_steps=100** | 4× deeper scans (was 25 in upstream) |
+
+### 🔒 Security Hardening
+
+| Fix | Description |
+|---|---|
+| **Path Traversal Guard** | Docker file ops reject `..` paths |
+| **SSRF Protection** | Scheme allowlist + IPv6-mapped IPv4 unwrap |
+| **Package Validation** | Regex allowlist for package manager names |
+| **Rate Limiting** | In-memory token bucket on API endpoints |
+| **Sudo Password Safety** | Passwords via subprocess stdin, never in command string |
+| **Auto-Approve TTL** | 5-minute expiry on governance auto-approve |
+
+### 📊 SAST Clean
+
+| Tool | Result |
+|---|---|
+| ruff F-rules | ✅ 0 errors |
+| bandit HIGH | ✅ 0 |
+| pylint E-errors | ✅ 0 |
+| vulture ≥80% | ✅ 0 |
+| detect-secrets | ✅ 0 real secrets |
+| CI | ✅ 4/4 green (Python 3.11/3.12/3.13) |
+
+<img src="assets/red-divider.svg" width="100%">
+
 ## CLI Commands
 
 ### Core
@@ -200,6 +248,7 @@ securagentx hunt <target>       # Autonomous AI vulnerability hunt (VulnAgent)
 securagentx scan <target>        # AI-driven scan (equivalent to hunt)
 securagentx vuln-hunt <target>   # Full autonomous vulnerability hunting
 securagentx hunt <target> --multi-agent   # Multi-agent FlowManager mode (specialists + Docker sandbox)
+securagentx hunt <target> --yolo           # YOLO mode: disable all safety scanning
 securagentx tui                  # Textual TUI (chat interface)
 securagentx configure            # Setup wizard
 securagentx doctor               # System health check
@@ -209,6 +258,8 @@ securagentx api                  # Start REST API + GraphQL server (FastAPI)
 **All scan/hunt commands now use VulnAgent** — the same AI agent with 27 tools, memory, and tool-selection autonomy. No script chains, no forced phases.
 
 Pass `--multi-agent` to `hunt` or `vuln-hunt` to switch from single-agent mode to the multi-agent `FlowManager` (uses `securagentx/flows/` + `ConcreteFlowProvider` + specialist agents + Docker sandbox).
+
+Pass `--yolo` to disable all AI script safety scanning. The AI can then run ANY Python code without restriction. **ONLY use this with explicit written authorization!**
 
 ### Multi-target
 
