@@ -2270,6 +2270,9 @@ class VulnAgent:
         self.start_time = time.time()
         self.step = 0
 
+        # Pre-hunt: Create a plan using mandatory skills
+        self._create_hunt_plan(verbose)
+
         # Pre-hunt: recall past memories
         memory_context = ""
         if self.memory is not None:
@@ -2680,6 +2683,60 @@ class VulnAgent:
                 # Avoid duplicates
                 if not any(h.description == hyp.description for h in self.hypotheses):
                     self.hypotheses.append(hyp)
+
+    # ------------------------------------------------------------------
+    # Pre-hunt planning (loads mandatory skills + creates TODO)
+    # ------------------------------------------------------------------
+
+    def _create_hunt_plan(self, verbose: bool = True) -> None:
+        """Create a structured hunt plan by loading the 5 mandatory pre-hunt skills.
+
+        Loads: red_team_methodology, hacking_workflow, bug_bounty_methodology,
+        owasp_top_10, pentest_checklist.
+
+        Builds a TODO list that the AI agent follows during the hunt.
+        """
+        import json as _json
+        from pathlib import Path as _P
+
+        skills_dir = _P.home() / ".securagentx" / "skills"
+        mandatory = [
+            "red_team_methodology",
+            "hacking_workflow",
+            "bug_bounty_methodology",
+            "owasp_top_10",
+            "pentest_checklist",
+        ]
+
+        self._hunt_plan: list[dict[str, Any]] = []
+        loaded = 0
+        for skill_name in mandatory:
+            skill_file = skills_dir / f"{skill_name}.json"
+            if skill_file.exists():
+                try:
+                    skill = _json.loads(skill_file.read_text())
+                    self._hunt_plan.append(skill)
+                    loaded += 1
+                except Exception:  # noqa: BLE001
+                    pass
+
+        if verbose and loaded > 0:
+            import sys as _sys
+            _sys.stdout.write(f"\n📋 Hunt Plan: {loaded} mandatory skills loaded\n")
+            for skill in self._hunt_plan:
+                _sys.stdout.write(f"   ✦ {skill['name']}: {skill.get('description', '')[:80]}\n")
+            _sys.stdout.flush()
+
+        # Count optional skills available
+        optional_count = 0
+        if skills_dir.exists():
+            optional_count = len(list(skills_dir.glob("*.json"))) - loaded
+
+        if verbose and optional_count > 0:
+            _sys.stdout.write(f"   📚 {optional_count} additional skills available on demand\n")
+            _sys.stdout.flush()
+
+        logger.info("Hunt plan created: %d mandatory + %d optional skills", loaded, optional_count)
 
     # ------------------------------------------------------------------
     # Prompts
