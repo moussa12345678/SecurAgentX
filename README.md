@@ -266,18 +266,21 @@ SecurAgentX includes a full single-page web dashboard with a terminal-style UI. 
 - Zero console errors (tested with Playwright)
 - 100% client-side — no server, no dependencies
 
-### Live Avatar Chat (Voice + Face)
+### Venom Live Avatar (Full-Screen Voice + Face)
 
 | Feature | Description |
 |---|---|
-| **Floating Avatar Button** | Click 🎭 button to open interactive assistant panel |
-| **Animated SVG Face** | Eyes blink, mouth moves during speech (lip-sync) |
-| **Voice Recognition** | Full-duplex speech via Web Speech API (`continuous: true, interimResults: true`) |
-| **Text-to-Speech** | Responses spoken via SpeechSynthesis with lip-sync animation |
-| **Voice Commands** | "change provider to OpenAI", "set multi-agent mode", "toggle YOLO", "hunt target.com" |
-| **Smart Responses** | Contextual responses for greetings, help, tools, skills |
-| **Text Input Fallback** | Type commands if microphone unavailable |
-| **Real-time Transcript** | Live interim results shown in yellow, final in green |
+| **Venom Face** | Full SVG Venom design: black symbiote head, large wavy white eyes (McFarlane style), 22 jagged teeth, long red tongue |
+| **Full-Screen Mode** | When activated, dashboard hides and full-screen black overlay appears with Venom face centered |
+| **Voice Recognition** | Full-duplex Web Speech API (`continuous: true, interimResults: true`) |
+| **Venom Voice** | SpeechSynthesis with pitch=0.1, rate=0.85, deep male voice auto-selection |
+| **Lip-Sync** | Mouth shape swapping via `onboundary` events + random mouth morphs during speech |
+| **Idle Animation** | Breathing (head scale), tongue lash (random), eye blink (3.5s interval) |
+| **Voice Commands** | "change provider to X", "set multi-agent mode", "toggle YOLO", "hunt target.com", "scan code", "list skills", "list tools", "exit" |
+| **Smart Responses** | Contextual Venom-style responses ("We are Venom. We are SecurAgentX.") |
+| **Text Input** | Always-visible text input for browsers without microphone support |
+| **Real-time Transcript** | Interim results (yellow) + final results (green) |
+| **SAST Auto-Scan** | When adding a skill, code is automatically scanned and warnings are shown via toast |
 
 ### SAST Code Scanner (Browser-Based)
 
