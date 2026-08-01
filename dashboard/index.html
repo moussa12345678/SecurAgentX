@@ -109,6 +109,14 @@ tr:hover{background:rgba(31,111,235,.05)}
 .venom-controls .btn-mic.active{background:var(--venom-red);box-shadow:0 0 16px var(--venom-red)}
 .venom-controls .btn-send{padding:10px 24px;background:var(--venom-red);color:var(--venom-white);border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:bold;letter-spacing:1px}
 .venom-controls .btn-send:hover{background:#ff3333}
+.venom-controls .btn-cog{width:48px;height:48px;border-radius:50%;background:rgba(80,80,80,.3);border:1px solid var(--border);color:var(--venom-white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s}
+.venom-controls .btn-cog:hover{background:rgba(80,80,80,.6);transform:rotate(45deg)}
+.venom-tts-panel{background:rgba(0,0,0,.85);border:1px solid var(--border);border-radius:6px;padding:14px;margin-top:12px;max-width:760px;margin-left:auto;margin-right:auto}
+.venom-tts-panel .tts-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.venom-tts-panel .tts-row label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.venom-tts-panel .tts-row input[type=password],.venom-tts-panel .tts-row select{background:#161b22;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-family:inherit;font-size:12px}
+.venom-tts-panel .tts-row input[type=password]{flex:1;min-width:200px}
+.venom-tts-panel .tts-status{font-size:11px;text-align:center;margin-top:4px;color:var(--green)}
 .venom-help{position:absolute;top:80px;right:24px;background:rgba(0,0,0,.7);border:1px solid var(--border);border-radius:6px;padding:12px;color:var(--dim);font-size:11px;max-width:260px;z-index:10}
 .venom-help .h-title{color:var(--venom-red);font-size:11px;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
 .venom-help ul{list-style:none}
@@ -211,6 +219,36 @@ tr:hover{background:rgba(31,111,235,.05)}
       <button class="btn-mic" id="venom-mic" onclick="VenomMode.toggleMic()" title="Toggle voice recognition">🎤</button>
       <input type="text" id="venom-input" placeholder="Speak or type a command..." onkeydown="if(event.key==='Enter'){VenomMode.handleUserText(this.value);this.value=''}">
       <button class="btn-send" onclick="VenomMode.handleUserText(document.getElementById('venom-input').value);document.getElementById('venom-input').value=''">SEND</button>
+      <button class="btn-cog" id="venom-cog" onclick="VenomMode.toggleTtsPanel()" title="Voice settings">⚙</button>
+    </div>
+    <div class="venom-tts-panel" id="venom-tts-panel" style="display:none">
+      <div class="tts-row">
+        <label>Google TTS API Key <span style="color:var(--dim)">(optional — leave empty for free voice)</span></label>
+        <input type="password" id="venom-tts-key" placeholder="AIzaSy..." onkeydown="if(event.key==='Enter'){VenomMode.saveTtsKey()}">
+        <button class="btn sm success" onclick="VenomMode.saveTtsKey()">Save</button>
+        <button class="btn sm ghost" onclick="VenomMode.clearTtsKey()">Clear</button>
+      </div>
+      <div class="tts-row">
+        <label>TTS Voice</label>
+        <select id="venom-tts-voice">
+          <option value="en-US-Standard-A">en-US Standard A (male)</option>
+          <option value="en-US-Standard-B">en-US Standard B (male, deep)</option>
+          <option value="en-US-Standard-C">en-US Standard C (female)</option>
+          <option value="en-US-Standard-D">en-US Standard D (male, deep)</option>
+          <option value="en-GB-Standard-A">en-GB Standard A (male)</option>
+          <option value="en-GB-Standard-B">en-GB Standard B (male)</option>
+          <option value="en-US-Neural2-A">en-US Neural2 A (male, premium)</option>
+          <option value="en-US-Neural2-D">en-US Neural2 D (male, deep, premium)</option>
+        </select>
+        <label style="margin-left:8px">Rate</label>
+        <input type="range" id="venom-tts-rate" min="0.5" max="2" step="0.05" value="0.95" style="width:80px" oninput="document.getElementById('venom-tts-rate-val').textContent=this.value">
+        <span id="venom-tts-rate-val" style="color:var(--blue);font-size:11px">0.95</span>
+      </div>
+      <div class="tts-status" id="venom-tts-status"></div>
+      <div style="font-size:10px;color:var(--dim);margin-top:6px;text-align:center">
+        Free voice: StreamElements Brian + Tone.js Venom effects (pitch -9, distortion 0.4).<br>
+        With Google TTS key: 1M chars/month free, supports SSML timestamps for accurate visemes. Key stored in localStorage only.
+      </div>
     </div>
   </div>
 </div>
@@ -243,7 +281,8 @@ const S = {
   chat: [],
   memory: [],
   sast: { lastScan: null, findings: [], tools: {} },
-  voice: { pitch: -9, distortion: 0.4, rate: 0.95, volume: 0.85 }
+  voice: { pitch: -9, distortion: 0.4, rate: 0.95, volume: 0.85 },
+  tts: { googleKey: '', voice: 'en-US-Standard-B', rate: 0.95 }
 };
 
 const SKILLS_SEED = [
@@ -309,7 +348,7 @@ const SAST_TOOLS = [
 ];
 
 // ============ Persistence ============
-function persist(){try{localStorage.setItem('securagentx',JSON.stringify({panel:S.panel,model:S.model,provider:S.provider,config:S.config,scope:S.scope,voice:S.voice,terminal:S.terminal.slice(-50),chat:S.chat.slice(-50),memory:S.memory.slice(-50),skills:S.skills.slice(0,30),sast:S.sast}))}catch(e){console.warn('persist failed',e)}}
+function persist(){try{localStorage.setItem('securagentx',JSON.stringify({panel:S.panel,model:S.model,provider:S.provider,config:S.config,scope:S.scope,voice:S.voice,tts:S.tts,terminal:S.terminal.slice(-50),chat:S.chat.slice(-50),memory:S.memory.slice(-50),skills:S.skills.slice(0,30),sast:S.sast}))}catch(e){console.warn('persist failed',e)}}
 function load(){try{const d=JSON.parse(localStorage.getItem('securagentx')||'{}');Object.assign(S,d);S.skills=SKILLS_SEED.concat(S.skills.filter(s=>!SKILLS_SEED.find(ss=>ss.name===s.name)).slice(0,471));if(S.skills.length<501){for(let i=S.skills.length+1;i<=501;i++){S.skills.push({name:'skill.'+String(i).padStart(3,'0'),desc:'Optional pentest skill #'+i,category:'optional'})}}}catch(e){console.warn('load failed',e)}}
 load();
 
@@ -667,11 +706,87 @@ const VenomMode={
     try{if('speechSynthesis'in window)window.speechSynthesis.cancel()}catch(e){}
     // Stop the avatar's animation loop (but don't destroy it — we want to reuse it)
     if(this.head){try{this.head.stop()}catch(e){console.warn('head.stop failed',e)}}
+    // Clear the morph baseline timer
+    if(this._venomBaselineTimer){clearInterval(this._venomBaselineTimer);this._venomBaselineTimer=null}
+    // Hide TTS panel if open
+    const ttsPanel=document.getElementById('venom-tts-panel');
+    if(ttsPanel)ttsPanel.style.display='none';
     this.setStatus('offline','');
   },
   setStatus(text,dotClass){
     document.getElementById('venom-status-text').textContent=text;
     if(dotClass)document.getElementById('venom-dot-status').className='dot '+dotClass;
+  },
+  toggleTtsPanel(){
+    const p=document.getElementById('venom-tts-panel');
+    if(!p)return;
+    const isHidden=p.style.display==='none';
+    p.style.display=isHidden?'block':'none';
+    if(isHidden){
+      // Load current values
+      const keyEl=document.getElementById('venom-tts-key');
+      const voiceEl=document.getElementById('venom-tts-voice');
+      const rateEl=document.getElementById('venom-tts-rate');
+      if(keyEl)keyEl.value=S.tts.googleKey||'';
+      if(voiceEl)voiceEl.value=S.tts.voice||'en-US-Standard-B';
+      if(rateEl){rateEl.value=S.tts.rate||0.95;document.getElementById('venom-tts-rate-val').textContent=rateEl.value}
+      // Update status
+      this.updateTtsStatus();
+    }
+  },
+  updateTtsStatus(){
+    const el=document.getElementById('venom-tts-status');
+    if(!el)return;
+    if(S.tts.googleKey&&S.tts.googleKey.length>10){
+      el.innerHTML='<span style="color:var(--green)">● Google TTS active</span> — using voice '+S.tts.voice;
+    } else {
+      el.innerHTML='<span style="color:var(--yellow)">● Free voice mode</span> — StreamElements Brian + Tone.js Venom effects';
+    }
+  },
+  saveTtsKey(){
+    const keyEl=document.getElementById('venom-tts-key');
+    const voiceEl=document.getElementById('venom-tts-voice');
+    const rateEl=document.getElementById('venom-tts-rate');
+    S.tts.googleKey=(keyEl?keyEl.value:'').trim();
+    S.tts.voice=(voiceEl?voiceEl.value:'en-US-Standard-B');
+    S.tts.rate=parseFloat(rateEl?rateEl.value:0.95);
+    persist();
+    // If avatar is loaded, re-create TalkingHead with the new TTS key
+    if(this.head&&S.tts.googleKey){
+      try{
+        this.head.opt.ttsApikey=S.tts.googleKey;
+        this.head.opt.ttsEndpoint='https://texttospeech.googleapis.com/v1beta1/text:synthesize';
+        this.head.opt.ttsVoice=S.tts.voice;
+        this.head.opt.ttsLang=S.tts.voice.startsWith('en-GB')?'en-GB':'en-US';
+        this.head.opt.ttsRate=S.tts.rate;
+        console.log('TalkingHead TTS updated:',S.tts.voice);
+      }catch(e){console.warn('Failed to update TalkingHead TTS',e)}
+    } else if(this.head){
+      try{
+        this.head.opt.ttsApikey=null;
+        this.head.opt.ttsEndpoint=null;
+      }catch(e){}
+    }
+    // Show confirmation (then revert to actual status)
+    const statusEl=document.getElementById('venom-tts-status');
+    if(statusEl){
+      statusEl.style.color='var(--green)';
+      statusEl.textContent=S.tts.googleKey?'✓ Saved. Google TTS will be used for the next reply.':'✓ Cleared. Free voice will be used.';
+      setTimeout(()=>this.updateTtsStatus(),2500);
+    }
+  },
+  clearTtsKey(){
+    S.tts.googleKey='';
+    const keyEl=document.getElementById('venom-tts-key');
+    if(keyEl)keyEl.value='';
+    persist();
+    if(this.head){
+      try{
+        this.head.opt.ttsApikey=null;
+        this.head.opt.ttsEndpoint=null;
+      }catch(e){}
+    }
+    this.updateTtsStatus();
   },
   async loadAvatar(){
     const detail=document.getElementById('venom-loading-detail');
@@ -683,8 +798,14 @@ const VenomMode={
         this.venomFilter=new Tone.ToneAudioBuffer();
       }
       detail.textContent='Instantiating TalkingHead';
+      // Initialize TTS settings from saved state (if user provided a key earlier)
+      const hasGoogleTTS=S.tts&&S.tts.googleKey&&S.tts.googleKey.length>10;
       this.head=new TalkingHead(nodeAvatar,{
-        ttsEndpoint:null, ttsApikey:null,
+        ttsEndpoint:hasGoogleTTS?'https://texttospeech.googleapis.com/v1beta1/text:synthesize':null,
+        ttsApikey:hasGoogleTTS?S.tts.googleKey:null,
+        ttsVoice:hasGoogleTTS?(S.tts.voice||'en-US-Standard-B'):null,
+        ttsLang:hasGoogleTTS?(S.tts.voice&&S.tts.voice.startsWith('en-GB')?'en-GB':'en-US'):null,
+        ttsRate:hasGoogleTTS?(S.tts.rate||0.95):1.0,
         lipsyncModules:["en"],
         cameraView:"head",
         cameraDistance:-0.2,
@@ -792,20 +913,59 @@ const VenomMode={
     console.log(`Venom look applied to ${meshCount} meshes`);
     // Force mood to angry for permanent snarl
     try{this.head.setMood('angry')}catch(e){}
-    // Boost morph targets for snarl (if available)
+    // Boost morph targets for Venom snarl + visible teeth
+    // Aggressive snarl: jawForward (push jaw out), mouthSmile (corners up = snarl),
+    // noseSneer (lip curl = aggressive), mouthShrugLower (lower lip down = show teeth),
+    // jawOpen (slight, to make teeth visible)
     try{
       if(this.head.morphs){
+        const venomMorphs={
+          jawForward:0.55,        // push jaw forward — Venom underbite
+          mouthSmile:0.45,        // corners pulled up = aggressive grin
+          mouthSmileLeft:0.5,
+          mouthSmileRight:0.5,
+          noseSneerLeft:0.6,      // lip curl — exposes canine teeth
+          noseSneerRight:0.6,
+          mouthShrugLower:0.4,    // lower lip down — shows lower teeth
+          mouthPressLeft:0.3,
+          mouthPressRight:0.3,
+          jawOpen:0.15,           // slight jaw open — teeth visible
+          eyeSquintLeft:0.3,      // predatory squint
+          eyeSquintRight:0.3,
+          browInnerUp:0.4,        // angry brow
+          browDownLeft:0.5,
+          browDownRight:0.5,
+          eyeWideLeft:0.3,        // widen eyes — manic
+          eyeWideRight:0.3,
+        };
         this.head.morphs.forEach(mesh=>{
           if(mesh.morphTargetDictionary){
-            // jawForward, mouthSmile, noseSneer for snarl
-            ['jawForward','mouthSmile','noseSneerLeft','noseSneerRight','jawOpen'].forEach(name=>{
+            Object.entries(venomMorphs).forEach(([name,val])=>{
               const idx=mesh.morphTargetDictionary[name];
               if(idx!==undefined&&mesh.morphTargetInfluences){
-                mesh.morphTargetInfluences[idx]=name==='jawForward'?0.3:(name==='mouthSmile'?0.15:0.25);
+                mesh.morphTargetInfluences[idx]=val;
               }
             });
           }
         });
+        // Periodically re-apply baseline (TalkingHead resets morphs each frame)
+        if(this._venomBaselineTimer)clearInterval(this._venomBaselineTimer);
+        this._venomBaselineTimer=setInterval(()=>{
+          if(!this.head||!this.head.morphs)return;
+          this.head.morphs.forEach(mesh=>{
+            if(mesh.morphTargetDictionary){
+              Object.entries(venomMorphs).forEach(([name,val])=>{
+                const idx=mesh.morphTargetDictionary[name];
+                if(idx!==undefined&&mesh.morphTargetInfluences){
+                  // Only re-apply if not currently speaking (let visemes take over during speech)
+                  if(!this.head.isSpeaking){
+                    mesh.morphTargetInfluences[idx]=val;
+                  }
+                }
+              });
+            }
+          });
+        },200);
       }
     }catch(e){console.warn('morph boost failed',e)}
   },
@@ -842,6 +1002,40 @@ const VenomMode={
     this.speakWithBrowserTTS(text);
   },
   async speakWithVenomVoice(text){
+    // If user provided a Google TTS API key, use TalkingHead's built-in speakText()
+    // which calls Google TTS directly and produces accurate word-level timestamps
+    // for visemes. We still apply Venom mood + don't override the audio effects chain
+    // (Google TTS already produces high-quality natural voice).
+    if(S.tts.googleKey&&S.tts.googleKey.length>10&&this.head){
+      try{
+        // Ensure TalkingHead has the TTS config
+        this.head.opt.ttsApikey=S.tts.googleKey;
+        this.head.opt.ttsEndpoint='https://texttospeech.googleapis.com/v1beta1/text:synthesize';
+        this.head.opt.ttsVoice=S.tts.voice||'en-US-Standard-B';
+        this.head.opt.ttsLang=S.tts.voice&&S.tts.voice.startsWith('en-GB')?'en-GB':'en-US';
+        this.head.opt.ttsRate=S.tts.rate||0.95;
+        // Use TalkingHead.speakText — handles TTS fetch + visemes + lip-sync internally
+        this.head.speakText(text,{
+          lipsyncLang:'en',
+          avatarMood:'angry',
+          ttsLang:this.head.opt.ttsLang,
+          ttsVoice:this.head.opt.ttsVoice,
+          ttsRate:this.head.opt.ttsRate,
+          ttsPitch:-4  // Lower pitch for Venom feel
+        });
+        document.getElementById('venom-dot-tts').className='dot live';
+        // Estimate duration (~150 words per minute)
+        const estDuration=Math.max(2000,(text.split(/\s+/).length/2.5)*1000);
+        setTimeout(()=>{
+          document.getElementById('venom-dot-tts').className='dot';
+        },estDuration);
+        return;
+      }catch(e){
+        console.warn('Google TTS failed, falling back to free voice',e);
+      }
+    }
+
+    // Free voice path: StreamElements + Tone.js Venom effects
     // 1. Compute visemes from text using TalkingHead's built-in module
     let visemes=[],vtimes=[],vdurations=[],words=[],wtimes=[],wdurations=[];
     try{
@@ -863,15 +1057,12 @@ const VenomMode={
       }
     }catch(e){console.warn('viseme generation failed',e)}
 
-    // 2. Fetch TTS audio — try multiple free providers, fall back to browser TTS
+    // 2. Fetch TTS audio — try StreamElements (free), fall back to browser TTS
     let audioBuffer=null;
-    for(const provider of ['streamelements','voicerss']){
-      try{
-        audioBuffer=await this.fetchTTSAudio(text,provider);
-        if(audioBuffer)break;
-      }catch(e){
-        console.warn(`TTS ${provider} failed:`,e.message);
-      }
+    try{
+      audioBuffer=await this.fetchTTSAudio(text,'streamelements');
+    }catch(e){
+      console.warn('StreamElements TTS failed:',e.message);
     }
     if(!audioBuffer){
       // Fall back to browser SpeechSynthesis (no Venom effects, but lip-sync still works via text)
@@ -915,7 +1106,35 @@ const VenomMode={
       const ctx=this.head&&this.head.audioCtx?this.head.audioCtx:new (window.AudioContext||window.webkitAudioContext)();
       return await ctx.decodeAudioData(arr);
     }
-    throw new Error('unknown provider');
+    if(provider==='google'){
+      // Direct Google TTS API call (returns base64 audio + timepoints)
+      const url='https://texttospeech.googleapis.com/v1beta1/text:synthesize?key='+S.tts.googleKey;
+      const voice=S.tts.voice||'en-US-Standard-B';
+      const lang=voice.startsWith('en-GB')?'en-GB':'en-US';
+      const res=await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          input:{text:text.slice(0,1000)},
+          voice:{languageCode:lang,name:voice},
+          audioConfig:{audioEncoding:'MP3',speakingRate:S.tts.rate||0.95,pitch:-4}
+        })
+      });
+      if(!res.ok)throw new Error('Google TTS HTTP '+res.status);
+      const data=await res.json();
+      if(!data.audioContent)throw new Error('No audio in response');
+      const arr=this.b64ToArrayBuffer(data.audioContent);
+      const ctx=this.head&&this.head.audioCtx?this.head.audioCtx:new (window.AudioContext||window.webkitAudioContext)();
+      return await ctx.decodeAudioData(arr);
+    }
+    throw new Error('unknown provider: '+provider);
+  },
+  b64ToArrayBuffer(b64){
+    const bin=atob(b64);
+    const len=bin.length;
+    const bytes=new Uint8Array(len);
+    for(let i=0;i<len;i++)bytes[i]=bin.charCodeAt(i);
+    return bytes.buffer;
   },
   async applyVenomEffects(audioBuffer){
     // Render the audio through an OfflineContext with Tone.js effects
