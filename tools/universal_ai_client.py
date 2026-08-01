@@ -352,7 +352,7 @@ class UniversalAIClient:
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
-        timeout: int = 150,
+        timeout: int = 300,
         max_retries: int = 20,
     ):
         """
