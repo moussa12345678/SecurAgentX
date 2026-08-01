@@ -239,6 +239,43 @@ SecurAgentX builds on the original Elengenix/PentAGI foundation with significant
 
 <img src="assets/red-divider.svg" width="100%">
 
+## Dashboard TUI (Web Interface)
+
+SecurAgentX includes a full single-page web dashboard with a terminal-style UI. Open `dashboard/index.html` in any browser — no server required.
+
+### Features
+
+| Panel | Description |
+|---|---|
+| **📊 Dashboard** | Stats overview (27 AI tools, 47 registry tools, 16 available, skills count), hunt launcher with mode/YOLO toggles, quick action buttons |
+| **🤖 AI Provider** | Switch between OpenRouter, OpenAI, Anthropic, Google Gemini, Groq, Ollama — with model selection and API key input. Changes persist to localStorage. |
+| **⚡ Skills Manager** | Add/edit/delete custom skills with built-in JavaScript code editor. View 5 mandatory pre-hunt skills + all custom skills. |
+| **🔧 Tools (47)** | Browse all 27 AI tools and 47 registry tools with availability status and `apt install` commands for missing tools. |
+| **⚙️ Config Editor** | Live JSON editor for the full config file + quick settings sliders (max_steps, timeout, max_output_chars). |
+| **🎯 Scope Manager** | Add/remove scope domains. Shows advisory-only warning (non-blocking scope enforcement). |
+| **💻 Terminal** | Interactive terminal prompt with 12 commands: `help`, `config show/set`, `provider set/list`, `skills list/add`, `scope add/list`, `tools list`, `hunt`, `mode`, `clear`. |
+| **💬 AI Chat** | Premium chat UI with avatars, timestamps, typing indicator, quick suggestion chips, smart responses (SQLi/OWASP/multi-agent/port_scan), and chat history persistence. |
+| **🔍 Hunt Control** | Launch/stop hunts with live progress bar, step logging, mode selector (single/multi), YOLO toggle, and max_steps control. |
+| **🧠 Memory & KG** | Save/view/delete cross-session memories. Add/remove knowledge graph nodes. All data persists in localStorage. |
+
+### Design
+- Dark terminal theme (#0a0e14) with monospace font
+- Green/blue/red/yellow accent colors
+- Sidebar navigation + topbar status bar
+- All data persists in localStorage (survives page reload)
+- Zero console errors (tested with Playwright)
+- 100% client-side — no server, no dependencies
+
+### Usage
+```bash
+# Open in browser
+open dashboard/index.html    # macOS
+xdg-open dashboard/index.html  # Linux
+start dashboard/index.html   # Windows
+```
+
+<img src="assets/red-divider.svg" width="100%">
+
 ## CLI Commands
 
 ### Core
