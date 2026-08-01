@@ -216,7 +216,7 @@ def _tool_web_recon(target: str, path: str = "/") -> Dict[str, Any]:
         import requests
 
         url = f"http://{target.rstrip('/')}/{path.lstrip('/')}".rstrip("/")
-        resp = requests.get(url, timeout=10, verify=False, allow_redirects=True)
+        resp = requests.get(url, timeout=10, allow_redirects=True)  # nosec B501 — pentest tool, intentional
         headers = dict(resp.headers)
         return {
             "success": True,
