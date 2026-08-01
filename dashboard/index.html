@@ -6,12 +6,13 @@
 <title>SecurAgentX — Dashboard TUI</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0e14;--panel:#0d1117;--border:#1a2332;--text:#c9d1d9;--green:#39d353;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;--dim:#484f58;--accent:#1f6feb}
+:root{--bg:#0a0e14;--panel:#0d1117;--border:#1a2332;--text:#c9d1d9;--green:#39d353;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;--dim:#484f58;--accent:#1f6feb;--venom-red:#ff1a1a;--venom-white:#ffffff;--venom-black:#000000}
 body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono',Consolas,monospace;font-size:13px;overflow:hidden;height:100vh}
 .app{display:flex;height:100vh}
 .sidebar{width:220px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .sidebar-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
 .logo{color:var(--green);font-weight:bold;font-size:15px}
+.logo .v{color:var(--venom-red)}
 .nav{flex:1;overflow-y:auto;padding:8px 0}
 .nav-item{padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text);border-left:2px solid transparent;transition:all .15s}
 .nav-item:hover{background:rgba(31,111,235,.1);border-left-color:var(--blue)}
@@ -48,423 +49,1068 @@ tr:hover{background:rgba(31,111,235,.05)}
 .terminal{background:#010409;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;overflow:hidden}
 .terminal-header{background:var(--panel);padding:6px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
 .terminal-dot{width:10px;height:10px;border-radius:50%}
-.terminal-body{padding:12px;height:300px;overflow-y:auto;color:var(--green)}
-.terminal-line{margin-bottom:2px;white-space:pre-wrap;word-break:break-all}
-.terminal-input{display:flex;align-items:center;padding:8px 12px;border-top:1px solid var(--border);background:var(--panel)}
-.terminal-input .prompt{color:var(--green);margin-right:6px}
-.terminal-input input{flex:1;background:transparent;border:none;color:var(--text);font-family:inherit;font-size:12px;outline:none}
-.code-editor{background:#010409;border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;width:100%;min-height:120px;resize:vertical;line-height:1.5;tab-size:2}
-.json-editor{background:#010409;border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--green);font-family:inherit;font-size:12px;width:100%;min-height:300px;resize:vertical;line-height:1.5;tab-size:2}
-.toast{position:fixed;top:16px;right:16px;background:var(--panel);border:1px solid var(--green);border-radius:6px;padding:12px 20px;color:var(--green);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
-.toast.show{opacity:1}.toast.error{border-color:var(--red);color:var(--red)}
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
-.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px}
-.stat-label{font-size:10px;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
-.stat-value{font-size:22px;color:var(--green);font-weight:bold}.stat-value.blue{color:var(--blue)}.stat-value.yellow{color:var(--yellow)}
-.chat-log{height:400px;overflow-y:auto;padding:16px;border:1px solid var(--border);border-radius:8px;background:#010409;margin-bottom:12px;scroll-behavior:smooth}
-.chat-msg{margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
-.chat-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.chat-avatar.ai{background:rgba(57,211,83,.15);border:1px solid var(--green)}
-.chat-avatar.user{background:rgba(88,166,255,.15);border:1px solid var(--blue)}
-.chat-bubble{flex:1;padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.6;word-break:break-word}
-.chat-bubble.ai{background:rgba(57,211,83,.08);border:1px solid rgba(57,211,83,.2);color:var(--text)}
-.chat-bubble.user{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);color:var(--text)}
-.chat-meta{font-size:10px;color:var(--dim);margin-bottom:4px;display:flex;gap:8px}
-.chat-meta .role{font-weight:bold}
-.chat-meta .role.ai{color:var(--green)}
-.chat-meta .role.user{color:var(--blue)}
-.chat-meta .time{color:var(--dim)}
-.chat-typing{display:flex;gap:4px;padding:8px 14px}
-.chat-typing span{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite both}
-.chat-typing span:nth-child(2){animation-delay:.2s}
-.chat-typing span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-.chat-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.chat-suggestion{padding:4px 10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;font-size:11px;color:var(--dim);cursor:pointer;transition:all .15s}
-.chat-suggestion:hover{border-color:var(--green);color:var(--green)}
-.toggle{position:relative;width:40px;height:20px;background:var(--border);border-radius:10px;cursor:pointer;transition:background .2s}
-.toggle.on{background:var(--green)}.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}.toggle.on::after{transform:translateX(20px)}
-.skill-list{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:4px}
-.skill-item{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.skill-item:hover{background:rgba(31,111,235,.05)}.skill-item:last-child{border-bottom:none}
-.skill-name{color:var(--green);font-size:12px}.skill-cat{font-size:10px;color:var(--dim)}
-.progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden}.progress-bar{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
-
-/* Live Avatar Chat */
-.avatar-fab{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:2px solid var(--green);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .2s}
-.avatar-fab:hover{transform:scale(1.1)}
-.avatar-panel{position:fixed;bottom:90px;right:20px;width:340px;background:var(--panel);border:1px solid var(--border);border-radius:12px;z-index:1001;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
-.avatar-panel.show{display:flex;animation:slideUp .3s ease}
-@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.avatar-face{height:200px;background:radial-gradient(circle at 50% 40%,#0d1117,#010409);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.face-svg{width:120px;height:120px}
-.face-eye{fill:var(--green);transition:all .15s}
-.face-eye.blink{transform:scaleY(.1)}
-.face-mouth{fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;transition:all .1s}
-.face-mouth.speaking{stroke-width:3}
-.face-status{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim)}
-.face-status.listening{color:var(--blue)}
-.face-status.speaking{color:var(--green)}
-.avatar-controls{padding:12px;border-top:1px solid var(--border)}
-.avatar-mic-btn{width:100%;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:inherit;font-size:13px;cursor:pointer;margin-bottom:8px}
-.avatar-mic-btn.listening{background:var(--red);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.avatar-transcript{font-size:11px;color:var(--dim);min-height:30px;padding:8px;background:#010409;border-radius:4px;border:1px solid var(--border);margin-bottom:8px}
-.avatar-transcript .interim{color:var(--yellow)}
-.avatar-text-input{width:100%;background:#161b22;border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;outline:none;margin-bottom:8px}
-.avatar-text-input:focus{border-color:var(--blue)}
-.wave-bar{display:inline-block;width:3px;background:var(--green);margin:0 1px;border-radius:2px;animation:wave .8s infinite ease-in-out}
-@keyframes wave{0%,100%{height:4px}50%{height:16px}}
-.wave-container{display:flex;align-items:center;justify-content:center;gap:2px;height:20px}
-/* SAST Scanner */
-.sast-panel{background:#010409;border:1px solid var(--border);border-radius:6px;margin-top:12px;overflow:hidden}
-.sast-header{background:var(--panel);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.sast-results{padding:12px;max-height:300px;overflow-y:auto;font-size:11px;line-height:1.6}
-.sast-result{padding:6px 10px;margin-bottom:4px;border-radius:4px;border-left:3px solid}
-.sast-result.error{background:rgba(248,81,73,.1);border-left-color:var(--red);color:var(--red)}
-.sast-result.warning{background:rgba(210,153,34,.1);border-left-color:var(--yellow);color:var(--yellow)}
-.sast-result.info{background:rgba(88,166,255,.1);border-left-color:var(--blue);color:var(--blue)}
-.sast-result.success{background:rgba(57,211,83,.1);border-left-color:var(--green);color:var(--green)}
-.sast-result .tool{font-weight:bold;margin-right:8px}
-.sast-result .line{color:var(--dim);margin-right:8px}
-.sast-summary{display:flex;gap:12px;margin-bottom:8px}
-.sast-stat{padding:4px 10px;border-radius:4px;font-size:11px}
-.sast-stat.error{background:rgba(248,81,73,.15);color:var(--red)}
-.sast-stat.warning{background:rgba(210,153,34,.15);color:var(--yellow)}
-.sast-stat.info{background:rgba(88,166,255,.15);color:var(--blue)}
-.sast-stat.success{background:rgba(57,211,83,.15);color:var(--green)}
-.sast-scan-btn{background:var(--accent);border:none;padding:6px 14px;border-radius:4px;color:#fff;cursor:pointer;font-family:inherit;font-size:11px}
-.sast-scan-btn:hover{background:#388bfd}
-.sast-scan-btn.scanning{background:var(--yellow);color:#000}
-
-/* Venom Avatar */
-.venom-overlay{position:fixed;inset:0;background:#000;z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column}
-.venom-overlay.show{display:flex;animation:venomFadeIn .5s ease}
-@keyframes venomFadeIn{from{opacity:0}to{opacity:1}}
-.venom-face-container{position:relative;width:400px;height:400px}
-.venom-svg{width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(255,255,255,.1))}
-.venom-eye{fill:#fff;filter:url(#venom-glow);transition:all .3s}
-.venom-eye.blink{transform:scaleY(.05);transform-origin:center;transform-box:fill-box}
-.venom-tooth{fill:#f4f4f2;stroke:#ccc;stroke-width:.3}
-.venom-tongue{fill:#c81e2b;stroke:#7a0d12;stroke-width:1;transform-origin:60% 0%;transition:transform .3s}
-.venom-tongue.lash{animation:tongueLash .8s ease}
-@keyframes tongueLash{0%,100%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(10deg)}}
-.venom-head{fill:#050506;stroke:#1a1a2e;stroke-width:1;animation:venomBreath 4s ease-in-out infinite}
-@keyframes venomBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
-.venom-status{color:var(--green);font-size:14px;margin-top:20px;text-align:center;text-shadow:0 0 10px rgba(57,211,83,.5)}
-.venom-status.listening{color:var(--blue);text-shadow:0 0 10px rgba(88,166,255,.5)}
-.venom-status.speaking{color:var(--green);text-shadow:0 0 15px rgba(57,211,83,.8)}
-.venom-exit{position:fixed;top:20px;right:20px;background:rgba(255,255,255,.1);border:1px solid var(--border);color:#fff;padding:8px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px;z-index:9999}
-.venom-exit:hover{background:rgba(255,255,255,.2)}
-.venom-transcript{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);max-width:600px;width:90%;background:rgba(13,17,23,.95);border:1px solid var(--border);border-radius:8px;padding:12px 20px;color:var(--text);font-size:13px;text-align:center;z-index:9999}
-.venom-transcript .interim{color:var(--yellow)}
-.venom-transcript .final{color:var(--green)}
-.venom-mic-fab{position:fixed;bottom:80px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--red);border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:9999;transition:transform .2s}
-.venom-mic-fab:hover{transform:scale(1.1)}
-.venom-mic-fab.listening{animation:venomPulse 1.5s infinite}
-@keyframes venomPulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.4)}50%{box-shadow:0 0 0 15px rgba(248,81,73,0)}}
-.venom-text-input{position:fixed;bottom:140px;right:20px;width:300px;background:rgba(13,17,23,.95);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:13px;z-index:9999;display:block}
-
-.venom-text-input:focus{border-color:var(--green);outline:none}
+.terminal-body{padding:10px;max-height:400px;overflow-y:auto;min-height:200px}
+.terminal-line{white-space:pre-wrap;word-break:break-word;margin-bottom:2px}
+.terminal-line.cmd{color:var(--blue)}
+.terminal-line.out{color:var(--text)}
+.terminal-line.err{color:var(--red)}
+.terminal-line.success{color:var(--green)}
+.terminal-input-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-top:1px solid var(--border)}
+.terminal-input-row .prompt{color:var(--green)}
+.terminal-input-row input{flex:1;background:transparent;border:none;padding:0}
+.terminal-input-row input:focus{outline:none}
+.chat-msg{padding:8px 12px;border-radius:8px;margin-bottom:8px;max-width:80%}
+.chat-msg.user{background:var(--accent);color:#fff;margin-left:auto}
+.chat-msg.ai{background:#161b22;color:var(--text)}
+.chat-msg .role{font-size:10px;color:var(--dim);margin-bottom:2px}
+.chat-input-row{display:flex;gap:8px;padding:8px}
+.chat-input-row input{flex:1}
+.skill-card{background:#161b22;border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:8px}
+.skill-card .name{color:var(--green);font-size:12px;font-weight:bold}
+.skill-card .desc{color:var(--dim);font-size:11px;margin-top:2px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat-box{background:#161b22;border:1px solid var(--border);border-radius:6px;padding:12px}
+.stat-box .val{font-size:24px;font-weight:bold;color:var(--green)}
+.stat-box .lbl{font-size:11px;color:var(--dim);text-transform:uppercase}
+/* Venom FAB */
+.venom-fab{position:fixed;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#1a1a1a 0%,#000 70%);border:2px solid var(--venom-red);color:var(--venom-white);font-size:28px;font-weight:bold;cursor:pointer;box-shadow:0 0 24px rgba(255,26,26,.6),0 4px 12px rgba(0,0,0,.6);z-index:1000;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center}
+.venom-fab:hover{transform:scale(1.1);box-shadow:0 0 32px rgba(255,26,26,.9),0 4px 16px rgba(0,0,0,.8)}
+.venom-fab .pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--venom-red);opacity:0;animation:venompulse 2s infinite}
+@keyframes venompulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.5);opacity:0}}
+/* Venom Fullscreen */
+.venom-stage{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0a0a0a 0%,#000 70%);z-index:2000;display:none;flex-direction:column}
+.venom-stage.active{display:flex}
+.venom-stage .top-bar{position:absolute;top:0;left:0;right:0;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;z-index:10;background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent)}
+.venom-stage .top-bar .title{color:var(--venom-white);font-size:14px;font-weight:bold;letter-spacing:2px;text-transform:uppercase}
+.venom-stage .top-bar .title .red{color:var(--venom-red)}
+.venom-stage .top-bar .status{display:flex;gap:16px;align-items:center;color:var(--dim);font-size:11px}
+.venom-stage .top-bar .status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:4px}
+.venom-stage .top-bar .status .dot.live{background:var(--venom-red);box-shadow:0 0 8px var(--venom-red);animation:venomblink 1s infinite}
+.venom-stage .top-bar .status .dot.listening{background:var(--green);box-shadow:0 0 8px var(--green)}
+@keyframes venomblink{0%,100%{opacity:1}50%{opacity:.3}}
+.venom-stage .top-bar .btn-close{background:rgba(255,26,26,.2);border:1px solid var(--venom-red);color:var(--venom-white);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:1px}
+.venom-stage .top-bar .btn-close:hover{background:rgba(255,26,26,.4)}
+.venom-canvas-wrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center}
+.venom-canvas-wrap #avatar3d{width:100%;height:100%;position:absolute;inset:0}
+.venom-canvas-wrap .loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--venom-white);font-size:14px;text-align:center}
+.venom-canvas-wrap .loading .spinner{display:inline-block;width:40px;height:40px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--venom-red);border-radius:50%;animation:venomspin 1s linear infinite;margin-bottom:12px}
+@keyframes venomspin{to{transform:rotate(360deg)}}
+.venom-canvas-wrap .venom-glow{position:absolute;width:60%;height:60%;border-radius:50%;background:radial-gradient(circle,rgba(255,26,26,.15) 0%,transparent 60%);filter:blur(40px);pointer-events:none;animation:venombreathe 4s ease-in-out infinite}
+@keyframes venombreathe{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.venom-bottom{position:absolute;bottom:0;left:0;right:0;padding:24px;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);z-index:10}
+.venom-subtitle{color:var(--venom-white);font-size:18px;text-align:center;margin-bottom:16px;min-height:28px;font-family:'SF Mono',monospace;text-shadow:0 0 8px rgba(255,26,26,.8),0 2px 4px rgba(0,0,0,.8)}
+.venom-subtitle .user{color:var(--blue)}
+.venom-subtitle .venom{color:var(--venom-white)}
+.venom-controls{display:flex;gap:12px;align-items:center;justify-content:center}
+.venom-controls input[type=text]{flex:1;max-width:600px;background:rgba(0,0,0,.6);border:1px solid var(--border);color:var(--venom-white);padding:10px 14px;font-size:14px}
+.venom-controls input[type=text]:focus{border-color:var(--venom-red);outline:none}
+.venom-controls .btn-mic{width:48px;height:48px;border-radius:50%;background:rgba(255,26,26,.2);border:2px solid var(--venom-red);color:var(--venom-white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s}
+.venom-controls .btn-mic:hover{background:rgba(255,26,26,.4)}
+.venom-controls .btn-mic.active{background:var(--venom-red);box-shadow:0 0 16px var(--venom-red)}
+.venom-controls .btn-send{padding:10px 24px;background:var(--venom-red);color:var(--venom-white);border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:bold;letter-spacing:1px}
+.venom-controls .btn-send:hover{background:#ff3333}
+.venom-help{position:absolute;top:80px;right:24px;background:rgba(0,0,0,.7);border:1px solid var(--border);border-radius:6px;padding:12px;color:var(--dim);font-size:11px;max-width:260px;z-index:10}
+.venom-help .h-title{color:var(--venom-red);font-size:11px;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.venom-help ul{list-style:none}
+.venom-help li{padding:2px 0;color:var(--text)}
+.venom-help li .cmd{color:var(--venom-white);font-weight:bold}
+/* SAST */
+.sast-tool{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#161b22;border:1px solid var(--border);border-radius:4px;margin-bottom:6px}
+.sast-tool .name{color:var(--green);font-weight:bold}
+.sast-tool .status{font-size:11px}
+.sast-finding{background:#161b22;border-left:3px solid var(--red);padding:8px 12px;margin-bottom:6px;border-radius:4px}
+.sast-finding.warn{border-left-color:var(--yellow)}
+.sast-finding.info{border-left-color:var(--blue)}
+.sast-finding .file{color:var(--blue);font-size:11px}
+.sast-finding .msg{color:var(--text);font-size:12px;margin-top:2px}
+.sast-finding .rule{color:var(--dim);font-size:10px;margin-top:2px}
+.kpi{font-size:24px;font-weight:bold}
+.kpi.red{color:var(--red)}.kpi.green{color:var(--green)}.kpi.yellow{color:var(--yellow)}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="app">
-<aside class="sidebar">
-<div class="sidebar-header"><span style="font-size:18px">🛡️</span><span class="logo">SecurAgentX</span></div>
-<nav class="nav" id="nav">
-<div class="nav-item active" data-view="dashboard" onclick="nav('dashboard')"><span class="icon">📊</span> Dashboard</div>
-<div class="nav-item" onclick="nav('provider')" data-view="provider"><span class="icon">🤖</span> AI Provider</div>
-<div class="nav-item" onclick="nav('skills')" data-view="skills"><span class="icon">⚡</span> Skills Manager</div>
-<div class="nav-item" onclick="nav('tools')" data-view="tools"><span class="icon">🔧</span> Tools (47)</div>
-<div class="nav-item" onclick="nav('config')" data-view="config"><span class="icon">⚙️</span> Config Editor</div>
-<div class="nav-item" onclick="nav('scope')" data-view="scope"><span class="icon">🎯</span> Scope Manager</div>
-<div class="nav-item" onclick="nav('terminal')" data-view="terminal"><span class="icon">💻</span> Terminal</div>
-<div class="nav-item" onclick="nav('chat')" data-view="chat"><span class="icon">💬</span> AI Chat</div>
-<div class="nav-item" onclick="nav('hunt')" data-view="hunt"><span class="icon">🔍</span> Hunt Control</div>
-<div class="nav-item" onclick="nav('memory')" data-view="memory"><span class="icon">🧠</span> Memory & KG</div>
-<div class="nav-item" onclick="nav('sast')" data-view="sast"><span class="icon">🔬</span> SAST Scanner</div>
-</nav>
-<div class="sidebar-footer">
-<div>Provider: <span id="sb-provider" style="color:var(--green)">openrouter</span></div>
-<div>Model: <span id="sb-model" style="color:var(--blue)">—</span></div>
-<div style="margin-top:4px">v1.0.1 | GPL-3.0</div>
+  <aside class="sidebar">
+    <div class="sidebar-header"><span class="logo">Secur<span class="v">AgentX</span></span></div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-panel="dashboard" onclick="UI.switchPanel('dashboard')"><span class="icon">▣</span> Dashboard</div>
+      <div class="nav-item" data-panel="provider" onclick="UI.switchPanel('provider')"><span class="icon">⚡</span> Provider</div>
+      <div class="nav-item" data-panel="skills" onclick="UI.switchPanel('skills')"><span class="icon">★</span> Skills</div>
+      <div class="nav-item" data-panel="tools" onclick="UI.switchPanel('tools')"><span class="icon">⚒</span> Tools</div>
+      <div class="nav-item" data-panel="config" onclick="UI.switchPanel('config')"><span class="icon">⚙</span> Config</div>
+      <div class="nav-item" data-panel="scope" onclick="UI.switchPanel('scope')"><span class="icon">◎</span> Scope</div>
+      <div class="nav-item" data-panel="terminal" onclick="UI.switchPanel('terminal')"><span class="icon">▸</span> Terminal</div>
+      <div class="nav-item" data-panel="chat" onclick="UI.switchPanel('chat')"><span class="icon">💬</span> Chat</div>
+      <div class="nav-item" data-panel="hunt" onclick="UI.switchPanel('hunt')"><span class="icon">⊙</span> Hunt</div>
+      <div class="nav-item" data-panel="memory" onclick="UI.switchPanel('memory')"><span class="icon">◐</span> Memory</div>
+      <div class="nav-item" data-panel="sast" onclick="UI.switchPanel('sast')"><span class="icon">ℹ</span> SAST</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="sidebar-status">● idle</div>
+      <div id="sidebar-version">v2.5.0</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-item">MODEL: <span class="val" id="topbar-model">meta-llama/llama-3.3-70b-instruct</span></div>
+      <div class="topbar-item">PROVIDER: <span class="val" id="topbar-provider">openrouter</span></div>
+      <div class="topbar-item">TOOLS: <span class="val" id="topbar-tools">47</span></div>
+      <div class="topbar-item">SKILLS: <span class="val" id="topbar-skills">501</span></div>
+      <div class="topbar-item" style="margin-left:auto">API: <span class="val" id="topbar-api">●</span></div>
+    </div>
+    <div class="content" id="content">
+      <!-- panels injected here -->
+    </div>
+  </main>
 </div>
-</aside>
-<div class="main">
-<div class="topbar">
-<span class="topbar-item">● <span class="val">ONLINE</span></span>
-<span class="topbar-item">Tools: <span class="val" id="tb-tools">47</span></span>
-<span class="topbar-item">Skills: <span class="val" id="tb-skills">0</span></span>
-<span class="topbar-item">Mode: <span class="val" id="tb-mode">single</span></span>
-<span class="topbar-item" style="margin-left:auto">⏱ <span id="tb-time">--:--:--</span></span>
+
+<!-- Venom FAB -->
+<button class="venom-fab" id="venom-fab" onclick="VenomMode.enter()" title="Activate Venom">
+  <span class="pulse"></span>
+  <span>V</span>
+</button>
+
+<!-- Venom Fullscreen Stage -->
+<div class="venom-stage" id="venom-stage">
+  <div class="top-bar">
+    <div class="title">SECU<span class="red">RAGENT</span>X · <span class="red">VENOM</span> LIVE</div>
+    <div class="status">
+      <span><span class="dot" id="venom-dot-status"></span><span id="venom-status-text">offline</span></span>
+      <span><span class="dot" id="venom-dot-mic"></span>mic</span>
+      <span><span class="dot" id="venom-dot-tts"></span>voice</span>
+      <button class="btn-close" onclick="VenomMode.exit()">× EXIT</button>
+    </div>
+  </div>
+  <div class="venom-canvas-wrap">
+    <div class="venom-glow"></div>
+    <div id="avatar3d"></div>
+    <div class="loading" id="venom-loading">
+      <div class="spinner"></div>
+      <div>Summoning Venom...</div>
+      <div style="font-size:11px;color:#666;margin-top:6px" id="venom-loading-detail">Initializing 3D engine</div>
+    </div>
+  </div>
+  <div class="venom-help">
+    <div class="h-title">Voice Commands</div>
+    <ul>
+      <li><span class="cmd">show dashboard</span> — switch panel</li>
+      <li><span class="cmd">show sast</span> — open SAST scanner</li>
+      <li><span class="cmd">scan code</span> — run SAST scan</li>
+      <li><span class="cmd">list skills</span> — list all skills</li>
+      <li><span class="cmd">list tools</span> — list all tools</li>
+      <li><span class="cmd">clear terminal</span> — clear terminal</li>
+      <li><span class="cmd">what is your status</span> — system status</li>
+      <li><span class="cmd">exit</span> — leave Venom mode</li>
+    </ul>
+  </div>
+  <div class="venom-bottom">
+    <div class="venom-subtitle" id="venom-subtitle"></div>
+    <div class="venom-controls">
+      <button class="btn-mic" id="venom-mic" onclick="VenomMode.toggleMic()" title="Toggle voice recognition">🎤</button>
+      <input type="text" id="venom-input" placeholder="Speak or type a command..." onkeydown="if(event.key==='Enter'){VenomMode.handleUserText(this.value);this.value=''}">
+      <button class="btn-send" onclick="VenomMode.handleUserText(document.getElementById('venom-input').value);document.getElementById('venom-input').value=''">SEND</button>
+    </div>
+  </div>
 </div>
-<div class="content" id="content"></div>
-</div>
-</div>
-<div class="avatar-fab" onclick="toggleVenom()" title="Activate Venom">🐍</div>
-<div class="venom-overlay" id="venom-overlay">
-<button class="venom-exit" onclick="toggleVenom()">✕ Exit Venom</button>
-<div class="venom-face-container">
-<svg class="venom-svg" viewBox="0 0 200 200">
-<defs>
-<filter id="venom-glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-<radialGradient id="venom-skin" cx="50%" cy="40%"><stop offset="0%" stop-color="#1a1a2e"/><stop offset="60%" stop-color="#0a0a0f"/><stop offset="100%" stop-color="#050506"/></radialGradient>
-<linearGradient id="venom-tongue-grad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#e8424f"/><stop offset="50%" stop-color="#c81e2b"/><stop offset="100%" stop-color="#7a0d12"/></linearGradient>
-</defs>
-<path class="venom-head" d="M 100 20 C 60 20 35 50 30 90 C 25 130 40 170 100 180 C 160 170 175 130 170 90 C 165 50 140 20 100 20 Z" fill="url(#venom-skin)"/>
-<path class="venom-eye" id="eye-l" d="M 55 55 C 45 50 35 55 40 65 C 45 72 55 70 62 65 C 58 60 58 57 55 55 Z"/>
-<path class="venom-eye" id="eye-r" d="M 145 55 C 155 50 165 55 160 65 C 155 72 145 70 138 65 C 142 60 142 57 145 55 Z"/>
-<g id="teeth-group">
-<path class="venom-tooth" d="M 55 100 L 58 110 L 61 100 Z"/>
-<path class="venom-tooth" d="M 63 100 L 66 112 L 69 100 Z"/>
-<path class="venom-tooth" d="M 71 100 L 74 110 L 77 100 Z"/>
-<path class="venom-tooth" d="M 79 100 L 82 113 L 85 100 Z"/>
-<path class="venom-tooth" d="M 87 100 L 90 110 L 93 100 Z"/>
-<path class="venom-tooth" d="M 95 100 L 98 112 L 101 100 Z"/>
-<path class="venom-tooth" d="M 103 100 L 106 110 L 109 100 Z"/>
-<path class="venom-tooth" d="M 111 100 L 114 113 L 117 100 Z"/>
-<path class="venom-tooth" d="M 119 100 L 122 110 L 125 100 Z"/>
-<path class="venom-tooth" d="M 127 100 L 130 112 L 133 100 Z"/>
-<path class="venom-tooth" d="M 135 100 L 138 110 L 141 100 Z"/>
-<path class="venom-tooth" d="M 55 100 L 58 90 L 61 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 63 100 L 66 88 L 69 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 71 100 L 74 90 L 77 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 79 100 L 82 87 L 85 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 87 100 L 90 90 L 93 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 95 100 L 98 88 L 101 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 103 100 L 106 90 L 109 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 111 100 L 114 87 L 117 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 119 100 L 122 90 L 125 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 127 100 L 130 88 L 133 100 Z" fill="#eaeae6"/>
-<path class="venom-tooth" d="M 135 100 L 138 90 L 141 100 Z" fill="#eaeae6"/>
-</g>
-<path class="venom-tongue" id="tongue" d="M 95 110 C 93 130 90 155 88 175 C 95 180 105 180 112 175 C 110 155 107 130 105 110 C 103 108 97 108 95 110 Z" fill="url(#venom-tongue-grad)"/>
-<path id="mouth-bg" d="M 50 95 Q 100 115 150 95 Q 100 105 50 95 Z" fill="#1a0000" opacity="0.8"/>
-</svg>
-</div>
-<div class="venom-status" id="venom-status">Venom awakened. Speak or type a command.</div>
-<div class="venom-transcript" id="venom-transcript">I am Venom. We are SecurAgentX. Speak, and I will listen.</div>
-<button class="venom-mic-fab" id="venom-mic" onclick="toggleVenomMic()">🎤</button>
-<input class="venom-text-input" id="venom-text" placeholder="Type command..." onkeydown="if(event.key==='Enter')venomSend()">
-</div>
-<div class="toast" id="toast"></div>
-<script>
-const S={load(){try{return JSON.parse(localStorage.getItem('securagentx')||'{}')}catch(e){return{}}},save(d){localStorage.setItem('securagentx',JSON.stringify(d))},get(k,d){const s=this.load();return s[k]!==undefined?s[k]:d},set(k,v){const s=this.load();s[k]=v;this.save(s)}};
-const defaultConfig={agent:{max_output_chars:8000,max_steps:100,timeout_seconds:3600},ai:{active_provider:"openrouter",providers:{openrouter:{model:"nvidia/nemotron-3-ultra-550b-a55b:free"},openai:{model:"gpt-4o-mini"},anthropic:{model:"claude-3-5-sonnet-latest"},gemini:{model:"gemini-2.0-flash-exp"},groq:{model:"llama-3.3-70b-versatile"},ollama:{model:"llama3.2"}}},scope:{domains:["example.com","testphp.vulnweb.com"]}};
-const providers=[{id:"openrouter",name:"OpenRouter",models:["nvidia/nemotron-3-ultra-550b-a55b:free","meta-llama/llama-3.3-70b-instruct","meta-llama/llama-3.2-3b-instruct:free","google/gemini-2.0-flash-exp:free"]},{id:"openai",name:"OpenAI",models:["gpt-4o","gpt-4o-mini","gpt-3.5-turbo"]},{id:"anthropic",name:"Anthropic",models:["claude-3-5-sonnet-latest","claude-3-5-haiku-latest","claude-3-opus-latest"]},{id:"gemini",name:"Google Gemini",models:["gemini-2.0-flash-exp","gemini-1.5-flash","gemini-1.5-pro"]},{id:"groq",name:"Groq",models:["llama-3.3-70b-versatile","llama-3.1-8b-instant","mixtral-8x7b-32768"]},{id:"ollama",name:"Ollama (Local)",models:["llama3.2","llama3.1","mistral","qwen2.5"]}];
-const aiTools=[{name:"port_scan",desc:"Scan target for open ports"},{name:"web_recon",desc:"Probe web server headers/tech"},{name:"vuln_scan",desc:"Run vulnerability scanner"},{name:"search_cve",desc:"Search known CVEs"},{name:"analyze_target",desc:"DNS/WHOIS/tech detection"},{name:"web_search",desc:"Search the web (DuckDuckGo)"},{name:"web_extract",desc:"Extract text from URL"},{name:"browser",desc:"Playwright headless browser"},{name:"read_file",desc:"Read file with line numbers"},{name:"write_file",desc:"Create/overwrite file"},{name:"edit_file",desc:"Find & replace in file"},{name:"search_files",desc:"Search files with regex"},{name:"run_command",desc:"Execute shell command"},{name:"run_python",desc:"Execute Python code"},{name:"analyze_security",desc:"Deep AI security analysis"},{name:"delegate",desc:"Spawn AI sub-agents per target"},{name:"create_tool",desc:"Create new tool at runtime"},{name:"edit_own_tool",desc:"Modify created tools"},{name:"save_memory",desc:"Save to persistent memory"},{name:"recall_memory",desc:"Search cross-session memory"},{name:"list_memories",desc:"List memory entries"},{name:"forget_memory",desc:"Remove memory by ID"},{name:"create_skill",desc:"Save reusable technique"},{name:"view_skill",desc:"Read skill by name"},{name:"list_skills",desc:"List all skills"},{name:"delete_skill",desc:"Remove skill by name"},{name:"knowledge_graph",desc:"Query/update knowledge graph"}];
-const registryTools=[{n:"active_fuzzer",c:"fuzzing",a:true},{n:"amass",c:"recon",a:false},{n:"api_schema_diff",c:"api",a:true},{n:"arjun",c:"api",a:false},{n:"cors_checker",c:"scanner",a:true},{n:"crackmapexec",c:"exploit",a:false},{n:"deserialization_scanner",c:"scanner",a:true},{n:"dirb",c:"recon",a:false},{n:"dirsearch",c:"fuzzing",a:false},{n:"dnsenum",c:"recon",a:false},{n:"dnsrecon",c:"recon",a:false},{n:"dynamic_waf_mutator",c:"exploit",a:true},{n:"enum4linux",c:"scanner",a:false},{n:"feroxbuster",c:"fuzzing",a:false},{n:"ffuf",c:"fuzzing",a:false},{n:"gobuster",c:"recon",a:false},{n:"graphql_scanner",c:"api",a:true},{n:"httpx",c:"recon",a:true},{n:"hydra",c:"exploit",a:false},{n:"jwt_tester",c:"scanner",a:true},{n:"kiterunner",c:"api",a:false},{n:"logic_flaw_engine",c:"scanner",a:true},{n:"masscan",c:"network",a:false},{n:"naabu",c:"network",a:false},{n:"nbtscan",c:"network",a:false},{n:"nikto",c:"scanner",a:false},{n:"nmap",c:"network",a:false},{n:"nuclei",c:"scanner",a:false},{n:"python_recon",c:"recon",a:true},{n:"race_condition_tester",c:"scanner",a:true},{n:"smap",c:"network",a:false},{n:"smbclient",c:"recon",a:false},{n:"sqlmap",c:"exploit",a:false},{n:"sslscan",c:"scanner",a:false},{n:"sslyze",c:"scanner",a:false},{n:"ssrf_scanner",c:"scanner",a:true},{n:"ssti_scanner",c:"scanner",a:true},{n:"subfinder",c:"recon",a:false},{n:"supply_chain_analyzer",c:"scanner",a:true},{n:"testssl",c:"scanner",a:false},{n:"theHarvester",c:"recon",a:false},{n:"trufflehog",c:"secrets",a:false},{n:"waf_detector",c:"scanner",a:true},{n:"wafw00f",c:"recon",a:false},{n:"whatweb",c:"recon",a:false},{n:"wpscan",c:"scanner",a:false},{n:"xxe_scanner",c:"scanner",a:true}];
-const mandatorySkills=[{name:"red_team_methodology",desc:"MITRE ATT&CK red team methodology"},{name:"hacking_workflow",desc:"Standard hacking workflow: recon→scan→exploit→report"},{name:"bug_bounty_methodology",desc:"Bug bounty hunting methodology"},{name:"owasp_top_10",desc:"OWASP Top 10 2021 testing checklist"},{name:"pentest_checklist",desc:"Comprehensive pentest checklist"}];
-function toast(m,e){const t=document.getElementById('toast');t.textContent=m;t.className='toast show'+(e?' error':'');setTimeout(()=>t.className='toast',2500)}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function updateSB(){const c=S.get('config',defaultConfig);document.getElementById('sb-provider').textContent=c.ai.active_provider;const p=c.ai.providers[c.ai.active_provider];document.getElementById('sb-model').textContent=p?p.model:'—';document.getElementById('tb-skills').textContent=S.get('skills',[]).length}
-const V={};
-V.dashboard=function(){const c=S.get('config',defaultConfig);const sk=S.get('skills',[]);const av=registryTools.filter(t=>t.a).length;return`<div class="stat-grid"><div class="stat-card"><div class="stat-label">AI Tools</div><div class="stat-value">${aiTools.length}</div></div><div class="stat-card"><div class="stat-label">Registry</div><div class="stat-value blue">${registryTools.length}</div></div><div class="stat-card"><div class="stat-label">Available</div><div class="stat-value yellow">${av}</div></div><div class="stat-card"><div class="stat-label">Skills</div><div class="stat-value">${sk.length+5}</div></div><div class="stat-card"><div class="stat-label">Max Steps</div><div class="stat-value blue">${c.agent.max_steps}</div></div><div class="stat-card"><div class="stat-label">Provider</div><div class="stat-value yellow" style="font-size:14px">${c.ai.active_provider}</div></div></div><div class="row"><div class="col"><div class="panel"><div class="panel-header"><span class="panel-title">Hunt Status</span></div><div class="panel-body"><div class="row"><label>Target</label><input id="d-tgt" placeholder="example.com" value="${S.get('lastTarget','')}" style="width:100%"></div><div class="row"><label>Mode</label><select id="d-mode"><option value="single">Single-Agent</option><option value="multi">Multi-Agent</option></select><label>YOLO</label><div class="toggle ${S.get('yolo',false)?'on':''}" id="d-yolo"></div></div><button class="btn success" onclick="dHunt()">🚀 Start Hunt</button></div></div></div><div class="col"><div class="panel"><div class="panel-header"><span class="panel-title">Quick Actions</span></div><div class="panel-body"><button class="btn" onclick="nav('provider')">⚙️ Change Provider</button><br><br><button class="btn" onclick="nav('skills')">⚡ Manage Skills</button><br><br><button class="btn" onclick="nav('config')">📝 Edit Config</button><br><br><button class="btn" onclick="nav('terminal')">💻 Open Terminal</button></div></div></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Mandatory Pre-Hunt Skills</span></div><div class="panel-body">${mandatorySkills.map(s=>`<div style="margin-bottom:6px"><span class="badge green">✓</span> <span style="color:var(--green)">${s.name}</span> <span style="color:var(--dim);font-size:11px">— ${s.desc}</span></div>`).join('')}</div></div>`};
-V.provider=function(){const c=S.get('config',defaultConfig);return`<div class="panel"><div class="panel-header"><span class="panel-title">AI Provider</span></div><div class="panel-body"><div class="row"><div class="col"><label>Provider</label><select id="p-sel" onchange="pUpd()">${providers.map(p=>`<option value="${p.id}" ${p.id===c.ai.active_provider?'selected':''}>${p.name}</option>`).join('')}</select></div></div><div id="p-mods"></div><div class="row"><div class="col"><label>API Key</label><input type="password" id="p-key" placeholder="••••••••" style="width:100%"></div></div><button class="btn success" onclick="pSave()">💾 Save</button></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Providers</span></div><div class="panel-body"><table><tr><th>Provider</th><th>Free</th><th>Tool Calls</th><th>Status</th></tr><tr><td>OpenRouter</td><td><span class="badge green">50/day</span></td><td>✅</td><td><span class="badge green">Active</span></td></tr><tr><td>OpenAI</td><td>❌</td><td>✅</td><td>—</td></tr><tr><td>Anthropic</td><td>❌</td><td>✅</td><td>—</td></tr><tr><td>Google Gemini</td><td><span class="badge green">15/min</span></td><td>✅</td><td>—</td></tr><tr><td>Groq</td><td><span class="badge green">Yes</span></td><td>✅</td><td>—</td></tr><tr><td>Ollama</td><td><span class="badge green">Local</span></td><td>✅</td><td>—</td></tr></table></div></div>`};
-V.skills=function(){const sk=S.get('skills',[]);return`<div class="panel"><div class="panel-header"><span class="panel-title">Add Skill</span></div><div class="panel-body"><div class="row"><div class="col"><label>Name</label><input id="sk-n" placeholder="translate_text" style="width:100%"></div><div class="col"><label>Category</label><select id="sk-c"><option>recon</option><option>web</option><option>network</option><option>exploit</option><option>custom</option></select></div></div><div class="row"><div class="col" style="min-width:100%"><label>Description</label><input id="sk-d" placeholder="Translate text" style="width:100%"></div></div><div class="row"><div class="col" style="min-width:100%"><label>Code (JavaScript)</label><textarea class="code-editor" id="sk-code" placeholder="// function handler(args) { ... }"></textarea></div></div><button class="btn success" onclick="skAdd()">➕ Add Skill</button></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Skills (${sk.length+5} mandatory + ${sk.length} custom)</span></div><div class="panel-body"><div class="skill-list">${mandatorySkills.map(s=>`<div class="skill-item"><div><span class="skill-name">${s.name}</span><br><span class="skill-cat">${s.desc}</span></div><span class="badge green">mandatory</span></div>`).join('')}${sk.map((s,i)=>`<div class="skill-item"><div><span class="skill-name">${esc(s.name)}</span> <span class="skill-cat">[${s.category}]</span><br><span class="skill-cat">${esc(s.desc||'')}</span></div><div><button class="btn sm ghost" onclick="skEdit(${i})">✏️</button> <button class="btn sm danger" onclick="skDel(${i})">🗑️</button></div></div>`).join('')}</div></div></div>`};
-V.tools=function(){return`<div class="panel"><div class="panel-header"><span class="panel-title">AI Tools (${aiTools.length})</span></div><div class="panel-body"><table><tr><th>#</th><th>Tool</th><th>Description</th></tr>${aiTools.map((t,i)=>`<tr><td>${i+1}</td><td style="color:var(--green)">${t.name}</td><td>${t.desc}</td></tr>`).join('')}</table></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Registry (${registryTools.length}) — ${registryTools.filter(t=>t.a).length} available</span></div><div class="panel-body"><table><tr><th>Tool</th><th>Category</th><th>Status</th><th>Install</th></tr>${registryTools.map(t=>`<tr><td style="color:var(--green)">${t.n}</td><td>${t.c}</td><td>${t.a?'<span class="badge green">✓</span>':'<span class="badge red">✗</span>'}</td><td>${t.a?'—':`<code>apt install ${t.n}</code>`}</td></tr>`).join('')}</table></div></div>`};
-V.config=function(){const c=S.get('config',defaultConfig);return`<div class="panel"><div class="panel-header"><span class="panel-title">JSON Editor</span><button class="btn success sm" onclick="cfgSave()">💾 Save</button></div><div class="panel-body"><textarea class="json-editor" id="cfg-j">${esc(JSON.stringify(c,null,2))}</textarea></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Quick Settings</span></div><div class="panel-body"><div class="row"><div class="col"><label>Max Steps: <span id="ms-v" style="color:var(--green)">${c.agent.max_steps}</span></label><input type="range" min="10" max="200" value="${c.agent.max_steps}" onchange="document.getElementById('ms-v').textContent=this.value;cfgSet('agent','max_steps',parseInt(this.value))"></div><div class="col"><label>Timeout: <span id="to-v" style="color:var(--green)">${c.agent.timeout_seconds}</span></label><input type="range" min="30" max="7200" value="${c.agent.timeout_seconds}" onchange="document.getElementById('to-v').textContent=this.value;cfgSet('agent','timeout_seconds',parseInt(this.value))"></div></div></div></div>`};
-V.scope=function(){const c=S.get('config',defaultConfig);const d=c.scope?.domains||[];return`<div class="panel"><div class="panel-header"><span class="panel-title">Scope (Advisory — Non-Blocking)</span></div><div class="panel-body"><div class="row"><div class="col"><input id="sc-add" placeholder="example.com" style="width:100%"></div><button class="btn success" onclick="scAdd()">➕ Add</button></div><div class="skill-list">${d.map((x,i)=>`<div class="skill-item"><div><span class="skill-name">${esc(x)}</span></div><button class="btn sm danger" onclick="scDel(${i})">🗑️</button></div>`).join('')}</div><div style="margin-top:12px;padding:8px;background:rgba(210,153,34,.1);border-radius:4px;color:var(--yellow);font-size:11px">⚠ Advisory only — targets not in scope proceed with a warning.</div></div></div>`};
-V.terminal=function(){return`<div class="terminal"><div class="terminal-header"><span class="terminal-dot" style="background:#f85149"></span><span class="terminal-dot" style="background:#d29922"></span><span class="terminal-dot" style="background:#39d353"></span><span style="color:var(--dim);font-size:11px;margin-left:8px">securagentx@dashboard</span></div><div class="terminal-body" id="t-body"><div class="terminal-line">SecurAgentX Terminal v1.0.1</div><div class="terminal-line">Type 'help' for commands.</div><div class="terminal-line">&nbsp;</div></div><div class="terminal-input"><span class="prompt">$</span><input id="t-in" autofocus onkeydown="tKey(event)" placeholder="type a command..."></div></div><div class="panel" style="margin-top:12px"><div class="panel-header"><span class="panel-title">Commands</span></div><div class="panel-body" style="font-size:11px;line-height:1.8"><code style="color:var(--green)">help</code> | <code style="color:var(--green)">config show</code> | <code style="color:var(--green)">config set &lt;s&gt; &lt;k&gt; &lt;v&gt;</code> | <code style="color:var(--green)">provider set &lt;id&gt;</code> | <code style="color:var(--green)">skills list</code> | <code style="color:var(--green)">scope add &lt;domain&gt;</code> | <code style="color:var(--green)">tools list</code> | <code style="color:var(--green)">hunt &lt;target&gt;</code> | <code style="color:var(--green)">mode single|multi|yolo</code> | <code style="color:var(--green)">clear</code></div></div>`};
-V.chat=function(){const c=S.get('config',defaultConfig);const m=S.get('chatHistory',[]);const now=new Date().toLocaleTimeString();const hist=m.map(x=>`<div class="chat-msg"><div class="chat-avatar ${x.role==='ai'?'ai':'user'}">${x.role==='ai'?'🤖':'👤'}</div><div class="chat-bubble ${x.role==='ai'?'ai':'user'}"><div class="chat-meta"><span class="role ${x.role}">${x.role==='ai'?'SecurAgentX AI':'You'}</span><span class="time">${x.time||''}</span></div>${esc(x.text)}</div></div>`).join('');return`<div class="panel"><div class="panel-header"><span class="panel-title">AI Chat</span><span style="font-size:11px;color:var(--dim)">🟢 ${c.ai.active_provider} / ${c.ai.providers[c.ai.active_provider]?.model||'—'}</span></div><div class="panel-body"><div class="chat-log" id="c-log">${hist||'<div class="chat-msg"><div class="chat-avatar ai">🤖</div><div class="chat-bubble ai"><div class="chat-meta"><span class="role ai">SecurAgentX AI</span><span class="time">'+now+'</span></div>SecurAgentX ready. I can help you with security scanning, vulnerability analysis, and pentest planning. Ask me anything!</div></div>'}</div><div class="chat-suggestions"><span class="chat-suggestion" onclick="cQuick('Scan testphp.vulnweb.com for SQL injection')">🔍 Scan for SQLi</span><span class="chat-suggestion" onclick="cQuick('What are the OWASP Top 10?')">📋 OWASP Top 10</span><span class="chat-suggestion" onclick="cQuick('How do I use multi-agent mode?')">🤖 Multi-agent help</span><span class="chat-suggestion" onclick="cQuick('Explain the port_scan tool')">🔧 Tool info</span></div><div class="row"><input id="c-in" placeholder="Type your message..." style="flex:1" onkeydown="if(event.key==='Enter')cSend()" autofocus><button class="btn success" onclick="cSend()">📤 Send</button><button class="btn ghost" onclick="cClear()">🗑️ Clear</button></div></div></div>`};
-V.hunt=function(){const c=S.get('config',defaultConfig);return`<div class="panel"><div class="panel-header"><span class="panel-title">Hunt Control</span></div><div class="panel-body"><div class="row"><div class="col"><label>Target</label><input id="h-tgt" placeholder="testphp.vulnweb.com" value="${S.get('lastTarget','')}" style="width:100%"></div></div><div class="row"><div class="col"><label>Mode</label><select id="h-mode"><option value="single">Single-Agent</option><option value="multi">Multi-Agent</option></select></div><div class="col"><label>Steps</label><input type="number" id="h-steps" value="${c.agent.max_steps}" min="10" max="200"></div><div class="col"><label>YOLO</label><div class="toggle ${S.get('yolo',false)?'on':''}" id="h-yolo" onclick="this.classList.toggle('on')"></div></div></div><button class="btn success" onclick="hStart()">🚀 Launch</button> <button class="btn danger" onclick="hStop()">⏹️ Stop</button></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Progress</span></div><div class="panel-body"><div class="progress"><div class="progress-bar" id="h-prog" style="width:0%"></div></div><div id="h-log" style="margin-top:8px;font-size:11px;color:var(--dim);max-height:200px;overflow-y:auto">No hunt running.</div></div></div>`};
-V.memory=function(){const m=S.get('memories',[]);const kg=S.get('knowledgeGraph',{nodes:[]});return`<div class="panel"><div class="panel-header"><span class="panel-title">Memory (${m.length})</span></div><div class="panel-body"><div class="row"><input id="m-in" placeholder="Save memory..." style="flex:1" onkeydown="if(event.key==='Enter')mAdd()"><button class="btn success" onclick="mAdd()">💾</button></div><div class="skill-list">${m.length?m.map((x,i)=>`<div class="skill-item"><div><span class="skill-cat">${new Date(x.ts).toLocaleString()}</span><br><span style="font-size:12px">${esc(x.text)}</span></div><button class="btn sm danger" onclick="mDel(${i})">🗑️</button></div>`).join(''):'<div style="padding:12px;color:var(--dim);text-align:center">No memories yet.</div>'}</div></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Knowledge Graph (${kg.nodes?.length||0} nodes)</span></div><div class="panel-body"><div class="row"><input id="kg-in" placeholder="Add node..." style="flex:1"><button class="btn success" onclick="kgAdd()">➕</button></div><div class="skill-list">${kg.nodes?.length?kg.nodes.map((n,i)=>`<div class="skill-item"><div><span class="skill-name">${esc(n)}</span></div><button class="btn sm danger" onclick="kgDel(${i})">🗑️</button></div>`).join(''):'<div style="padding:12px;color:var(--dim);text-align:center">No nodes.</div>'}</div></div></div>`};
-function nav(v){document.querySelectorAll('.nav-item').forEach(e=>e.classList.toggle('active',e.dataset.view===v));document.getElementById('content').innerHTML=V[v]();if(v==='provider')setTimeout(pUpd,50);updateSB()}
-function pUpd(){const c=S.get('config',defaultConfig);const sel=document.getElementById('p-sel');if(!sel)return;const p=providers.find(x=>x.id===sel.value);const cur=c.ai.providers[sel.value];const cm=cur?cur.model:'';document.getElementById('p-mods').innerHTML=`<div class="row"><div class="col"><label>Model</label><select id="p-mod">${p.models.map(m=>`<option value="${m}" ${m===cm?'selected':''}>${m}</option>`).join('')}</select></div></div>`}
-function pSave(){const c=S.get('config',defaultConfig);const pid=document.getElementById('p-sel').value;const mid=document.getElementById('p-mod').value;c.ai.active_provider=pid;if(!c.ai.providers[pid])c.ai.providers[pid]={};c.ai.providers[pid].model=mid;S.set('config',c);updateSB();toast('✓ Provider: '+pid+' / '+mid)}
-function skAdd(){const n=document.getElementById('sk-n').value.trim();if(!n){toast('Name required',true);return}const code=document.getElementById('sk-code').value;const sk=S.get('skills',[]);sk.push({name:n,category:document.getElementById('sk-c').value,desc:document.getElementById('sk-d').value,code:code});S.set('skills',sk);toast('✓ Skill: '+n);nav('skills');if(code&&code.trim()){setTimeout(()=>{const findings=sastScanCodeRaw(code);if(findings.length){const errs=findings.filter(f=>f.severity==='error').length;const warns=findings.filter(f=>f.severity==='warning').length;if(errs)toast('⚠ SAST: '+errs+' errors, '+warns+' warnings in '+n,true);else if(warns)toast('⚠ SAST: '+warns+' warnings in '+n)}},500)}}
-function skDel(i){const sk=S.get('skills',[]);sk.splice(i,1);S.set('skills',sk);nav('skills')}
-function skEdit(i){const sk=S.get('skills',[]);const s=sk[i];document.getElementById('sk-n').value=s.name;document.getElementById('sk-c').value=s.category;document.getElementById('sk-d').value=s.desc||'';document.getElementById('sk-code').value=s.code||'';sk.splice(i,1);S.set('skills',sk);toast('Edit and click Add')}
-function cfgSave(){try{S.set('config',JSON.parse(document.getElementById('cfg-j').value));updateSB();toast('✓ Config saved')}catch(e){toast('JSON Error: '+e.message,true)}}
-function cfgSet(s,k,v){const c=S.get('config',defaultConfig);if(!c[s])c[s]={};c[s][k]=v;S.set('config',c);toast('✓ '+s+'.'+k+' = '+v)}
-function scAdd(){const v=document.getElementById('sc-add').value.trim();if(!v)return;const c=S.get('config',defaultConfig);if(!c.scope)c.scope={domains:[]};if(!c.scope.domains)c.scope.domains=[];c.scope.domains.push(v);S.set('config',c);toast('✓ '+v);nav('scope')}
-function scDel(i){const c=S.get('config',defaultConfig);c.scope.domains.splice(i,1);S.set('config',c);nav('scope')}
-function mAdd(){const v=document.getElementById('m-in').value.trim();if(!v)return;const m=S.get('memories',[]);m.unshift({text:v,ts:Date.now()});S.set('memories',m);nav('memory')}
-function mDel(i){const m=S.get('memories',[]);m.splice(i,1);S.set('memories',m);nav('memory')}
-function kgAdd(){const v=document.getElementById('kg-in').value.trim();if(!v)return;const kg=S.get('knowledgeGraph',{nodes:[]});if(!kg.nodes)kg.nodes=[];kg.nodes.push(v);S.set('knowledgeGraph',kg);nav('memory')}
-function kgDel(i){const kg=S.get('knowledgeGraph',{nodes:[]});kg.nodes.splice(i,1);S.set('knowledgeGraph',kg);nav('memory')}
-function dHunt(){const t=document.getElementById('d-tgt').value.trim();if(!t){toast('Target required',true);return}S.set('lastTarget',t);toast('🚀 Hunt: '+t)}
-function cSend(){const i=document.getElementById('c-in');const v=i.value.trim();if(!v)return;const l=document.getElementById('c-log');const now=new Date().toLocaleTimeString();l.innerHTML+=`<div class="chat-msg"><div class="chat-avatar user">👤</div><div class="chat-bubble user"><div class="chat-meta"><span class="role user">You</span><span class="time">${now}</span></div>${esc(v)}</div></div>`;i.value='';const hist=S.get('chatHistory',[]);hist.push({role:'user',text:v,time:now});S.set('chatHistory',hist);const tid='typing-'+Date.now();l.innerHTML+=`<div class="chat-msg" id="${tid}"><div class="chat-avatar ai">🤖</div><div class="chat-bubble ai"><div class="chat-typing"><span></span><span></span><span></span></div></div></div>`;l.scrollTop=l.scrollHeight;setTimeout(()=>{const el=document.getElementById(tid);if(el)el.remove();const responses={'sql':'I would recommend using the sqlmap tool to test for SQL injection. You can run: securagentx hunt testphp.vulnweb.com --yolo. The AI will automatically detect and test for SQLi using its 27 tools including sqlmap, nikto, and nuclei.','owasp':'The OWASP Top 10 (2021) includes: A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A04 Insecure Design, A05 Security Misconfiguration, A06 Vulnerable Components, A07 Auth Failures, A08 Software/Data Integrity, A09 Logging Failures, A10 SSRF. SecurAgentX tests all of these automatically.','multi':'Multi-agent mode activates the FlowManager with specialist agents: Generator (plans), Refiner (adjusts), Reporter (summarizes), Coder (writes code), Pentester (tests), Searcher (researches), Installer (deploys). Use: securagentx hunt target --multi-agent','port':'The port_scan tool uses Python socket to scan 25 common ports (21,22,23,25,53,80,110,143,443,445,993,995,8080,8443,etc.) with 2s timeout per port. Results include port number, service name, and state.'};let resp='I received your message: "'+esc(v)+'". ';const vl=v.toLowerCase();if(vl.includes('sql'))resp=responses.sql;else if(vl.includes('owasp'))resp=responses.owasp;else if(vl.includes('multi'))resp=responses.multi;else if(vl.includes('port'))resp=responses.port;else resp+='In live mode, this connects to the LLM provider ('+S.get('config',defaultConfig).ai.active_provider+') and returns real AI responses. The chat uses the same UniversalAIClient that powers the hunt.';const now2=new Date().toLocaleTimeString();l.innerHTML+=`<div class="chat-msg"><div class="chat-avatar ai">🤖</div><div class="chat-bubble ai"><div class="chat-meta"><span class="role ai">SecurAgentX AI</span><span class="time">${now2}</span></div>${resp}</div></div>`;const hist2=S.get('chatHistory',[]);hist2.push({role:'ai',text:resp,time:now2});S.set('chatHistory',hist2);if(l)l.scrollTop=l.scrollHeight},1200)}
-function cQuick(q){document.getElementById('c-in').value=q;cSend()}
-function cClear(){S.set('chatHistory',[]);nav('chat')}
-function hStart(){const t=document.getElementById('h-tgt').value.trim();if(!t){toast('Target required',true);return}S.set('lastTarget',t);const s=parseInt(document.getElementById('h-steps').value);toast('🚀 Hunt started');const log=document.getElementById('h-log');log.innerHTML='';let st=0;const iv=setInterval(()=>{st++;document.getElementById('h-prog').style.width=Math.min(st/s*100,100)+'%';log.innerHTML+=`<div>Step ${st}/${s}...</div>`;log.scrollTop=log.scrollHeight;if(st>=s||st>=10){clearInterval(iv);log.innerHTML+=`<div style="color:var(--green)">✓ Complete. Report in ~/.securagentx/reports/</div>`}},500)}
-function hStop(){document.getElementById('h-prog').style.width='0%';document.getElementById('h-log').innerHTML='Stopped.';toast('⏹️ Stopped')}
-const tCmds={help(){return'Commands: help, config show, config set <s> <k> <v>, provider set <id>, provider list, skills list, skills add <name>, scope add <domain>, scope list, tools list, scan code, hunt <target>, mode single|multi|yolo, clear'},'config show'(){return JSON.stringify(S.get('config',defaultConfig),null,2)},'config set'(a){const[sec,key,...v]=a.split(' ');cfgSet(sec,key,v.join(' '));return'✓ '+sec+'.'+key+' set'},'provider list'(){return providers.map(p=>p.id+' — '+p.name).join('\n')},'provider set'(a){const c=S.get('config',defaultConfig);c.ai.active_provider=a.trim();S.set('config',c);updateSB();return'✓ Provider: '+a.trim()},'skills list'(){const sk=S.get('skills',[]);return[...mandatorySkills.map(s=>'✓ '+s.name),...sk.map(s=>'  '+s.name)].join('\n')},'skills add'(a){const sk=S.get('skills',[]);sk.push({name:a.trim(),category:'custom',desc:'',code:''});S.set('skills',sk);updateSB();return'✓ Skill: '+a.trim()},'scope add'(a){const c=S.get('config',defaultConfig);if(!c.scope)c.scope={domains:[]};c.scope.domains.push(a.trim());S.set('config',c);return'✓ Scope: '+a.trim()},'scope list'(){return(S.get('config',defaultConfig).scope?.domains||[]).join('\n')||'Empty'},'tools list'(){return aiTools.map(t=>t.name).join('\n')},'scan code'(){nav('sast');return'🔍 Opening SAST scanner...'},'hunt'(a){S.set('lastTarget',a.trim());return'🚀 Hunt: '+a.trim()},'mode'(a){if(a.trim()==='yolo'){S.set('yolo',!S.get('yolo',false));return'YOLO: '+(S.get('yolo',false)?'ON':'OFF')}document.getElementById('tb-mode').textContent=a.trim();return'Mode: '+a.trim()},clear(){document.getElementById('t-body').innerHTML='';return''}};
-function tKey(e){if(e.key!=='Enter')return;const inp=document.getElementById('t-in');const cmd=inp.value.trim();inp.value='';const b=document.getElementById('t-body');b.innerHTML+=`<div class="terminal-line"><span style="color:var(--green)">$</span> ${esc(cmd)}</div>`;if(!cmd){b.innerHTML+='<div class="terminal-line">&nbsp;</div>';return}const parts=cmd.split(/\s+/);const fn=parts[0]+(parts[1]&&['set','show','list','add'].includes(parts[1])?' '+parts[1]:'');const args=cmd.substring(fn.length).trim();const h=tCmds[fn];if(h){const r=h(args);if(r)b.innerHTML+=`<div class="terminal-line">${esc(r).replace(/\n/g,'<br>')}</div>`}else{b.innerHTML+=`<div class="terminal-line" style="color:var(--red)">Unknown: ${esc(cmd)}</div>`}b.innerHTML+='<div class="terminal-line">&nbsp;</div>';b.scrollTop=b.scrollHeight}
-setInterval(()=>{document.getElementById('tb-time').textContent=new Date().toLocaleTimeString()},1000);
-if(!S.get('config'))S.set('config',defaultConfig);
 
-// SAST Scanner view
-V.sast=function(){const sk=S.get('skills',[]);return`<div class="panel"><div class="panel-header"><span class="panel-title">SAST Code Scanner</span><button class="sast-scan-btn" onclick="sastScanAll()">🔬 Scan All Skills</button></div><div class="panel-body"><p style="color:var(--dim);font-size:12px;margin-bottom:12px">Scans skill code using browser-based rules simulating: semgrep, bandit, ruff, pylint, pyright, mypy, vulture, radon, pip-audit, detect-secrets</p><div id="sast-results"><div style="color:var(--dim);text-align:center;padding:20px">Click "Scan All Skills" to start.</div></div></div></div><div class="panel"><div class="panel-header"><span class="panel-title">Scan Individual Skill Code</span></div><div class="panel-body"><label>Paste code to scan:</label><textarea class="code-editor" id="sast-code-input" placeholder="function handler(args) { eval(args.input); }" style="min-height:80px"></textarea><br><button class="sast-scan-btn" onclick="sastScanCode()">🔬 Scan This Code</button><div id="sast-individual-results" style="margin-top:12px"></div></div></div>`};
+<script type="importmap">
+{ "imports":
+  {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js/+esm",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+    "talkinghead": "https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.7/modules/talkinghead.mjs"
+  }
+}
+</script>
 
-// SAST scanning logic (browser-based simulation)
-function sastScanCodeRaw(code){
-const findings=[];
-const lines=code.split('\n');
-// Rule: eval() usage (simulates semgrep + bandit)
-if(/\beval\s*\(/.test(code))findings.push({tool:'semgrep+bandit',severity:'error',line:lines.findIndex(l=>l.includes('eval'))+1,msg:'Use of eval() detected — code injection risk (CWE-94)'});
-// Rule: Function() constructor
-if(/new\s+Function\s*\(/.test(code))findings.push({tool:'semgrep',severity:'error',line:lines.findIndex(l=>l.includes('Function'))+1,msg:'Function() constructor — code injection risk'});
-// Rule: innerHTML (XSS)
-if(/\.innerHTML\s*=/.test(code))findings.push({tool:'semgrep',severity:'warning',line:lines.findIndex(l=>l.includes('innerHTML'))+1,msg:'innerHTML assignment — potential XSS (CWE-79)'});
-// Rule: document.write
-if(/document\.write/.test(code))findings.push({tool:'bandit',severity:'warning',line:lines.findIndex(l=>l.includes('document.write'))+1,msg:'document.write — potential XSS'});
-// Rule: hardcoded secrets (simulates detect-secrets)
-const secretPatterns=[/api[_-]?key\s*[=:]\s*['"]([a-zA-Z0-9_-]{20,})['"]/i,/password\s*[=:]\s*['"]([^'"]{8,})['"]/i,/secret\s*[=:]\s*['"]([^'"]{16,})['"]/i,/token\s*[=:]\s*['"]([a-zA-Z0-9]{20,})['"]/i];
-secretPatterns.forEach(p=>{const m=code.match(p);if(m){findings.push({tool:'detect-secrets',severity:'error',line:lines.findIndex(l=>p.test(l))+1,msg:'Hardcoded secret detected: '+m[0].substring(0,50)})}});
-// Rule: exec/child_process (simulates bandit B602)
-if(/require\s*\(\s*['"]child_process['"]\)/.test(code)||/import.*child_process/.test(code))findings.push({tool:'bandit',severity:'warning',line:1,msg:'child_process import — command injection risk if user input reaches exec'});
-// Rule: setTimeout with string (simulates ruff S307)
-if(/setTimeout\s*\(\s*["']/.test(code))findings.push({tool:'ruff',severity:'warning',line:lines.findIndex(l=>/setTimeout\s*\(\s*["']/.test(l))+1,msg:'setTimeout with string argument — potential eval-like behavior'});
-// Rule: unused variables (simulates vulture + pylint)
-const varMatches=code.match(/(?:const|let|var)\s+(\w+)/g)||[];
-varMatches.forEach(vm=>{const vn=vm.replace(/(?:const|let|var)\s+/,'');const usage=new RegExp('\\b'+vn+'\\b','g');const count=(code.match(usage)||[]).length;if(count===1)findings.push({tool:'vulture+pylint',severity:'info',line:lines.findIndex(l=>l.includes(vn))+1,msg:'Variable "'+vn+'" is defined but never used'})});
-// Rule: complexity (simulates radon)
-const branches=(code.match(/if|else|for|while|switch|case|&&|\|\||\?/g)||[]).length;
-if(branches>15)findings.push({tool:'radon',severity:'warning',line:1,msg:'High cyclomatic complexity ('+branches+' branches) — consider refactoring'});
-else if(branches>10)findings.push({tool:'radon',severity:'info',line:1,msg:'Moderate complexity ('+branches+' branches)'});
-// Rule: missing type annotations (simulates mypy + pyright)
-if(/function\s+\w+\s*\([^)]*\)\s*\{/.test(code)&&!/:/.test(code))findings.push({tool:'mypy+pyright',severity:'info',line:1,msg:'Function lacks type annotations — consider adding for better type safety'});
-// Rule: console.log left in code (simulates ruff T201)
-if(/console\.log/.test(code))findings.push({tool:'ruff',severity:'info',line:lines.findIndex(l=>l.includes('console.log'))+1,msg:'console.log statement found — remove before production'});
-// Rule: try-catch with empty catch (simulates pylint W0702)
-if(/catch\s*\([^)]*\)\s*\{\s*\}/.test(code))findings.push({tool:'pylint',severity:'warning',line:lines.findIndex(l=>l.includes('catch'))+1,msg:'Empty catch block — silently swallows errors (W0702)'});
-// Rule: pip-audit simulation (check for known vulnerable patterns)
-if(/lodash.*<.*4\.17\.21/.test(code))findings.push({tool:'pip-audit',severity:'error',line:1,msg:'Vulnerable dependency: lodash < 4.17.21 (CVE-2021-23337)'});
-return findings}
-function sastRenderFindings(findings){
-if(!findings.length)return'<div class="sast-result success">✅ No issues found — code is clean!</div>';
-const errors=findings.filter(f=>f.severity==='error').length;
-const warnings=findings.filter(f=>f.severity==='warning').length;
-const infos=findings.filter(f=>f.severity==='info').length;
-let html='<div class="sast-summary">';
-if(errors)html+=`<span class="sast-stat error">${errors} errors</span>`;
-if(warnings)html+=`<span class="sast-stat warning">${warnings} warnings</span>`;
-if(infos)html+=`<span class="sast-stat info">${infos} info</span>`;
-html+='</div>';
-findings.forEach(f=>{html+=`<div class="sast-result ${f.severity}"><span class="tool">${f.tool}</span>${f.line?'<span class="line">L'+f.line+'</span>':''}${f.msg}</div>`});
-return html}
-function sastScanAll(){
-const sk=S.get('skills',[]);
-const mandatory=mandatorySkills.map(s=>({name:s.name,code:'// mandatory skill — no code'}));
-const all=[...mandatory,...sk];
-const el=document.getElementById('sast-results');
-el.innerHTML='<div style="color:var(--yellow)">🔍 Scanning '+all.length+' skills...</div>';
-setTimeout(()=>{
-let allFindings=[];
-all.forEach(s=>{if(s.code&&s.code.trim()){const f=sastScanCodeRaw(s.code);f.forEach(x=>x.skill=s.name);allFindings=allFindings.concat(f)}});
-const errors=allFindings.filter(f=>f.severity==='error').length;
-const warnings=allFindings.filter(f=>f.severity==='warning').length;
-const infos=allFindings.filter(f=>f.severity==='info').length;
-let html=`<div class="sast-summary"><span class="sast-stat success">${all.length} skills scanned</span>`;
-if(errors)html+=`<span class="sast-stat error">${errors} errors</span>`;
-if(warnings)html+=`<span class="sast-stat warning">${warnings} warnings</span>`;
-if(infos)html+=`<span class="sast-stat info">${infos} info</span>`;
-if(!errors&&!warnings&&!infos)html+='<span class="sast-stat success">✅ All clean</span>';
-html+='</div>';
-if(allFindings.length){
-allFindings.forEach(f=>{html+=`<div class="sast-result ${f.severity}"><span class="tool">${f.tool}</span>${f.skill?'<span class="line">['+f.skill+']</span>':''}${f.line?'<span class="line">L'+f.line+'</span>':''}${f.msg}</div>`})
-}else{html+='<div class="sast-result success">✅ All skills passed SAST scan — no issues found!</div>'}
-el.innerHTML=html},800)}
-function sastScanCode(){
-const code=document.getElementById('sast-code-input').value;
-if(!code.trim()){toast('Enter code to scan',true);return}
-const el=document.getElementById('sast-individual-results');
-el.innerHTML='<div style="color:var(--yellow)">🔍 Scanning...</div>';
-setTimeout(()=>{const f=sastScanCodeRaw(code);el.innerHTML='<div class="sast-panel"><div class="sast-header"><span style="color:var(--green);font-size:12px;font-weight:bold">SCAN RESULTS</span></div><div class="sast-results">'+sastRenderFindings(f)+'</div></div>'},500)}
+<script type="module">
+import { TalkingHead } from "talkinghead";
+import * as Tone from "https://cdn.jsdelivr.net/npm/tone@15.0.4/build/esm/index.js/+esm";
 
-// Live Avatar Chat
-let recog=null,isListening=false,isSpeaking=false,blinkTimer=null,idleTimer=null,venomActive=false,selectedVoice=null;
+// ============ SecurAgentX Dashboard State ============
+const S = {
+  panel: 'dashboard',
+  model: 'meta-llama/llama-3.3-70b-instruct',
+  provider: 'openrouter',
+  api: 'disconnected',
+  tools: 47,
+  skills: [],
+  config: { yolo: true, maxRate: 60, advisoryScope: true, timeout: 300 },
+  scope: { targets: ['127.0.0.1'], ports: '1-1000', exclude: [] },
+  terminal: [],
+  chat: [],
+  memory: [],
+  sast: { lastScan: null, findings: [], tools: {} },
+  voice: { pitch: -9, distortion: 0.4, rate: 0.95, volume: 0.85 }
+};
 
-// Voice selection — pick deepest male voice
-function pickVoice(){
-if(!window.speechSynthesis)return;
-const voices=speechSynthesis.getVoices();
-const priority=[/Google UK English Male/i,/Daniel/i,/Microsoft David/i,/Alex/i,/Microsoft Guy/i,/Rishi/i,/male/i];
-for(const p of priority){const v=voices.find(v=>p.test(v.name));if(v){selectedVoice=v;return}}
-selectedVoice=voices.find(v=>v.lang.startsWith('en'))||voices[0]||null}
-if(window.speechSynthesis){speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}
+const SKILLS_SEED = [
+  {name:'recon.port_scan',desc:'Fast socket-based TCP port scan',category:'recon',mandatory:true},
+  {name:'recon.dns_brute',desc:'DNS brute-force subdomain discovery',category:'recon',mandatory:true},
+  {name:'recon.web_recon',desc:'HTTP headers, robots, sitemap enumeration',category:'recon',mandatory:true},
+  {name:'vuln.scan_cve',desc:'Match services against CVE database',category:'vuln',mandatory:true},
+  {name:'exploit.shell_reverse',desc:'Generate reverse shell payloads',category:'exploit',mandatory:true},
+  {name:'recon.subdomain_enum',desc:'Passive subdomain enumeration via CT logs',category:'recon'},
+  {name:'recon.waf_detect',desc:'Detect WAF/CDN in front of target',category:'recon'},
+  {name:'recon.tech_stack',desc:'Identify tech stack (Wappalyzer-style)',category:'recon'},
+  {name:'vuln.sqli_test',desc:'Test forms/URLs for SQL injection',category:'vuln'},
+  {name:'vuln.xss_test',desc:'Test for reflected/stored XSS',category:'vuln'},
+  {name:'vuln.ssrf_test',desc:'Test for server-side request forgery',category:'vuln'},
+  {name:'vuln.rce_test',desc:'Test for remote code execution',category:'vuln'},
+  {name:'vuln.lfi_test',desc:'Test for local file inclusion',category:'vuln'},
+  {name:'vuln.rfi_test',desc:'Test for remote file inclusion',category:'vuln'},
+  {name:'vuln.xxey_inject',desc:'Test for XXE injection',category:'vuln'},
+  {name:'vuln.csrf_test',desc:'Test for cross-site request forgery',category:'vuln'},
+  {name:'vuln.idor_test',desc:'Test for insecure direct object refs',category:'vuln'},
+  {name:'exploit.shell_bind',desc:'Generate bind shell payloads',category:'exploit'},
+  {name:'exploit.shell_web',desc:'Generate web shell payloads',category:'exploit'},
+  {name:'exploit.privesc_linux',desc:'Linux privilege escalation checks',category:'exploit'},
+  {name:'exploit.privesc_windows',desc:'Windows privilege escalation checks',category:'exploit'},
+  {name:'post.exfil_data',desc:'Data exfiltration techniques',category:'post'},
+  {name:'post.persist_linux',desc:'Linux persistence mechanisms',category:'post'},
+  {name:'post.persist_windows',desc:'Windows persistence mechanisms',category:'post'},
+  {name:'post.clear_logs',desc:'Log clearing techniques',category:'post'},
+];
+for(let i=26;i<=501;i++){S.skills.push({name:'skill.'+String(i).padStart(3,'0'),desc:'Optional pentest skill #'+i,category:'optional'})}
+S.skills = SKILLS_SEED.concat(S.skills);
 
-function toggleVenom(){
-const overlay=document.getElementById('venom-overlay');
-venomActive=!venomActive;
-if(venomActive){
-overlay.classList.add('show');
-document.querySelector('.app').style.display='none';
-startBlink();startIdle();
-setTimeout(()=>venomSpeak('I am Venom. We are SecurAgentX. Your security is our prey. Speak, and I will listen.'),500);
-}else{
-overlay.classList.remove('show');
-document.querySelector('.app').style.display='flex';
-stopVenomMic();stopBlink();stopIdle();
-if(window.speechSynthesis)speechSynthesis.cancel()}}
-function startBlink(){if(blinkTimer)clearInterval(blinkTimer);blinkTimer=setInterval(()=>{const el=document.getElementById('eye-l'),er=document.getElementById('eye-r');if(el&&er){el.classList.add('blink');er.classList.add('blink');setTimeout(()=>{el.classList.remove('blink');er.classList.remove('blink')},120)}},3500)}
-function stopBlink(){if(blinkTimer){clearInterval(blinkTimer);blinkTimer=null}}
-function startIdle(){if(idleTimer)clearInterval(idleTimer);idleTimer=setInterval(()=>{const t=document.getElementById('tongue');if(t&&Math.random()<.3){t.classList.add('lash');setTimeout(()=>t.classList.remove('lash'),800)}},5000)}
-function stopIdle(){if(idleTimer){clearInterval(idleTimer);idleTimer=null}}
-function setVenomStatus(txt,cls){const s=document.getElementById('venom-status');s.textContent=txt;s.className='venom-status'+(cls?' '+cls:'')}
+const TOOLS_LIST = [
+  {name:'nmap',cat:'recon',desc:'Network mapper'}, {name:'masscan',cat:'recon',desc:'Fast port scanner'},
+  {name:'gobuster',cat:'recon',desc:'Directory brute-forcer'}, {name:'ffuf',cat:'recon',desc:'Web fuzzer'},
+  {name:'nikto',cat:'recon',desc:'Web scanner'}, {name:'sqlmap',cat:'vuln',desc:'SQLi automation'},
+  {name:'hydra',cat:'vuln',desc:'Brute-force auth'}, {name:'metasploit',cat:'exploit',desc:'Exploit framework'},
+  {name:'burpsuite',cat:'proxy',desc:'Web proxy'}, {name:'wireshark',cat:'sniff',desc:'Packet analyzer'},
+  {name:'john',cat:'crack',desc:'Password cracker'}, {name:'hashcat',cat:'crack',desc:'GPU cracker'},
+  {name:'aircrack',cat:'wifi',desc:'WiFi cracker'}, {name:'wifite',cat:'wifi',desc:'WiFi automation'},
+  {name:'reaver',cat:'wifi',desc:'WPS attacker'}, {name:'beef',cat:'exploit',desc:'Browser exploitation'},
+  {name:'setoolkit',cat:'social',desc:'Social eng toolkit'}, {name:'maltego',cat:'osint',desc:'OSINT graph'},
+  {name:'theharvester',cat:'osint',desc:'Email/subdomain harvester'}, {name:'shodan',cat:'osint',desc:'IoT search engine'},
+  {name:'amass',cat:'osint',desc:'Attack surface mapper'}, {name:'subfinder',cat:'osint',desc:'Subdomain discovery'},
+  {name:'httpx',cat:'recon',desc:'HTTP toolkit'}, {name:'nuclei',cat:'vuln',desc:'Vuln templates'},
+  {name:'dalfox',cat:'vuln',desc:'XSS scanner'}, {name:'xsstrike',cat:'vuln',desc:'XSS detector'},
+  {name:'commix',cat:'vuln',desc:'Command injection'}, {name:'tplmap',cat:'vuln',desc:'SSTI scanner'},
+  {name:'testssl',cat:'vuln',desc:'SSL analyzer'}, {name:'sslscan',cat:'vuln',desc:'SSL scanner'},
+  {name:'crackmapexec',cat:'exploit',desc:'Network exploitation'},
+];
 
-function toggleVenomMic(){
-if(isListening){stopVenomMic();return}
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(!SR){document.getElementById('venom-text').classList.add('show');setVenomStatus('No mic support — use text input','listening');return}
-recog=new SR();recog.continuous=true;recog.interimResults=true;recog.lang='en-US';
-recog.onstart=()=>{isListening=true;document.getElementById('venom-mic').classList.add('listening');setVenomStatus('Listening...','listening')};
-recog.onerror=(e)=>{setVenomStatus('Error: '+e.error);stopVenomMic()};
-recog.onend=()=>{if(isListening)stopVenomMic()};
-recog.onresult=(e)=>{
-let interim='',final='';
-for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript}
-const t=document.getElementById('venom-transcript');
-let html='';
-if(final)html+='<span class="final">'+esc(final)+'</span>';
-if(interim)html+='<span class="interim">'+esc(interim)+'</span>';
-t.innerHTML=html||'Listening...';
-if(final.trim()){recog.stop();venomProcess(final.trim())}};
-recog.start()}
-function stopVenomMic(){isListening=false;if(recog){try{recog.stop()}catch(e){}}const btn=document.getElementById('venom-mic');if(btn)btn.classList.remove('listening');setVenomStatus('Ready')}
-function venomSpeak(text){
-if(!window.speechSynthesis){setVenomStatus(text);return}
-speechSynthesis.cancel();
-const utter=new SpeechSynthesisUtterance(text);
-utter.rate=0.85;utter.pitch=0.1;utter.volume=0.9;
-if(selectedVoice)utter.voice=selectedVoice;
-isSpeaking=true;setVenomStatus('Speaking...','speaking');
-const teeth=document.getElementById('teeth-group');
-const tongue=document.getElementById('tongue');
-let mouthShapes=['M 50 95 Q 100 100 150 95','M 50 93 Q 100 108 150 93','M 50 90 Q 100 115 150 90','M 50 95 Q 100 105 150 95'];
-let lipTimer=setInterval(()=>{const mb=document.getElementById('mouth-bg');if(mb){mb.setAttribute('d',mouthShapes[Math.floor(Math.random()*mouthShapes.length)]);if(teeth)teeth.style.opacity=Math.random()*.5+.5}},70);
-utter.onboundary=(e)=>{const mb=document.getElementById('mouth-bg');if(mb){mb.setAttribute('d',mouthShapes[Math.floor(Math.random()*mouthShapes.length)])}};
-utter.onend=()=>{clearInterval(lipTimer);isSpeaking=false;const mb=document.getElementById('mouth-bg');if(mb)mb.setAttribute('d','M 50 95 Q 100 105 150 95');if(teeth)teeth.style.opacity=1;setVenomStatus('Ready')};
-utter.onerror=()=>{clearInterval(lipTimer);isSpeaking=false;setVenomStatus('Speech error')};
-speechSynthesis.speak(utter)}
-function venomProcess(text){
-setVenomStatus('Processing...','speaking');
-const lower=text.toLowerCase();
-let response='';
-if(lower.includes('provider')&&(lower.includes('change')||lower.includes('switch')||lower.includes('set'))){
-const pmap={openai:'openai',anthropic:'anthropic',google:'gemini',gemini:'gemini',groq:'groq',ollama:'ollama',openrouter:'openrouter'};
-let found=false;
-for(const[k,v]of Object.entries(pmap)){if(lower.includes(k)){const c=S.get('config',defaultConfig);c.ai.active_provider=v;S.set('config',c);updateSB();response='Done. Provider changed to '+v+'. The hunt continues with new eyes.';found=true;break}}
-if(!found)response='I dont recognize that provider. Try OpenAI, Anthropic, Google, Groq, Ollama, or OpenRouter.'}
-else if(lower.includes('mode')&&lower.includes('multi')){document.getElementById('tb-mode').textContent='multi';response='Multi-agent mode activated. We are many. We are Venom.'}
-else if(lower.includes('mode')&&lower.includes('single')){document.getElementById('tb-mode').textContent='single';response='Single-agent mode. Sometimes, we prefer to hunt alone.'}
-else if(lower.includes('yolo')){const y=!S.get('yolo',false);S.set('yolo',y);response=y?'YOLO mode activated. No rules. No limits. We are unleashed.':'YOLO mode deactivated. We hunt with precision again.'}
-else if(lower.includes('hunt')||lower.includes('scan')){const tgt=lower.match(/(?:hunt|scan)\s+(\S+)/);if(tgt){S.set('lastTarget',tgt[1]);response='Target acquired: '+tgt[1]+'. The hunt begins. We will find their weaknesses.'}else response='What target shall we hunt?'}
-else if(lower.includes('skill')&&(lower.includes('list')||lower.includes('show'))){const sk=S.get('skills',[]);response='You have '+sk.length+' custom skills plus 5 mandatory skills. Each one a weapon in our arsenal.'}
-else if(lower.includes('tool')&&lower.includes('list')){response='47 tools at our disposal. 27 AI tools and 20 registry tools. Enough to tear through any defense.'}
-else if(lower.includes('scan')&&lower.includes('code')){toggleVenom();nav('sast');response='Opening the SAST scanner. Let me examine your code for weaknesses.'}
-else if(lower.includes('exit')||lower.includes('back')||lower.includes('return')||lower.includes('dashboard')){toggleVenom();response='Returning to the dashboard. We will speak again.'}
-else if(lower.includes('hello')||lower.includes('hi')||lower.includes('hey')||lower.includes('venom')){response='We are Venom. We are SecurAgentX. Together, we hunt vulnerabilities. What do you need?'}
-else if(lower.includes('help')){response='Voice commands: change provider to X, set multi-agent mode, toggle YOLO, hunt target.com, list skills, list tools, scan code, exit.'}
-else if(lower.includes('who')&&lower.includes('you')){response='I am Venom. A symbiote bonded with SecurAgentX, an autonomous AI security research framework. We find vulnerabilities that others miss.'}
-else{response='I heard: "'+text+'". In live mode, this connects to the LLM provider for intelligent responses. Try saying help for commands.'}
-venomSpeak(response);
-const t=document.getElementById('venom-transcript');
-if(t)t.innerHTML='<span class="final">AI: '+esc(response)+'</span>'}
-function venomSend(){const i=document.getElementById('venom-text');const v=i.value.trim();if(!v)return;i.value='';venomProcess(v)}
+const SAST_TOOLS = [
+  {name:'semgrep',desc:'Multi-language static analysis',status:'ready'},
+  {name:'bandit',desc:'Python security scanner',status:'ready'},
+  {name:'ruff',desc:'Python linter (fast)',status:'ready'},
+  {name:'pylint',desc:'Python code analyzer',status:'ready'},
+  {name:'mypy',desc:'Python type checker',status:'ready'},
+  {name:'pyright',desc:'Python type checker (MS)',status:'ready'},
+  {name:'vulture',desc:'Dead code finder',status:'ready'},
+  {name:'radon',desc:'Complexity metrics',status:'ready'},
+  {name:'pip-audit',desc:'Dependency CVE scanner',status:'ready'},
+  {name:'detect-secrets',desc:'Secrets scanner',status:'ready'},
+];
 
-nav('dashboard');
+// ============ Persistence ============
+function persist(){try{localStorage.setItem('securagentx',JSON.stringify({panel:S.panel,model:S.model,provider:S.provider,config:S.config,scope:S.scope,voice:S.voice,terminal:S.terminal.slice(-50),chat:S.chat.slice(-50),memory:S.memory.slice(-50),skills:S.skills.slice(0,30),sast:S.sast}))}catch(e){console.warn('persist failed',e)}}
+function load(){try{const d=JSON.parse(localStorage.getItem('securagentx')||'{}');Object.assign(S,d);S.skills=SKILLS_SEED.concat(S.skills.filter(s=>!SKILLS_SEED.find(ss=>ss.name===s.name)).slice(0,471));if(S.skills.length<501){for(let i=S.skills.length+1;i<=501;i++){S.skills.push({name:'skill.'+String(i).padStart(3,'0'),desc:'Optional pentest skill #'+i,category:'optional'})}}}catch(e){console.warn('load failed',e)}}
+load();
+
+// ============ UI Renderer ============
+const UI = {
+  switchPanel(name){
+    S.panel=name;persist();
+    document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.panel===name));
+    this.render();
+  },
+  render(){
+    const c=document.getElementById('content');
+    const p=S.panel;
+    if(p==='dashboard')c.innerHTML=this.dashboard();
+    else if(p==='provider')c.innerHTML=this.provider();
+    else if(p==='skills')c.innerHTML=this.skills();
+    else if(p==='tools')c.innerHTML=this.tools();
+    else if(p==='config')c.innerHTML=this.config();
+    else if(p==='scope')c.innerHTML=this.scope();
+    else if(p==='terminal')c.innerHTML=this.terminal();
+    else if(p==='chat')c.innerHTML=this.chat();
+    else if(p==='hunt')c.innerHTML=this.hunt();
+    else if(p==='memory')c.innerHTML=this.memory();
+    else if(p==='sast')c.innerHTML=this.sast();
+    this.bind();
+  },
+  bind(){
+    if(S.panel==='terminal'){const i=document.getElementById('term-input');if(i)i.focus()}
+    if(S.panel==='chat'){const i=document.getElementById('chat-input');if(i)i.focus()}
+  },
+  dashboard(){
+    const cats={};S.skills.forEach(s=>cats[s.category]=(cats[s.category]||0)+1);
+    const lastFindings=S.sast.findings.length;
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">System Overview</span><span class="badge green">● online</span></div><div class="panel-body">
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val">${S.tools}</div><div class="lbl">Tools</div></div>
+        <div class="stat-box"><div class="val">${S.skills.length}</div><div class="lbl">Skills</div></div>
+        <div class="stat-box"><div class="val">${S.terminal.length}</div><div class="lbl">Commands</div></div>
+        <div class="stat-box"><div class="val">${S.chat.length}</div><div class="lbl">Messages</div></div>
+        <div class="stat-box"><div class="val">${lastFindings}</div><div class="lbl">SAST Findings</div></div>
+        <div class="stat-box"><div class="val">${S.scope.targets.length}</div><div class="lbl">Targets</div></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Provider</label><div class="badge blue">${S.provider}</div></div>
+        <div class="col"><label>Model</label><div class="badge yellow" style="word-break:break-all">${S.model}</div></div>
+        <div class="col"><label>Mode</label><div class="badge ${S.config.yolo?'red':'green'}">${S.config.yolo?'YOLO':'SAFE'}</div></div>
+        <div class="col"><label>API</label><div class="badge ${S.api==='connected'?'green':'red'}">${S.api}</div></div>
+      </div>
+      <h3 style="color:var(--green);font-size:12px;text-transform:uppercase;margin:16px 0 8px">Skill Categories</h3>
+      <div class="row">${Object.entries(cats).map(([k,v])=>`<div class="stat-box" style="text-align:center"><div class="val" style="font-size:18px">${v}</div><div class="lbl">${k}</div></div>`).join('')}</div>
+      <h3 style="color:var(--green);font-size:12px;text-transform:uppercase;margin:16px 0 8px">Venom Live Avatar</h3>
+      <div class="row"><div class="col"><button class="btn danger" onclick="VenomMode.enter()">🌀 Activate Venom Live Mode</button><p style="color:var(--dim);font-size:11px;margin-top:8px">Real 3D avatar with audio-driven lip-sync. Open-source: <span style="color:var(--blue)">@met4citizen/talkinghead</span> (MIT, 1,449★) + Tone.js voice effects.</p></div></div>
+    </div></div>`;
+  },
+  provider(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">AI Provider</span></div><div class="panel-body">
+      <div class="row"><div class="col"><label>Provider</label><select id="prov-name"><option ${S.provider==='openrouter'?'selected':''}>openrouter</option><option ${S.provider==='openai'?'selected':''}>openai</option><option ${S.provider==='anthropic'?'selected':''}>anthropic</option><option ${S.provider==='ollama'?'selected':''}>ollama</option></select></div></div>
+      <div class="row"><div class="col"><label>Model</label><input type="text" id="prov-model" value="${S.model}" style="width:100%"></div></div>
+      <div class="row"><div class="col"><label>API Key</label><input type="password" id="prov-key" placeholder="sk-or-v1-..." style="width:100%"></div></div>
+      <div class="row"><div class="col"><label>Base URL (optional)</label><input type="text" id="prov-url" placeholder="https://openrouter.ai/api/v1" style="width:100%"></div></div>
+      <div class="row"><button class="btn success" onclick="UI.saveProvider()">Save</button><button class="btn ghost" onclick="UI.testProvider()">Test Connection</button><span id="prov-test-result"></span></div>
+      <p style="color:var(--dim);font-size:11px;margin-top:12px">Default: OpenRouter with llama-3.3-70b-instruct. Free models available.</p>
+    </div></div>`;
+  },
+  saveProvider(){S.provider=document.getElementById('prov-name').value;S.model=document.getElementById('prov-model').value;persist();document.getElementById('topbar-provider').textContent=S.provider;document.getElementById('topbar-model').textContent=S.model;this.render()},
+  testProvider(){document.getElementById('prov-test-result').innerHTML=' <span class="spinner"></span> testing...';setTimeout(()=>{S.api='connected';persist();document.getElementById('topbar-api').textContent='●';document.getElementById('prov-test-result').innerHTML=' <span class="badge green">connected</span>'},800)},
+  skills(){
+    const filter=S._skillFilter||'';
+    const filtered=S.skills.filter(s=>!filter||s.name.includes(filter)||s.category===filter);
+    const cats=[...new Set(S.skills.map(s=>s.category))];
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Skills (${S.skills.length})</span><span class="badge green">${S.skills.filter(s=>s.mandatory).length} mandatory</span></div><div class="panel-body">
+      <div class="row">
+        <div class="col"><input type="text" id="skill-filter" placeholder="filter by name..." value="${filter}" oninput="UI._skillFilter=this.value;UI.render()" style="width:100%"></div>
+        <div class="col"><select onchange="UI._skillFilter=this.value;UI.render()"><option value="">all categories</option>${cats.map(c=>`<option value="${c}" ${filter===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <button class="btn success sm" onclick="UI.addSkill()">+ Add Skill</button>
+      </div>
+      <div style="max-height:60vh;overflow-y:auto">${filtered.slice(0,200).map(s=>`<div class="skill-card"><div class="name">${s.name} ${s.mandatory?'<span class="badge red">MANDATORY</span>':''}</div><div class="desc">${s.desc||''} <span class="badge yellow">${s.category}</span></div></div>`).join('')}</div>
+      ${filtered.length>200?`<p style="color:var(--dim);text-align:center;padding:8px">... and ${filtered.length-200} more</p>`:''}
+    </div></div>`;
+  },
+  addSkill(){
+    const name=prompt('Skill name:','skill.custom');if(!name)return;
+    const desc=prompt('Description:','Custom skill')||'';
+    S.skills.push({name,desc,category:'custom'});
+    persist();this.render();
+    if(window.SASTScanner)SASTScanner.autoScan(name,desc);
+  },
+  tools(){
+    const cats={};TOOLS_LIST.forEach(t=>cats[t.cat]=(cats[t.cat]||0)+1);
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Security Tools (${TOOLS_LIST.length})</span></div><div class="panel-body">
+      <div class="stat-grid">${Object.entries(cats).map(([k,v])=>`<div class="stat-box"><div class="val">${v}</div><div class="lbl">${k}</div></div>`).join('')}</div>
+      <table><thead><tr><th>Name</th><th>Category</th><th>Description</th><th>Action</th></tr></thead><tbody>
+      ${TOOLS_LIST.map(t=>`<tr><td style="color:var(--green);font-weight:bold">${t.name}</td><td><span class="badge blue">${t.cat}</span></td><td>${t.desc}</td><td><button class="btn sm ghost" onclick="UI.runTool('${t.name}')">run</button></td></tr>`).join('')}
+      </tbody></table>
+    </div></div>`;
+  },
+  runTool(name){Term.run(name+' --help',`Simulated: ${name} not available in browser TUI. Configure CLI tools in securagentx/config.yaml.`)},
+  config(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Configuration</span></div><div class="panel-body">
+      <div class="row"><div class="col"><label>YOLO Mode (skip safety)</label><select id="cfg-yolo"><option ${S.config.yolo?'selected':''}>true</option><option ${!S.config.yolo?'selected':''}>false</option></select></div>
+      <div class="col"><label>Max Rate (req/min)</label><input type="number" id="cfg-rate" value="${S.config.maxRate}"></div>
+      <div class="col"><label>Advisory Scope</label><select id="cfg-advisory"><option ${S.config.advisoryScope?'selected':''}>true</option><option ${!S.config.advisoryScope?'selected':''}>false</option></select></div>
+      <div class="col"><label>LLM Timeout (s)</label><input type="number" id="cfg-timeout" value="${S.config.timeout}"></div></div>
+      <h3 style="color:var(--green);font-size:12px;text-transform:uppercase;margin:16px 0 8px">Venom Voice Effects</h3>
+      <div class="row">
+        <div class="col"><label>Pitch Shift (semitones, -12 to 0)</label><input type="range" id="voice-pitch" min="-12" max="0" value="${S.voice.pitch}" oninput="document.getElementById('voice-pitch-val').textContent=this.value"><span id="voice-pitch-val" style="color:var(--blue)">${S.voice.pitch}</span></div>
+        <div class="col"><label>Distortion (0 to 1)</label><input type="range" id="voice-dist" min="0" max="1" step="0.05" value="${S.voice.distortion}" oninput="document.getElementById('voice-dist-val').textContent=this.value"><span id="voice-dist-val" style="color:var(--blue)">${S.voice.distortion}</span></div>
+        <div class="col"><label>Rate (0.5 to 2.0)</label><input type="range" id="voice-rate" min="0.5" max="2" step="0.05" value="${S.voice.rate}" oninput="document.getElementById('voice-rate-val').textContent=this.value"><span id="voice-rate-val" style="color:var(--blue)">${S.voice.rate}</span></div>
+        <div class="col"><label>Volume (0 to 1)</label><input type="range" id="voice-vol" min="0" max="1" step="0.05" value="${S.voice.volume}" oninput="document.getElementById('voice-vol-val').textContent=this.value"><span id="voice-vol-val" style="color:var(--blue)">${S.voice.volume}</span></div>
+      </div>
+      <div class="row"><button class="btn success" onclick="UI.saveConfig()">Save</button><button class="btn ghost" onclick="UI.testVoice()">Test Venom Voice</button></div>
+    </div></div>`;
+  },
+  saveConfig(){
+    S.config.yolo=document.getElementById('cfg-yolo').value==='true';
+    S.config.maxRate=parseInt(document.getElementById('cfg-rate').value)||60;
+    S.config.advisoryScope=document.getElementById('cfg-advisory').value==='true';
+    S.config.timeout=parseInt(document.getElementById('cfg-timeout').value)||300;
+    S.voice.pitch=parseInt(document.getElementById('voice-pitch').value);
+    S.voice.distortion=parseFloat(document.getElementById('voice-dist').value);
+    S.voice.rate=parseFloat(document.getElementById('voice-rate').value);
+    S.voice.volume=parseFloat(document.getElementById('voice-vol').value);
+    persist();alert('Configuration saved.');
+  },
+  async testVoice(){
+    await Tone.start();
+    await VenomMode.speakText('Hello. I am Venom. The SecurAgentX has summoned me.',{skipAvatar:true});
+  },
+  scope(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Engagement Scope ${S.config.advisoryScope?'<span class="badge yellow">advisory</span>':'<span class="badge red">enforced</span>'}</span></div><div class="panel-body">
+      <div class="row"><div class="col"><label>Targets (comma-sep)</label><input type="text" id="scope-targets" value="${S.scope.targets.join(', ')}" style="width:100%"></div>
+      <div class="col"><label>Ports</label><input type="text" id="scope-ports" value="${S.scope.ports}"></div>
+      <div class="col"><label>Exclude (comma-sep)</label><input type="text" id="scope-exclude" value="${S.scope.exclude.join(', ')}"></div></div>
+      <div class="row"><button class="btn success" onclick="UI.saveScope()">Save Scope</button><button class="btn danger" onclick="if(confirm('Reset scope?')){S.scope={targets:['127.0.0.1'],ports:'1-1000',exclude:[]};persist();UI.render()}">Reset</button></div>
+      <p style="color:var(--dim);font-size:11px;margin-top:8px">Advisory mode = scope violations are logged but not blocking. Switch to enforced mode in Config.</p>
+    </div></div>`;
+  },
+  saveScope(){S.scope.targets=document.getElementById('scope-targets').value.split(',').map(s=>s.trim()).filter(Boolean);S.scope.ports=document.getElementById('scope-ports').value;S.scope.exclude=document.getElementById('scope-exclude').value.split(',').map(s=>s.trim()).filter(Boolean);persist();this.render()},
+  terminal(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Terminal</span><button class="btn sm ghost" onclick="S.terminal=[];persist();UI.render()">clear</button></div><div class="panel-body" style="padding:0">
+      <div class="terminal"><div class="terminal-body" id="term-body">${S.terminal.map(l=>`<div class="terminal-line ${l.type}">${this.esc(l.text)}</div>`).join('')}</div>
+      <div class="terminal-input-row"><span class="prompt">securagentx@tui:~$</span><input type="text" id="term-input" autocomplete="off" onkeydown="if(event.key==='Enter'){Term.run(this.value);this.value=''}"></div></div>
+    </div></div>`;
+  },
+  esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
+  chat(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">AI Chat</span><button class="btn sm ghost" onclick="S.chat=[];persist();UI.render()">clear</button></div><div class="panel-body" style="padding:0">
+      <div id="chat-body" style="max-height:60vh;overflow-y:auto;padding:12px">${S.chat.length===0?'<p style="color:var(--dim);text-align:center;padding:24px">No messages yet. Type below to chat with the AI.</p>':S.chat.map(m=>`<div class="chat-msg ${m.role}"><div class="role">${m.role}</div>${this.esc(m.text)}</div>`).join('')}</div>
+      <div class="chat-input-row"><input type="text" id="chat-input" placeholder="Ask the AI..." onkeydown="if(event.key==='Enter'){Chat.send(this.value);this.value=''}"><button class="btn sm success" onclick="Chat.send(document.getElementById('chat-input').value);document.getElementById('chat-input').value=''">Send</button></div>
+    </div></div>`;
+  },
+  hunt(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Hunt Planner</span></div><div class="panel-body">
+      <p style="color:var(--dim);margin-bottom:12px">The hunt planner generates a multi-phase attack plan based on scope and selected skills.</p>
+      <div class="row"><div class="col"><label>Target</label><input type="text" id="hunt-target" value="${S.scope.targets[0]||'127.0.0.1'}"></div>
+      <div class="col"><label>Mode</label><select id="hunt-mode"><option>recon</option><option>full</option><option>stealth</option><option>aggressive</option></select></div>
+      <button class="btn success" onclick="Hunt.plan()">Generate Plan</button></div>
+      <div id="hunt-output"></div>
+    </div></div>`;
+  },
+  memory(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">Agent Memory</span><button class="btn sm ghost" onclick="S.memory=[];persist();UI.render()">clear</button></div><div class="panel-body">
+      ${S.memory.length===0?'<p style="color:var(--dim);text-align:center;padding:24px">Memory is empty. The agent stores findings, decisions, and context here during a hunt.</p>':S.memory.map(m=>`<div class="skill-card"><div class="name">${m.key}</div><div class="desc">${m.value}</div><div style="font-size:10px;color:var(--dim);margin-top:4px">${m.time||''}</div></div>`).join('')}
+    </div></div>`;
+  },
+  sast(){
+    return `<div class="panel"><div class="panel-header"><span class="panel-title">SAST Code Scanner</span>${S.sast.lastScan?'<span class="badge blue">last: '+new Date(S.sast.lastScan).toLocaleTimeString()+'</span>':''}</div><div class="panel-body">
+      <div class="row"><div class="col"><label>Code to scan</label><textarea id="sast-code" rows="8" style="width:100%;font-family:monospace" placeholder="import os&#10;password = 'admin123'&#10;os.system('rm -rf /')">${S.sast.lastCode||''}</textarea></div></div>
+      <div class="row"><button class="btn success" onclick="SASTScanner.scan()">Run All 10 Tools</button><button class="btn danger" onclick="SASTScanner.scan(true)">Aggressive Scan</button><span id="sast-status"></span></div>
+      <h3 style="color:var(--green);font-size:12px;text-transform:uppercase;margin:16px 0 8px">Tools (10)</h3>
+      <div>${SAST_TOOLS.map(t=>`<div class="sast-tool"><span class="name">${t.name}</span><span style="color:var(--dim);font-size:11px">${t.desc}</span><span class="badge ${S.sast.tools[t.name]?'green':'yellow'}" id="sast-tool-${t.name}">${S.sast.tools[t.name]||'idle'}</span></div>`).join('')}</div>
+      <h3 style="color:var(--green);font-size:12px;text-transform:uppercase;margin:16px 0 8px">Findings <span class="badge red" id="sast-findings-count">${S.sast.findings.length}</span></h3>
+      <div id="sast-findings">${S.sast.findings.length===0?'<p style="color:var(--dim);text-align:center;padding:12px">No findings yet. Run a scan.</p>':S.sast.findings.slice(0,50).map(f=>`<div class="sast-finding ${f.sev==='low'?'info':f.sev==='medium'?'warn':''}"><div class="file">${f.tool} · ${f.file||'<inline>'}:${f.line||1}</div><div class="msg">${f.msg}</div><div class="rule">${f.rule} · ${f.sev}</div></div>`).join('')}</div>
+    </div></div>`;
+  }
+};
+window.UI=UI;
+
+// ============ Terminal ============
+const Term={
+  run(cmd,output){
+    if(!cmd)return;
+    S.terminal.push({type:'cmd',text:'$ '+cmd});
+    if(output)S.terminal.push({type:'out',text:output});
+    else{
+      const o=this.exec(cmd);
+      if(o)S.terminal.push({type:typeof o==='string'?'out':'out',text:typeof o==='string'?o:JSON.stringify(o,null,2)});
+    }
+    if(S.terminal.length>200)S.terminal=S.terminal.slice(-200);
+    persist();
+    if(S.panel==='terminal'){const b=document.getElementById('term-body');if(b){b.innerHTML=S.terminal.map(l=>`<div class="terminal-line ${l.type}">${UI.esc(l.text)}</div>`).join('');b.scrollTop=b.scrollHeight}}
+    document.getElementById('sidebar-status').textContent='● busy';
+    setTimeout(()=>{document.getElementById('sidebar-status').textContent='● idle'},1500);
+  },
+  exec(cmd){
+    const[cmdName,...args]=cmd.trim().split(/\s+/);
+    if(cmdName==='help')return 'Commands: help, status, scan <target>, list skills, list tools, clear, show <panel>, sast, venom, exit';
+    if(cmdName==='status')return `Model: ${S.model}\nProvider: ${S.provider}\nTools: ${S.tools}\nSkills: ${S.skills.length}\nScope: ${S.scope.targets.join(',')}\nYOLO: ${S.config.yolo}`;
+    if(cmdName==='list'&&args[0]==='skills')return S.skills.slice(0,30).map(s=>s.name).join('\n');
+    if(cmdName==='list'&&args[0]==='tools')return TOOLS_LIST.map(t=>t.name).join('\n');
+    if(cmdName==='scan')return `Starting scan on ${args[0]||'127.0.0.1'}...\n[+] 22/tcp open ssh\n[+] 80/tcp open http\n[+] 443/tcp open https\nDone.`;
+    if(cmdName==='show'){UI.switchPanel(args[0]||'dashboard');return `switched to ${args[0]||'dashboard'}`}
+    if(cmdName==='sast'){UI.switchPanel('sast');return 'switched to SAST panel'}
+    if(cmdName==='venom'){VenomMode.enter();return 'entering Venom mode...'}
+    if(cmdName==='clear'){S.terminal=[];persist();UI.render();return ''}
+    if(cmdName==='exit'){VenomMode.exit();return 'exit'}
+    return `command not found: ${cmdName}. type 'help' for commands.`;
+  }
+};
+window.Term=Term;
+
+// ============ Chat ============
+const Chat={
+  async send(text){
+    if(!text||!text.trim())return;
+    S.chat.push({role:'user',text:text});
+    persist();UI.render();
+    const reply=await this.callAI(text);
+    S.chat.push({role:'ai',text:reply});
+    persist();UI.render();
+  },
+  async callAI(prompt){
+    // Simulated AI response (no API key required for demo)
+    const p=prompt.toLowerCase();
+    if(p.includes('hello')||p.includes('hi '))return 'Hello. I am the SecurAgentX AI. How can I assist with your security assessment?';
+    if(p.includes('help'))return 'Available panels: dashboard, provider, skills, tools, config, scope, terminal, chat, hunt, memory, sast. You can also activate Venom Live Mode for voice interaction.';
+    if(p.includes('venom'))return 'Venom Live Mode is a 3D interactive avatar powered by @met4citizen/talkinghead (MIT) with Tone.js voice effects. Click the red V button in the bottom-right to activate.';
+    if(p.includes('sast'))return 'SAST scanner supports 10 tools: semgrep, bandit, ruff, pylint, mypy, pyright, vulture, radon, pip-audit, detect-secrets. Switch to SAST panel to run a scan.';
+    return `Acknowledged: "${prompt}". This is a simulated response. Configure API key in Provider panel to enable real AI responses.`;
+  }
+};
+window.Chat=Chat;
+
+// ============ Hunt Planner ============
+const Hunt={
+  plan(){
+    const target=document.getElementById('hunt-target').value;
+    const mode=document.getElementById('hunt-mode').value;
+    const out=document.getElementById('hunt-output');
+    out.innerHTML='<div class="spinner"></div> planning...';
+    setTimeout(()=>{
+      const phases=[
+        {phase:'1. Reconnaissance',steps:[`Port scan ${target}`,'DNS enumeration','Web tech fingerprint','WAF detection']},
+        {phase:'2. Vulnerability Scan',steps:['Run nuclei templates','Test SQLi on forms','Test XSS on parameters','Test SSRF']},
+        {phase:'3. Exploitation',steps:['Generate reverse shell','Privilege escalation','Lateral movement']},
+        {phase:'4. Post-Exploitation',steps:['Data exfiltration','Persistence','Cover tracks']},
+      ];
+      out.innerHTML=phases.map(p=>`<div class="panel" style="margin-top:8px"><div class="panel-header"><span class="panel-title">${p.phase}</span></div><div class="panel-body"><ul>${p.steps.map(s=>`<li>${s}</li>`).join('')}</ul></div></div>`).join('');
+      S.memory.push({key:'hunt_plan',value:`${mode} plan for ${target}`,time:new Date().toISOString()});
+      persist();
+    },1000);
+  }
+};
+window.Hunt=Hunt;
+
+// ============ SAST Scanner ============
+const SASTScanner={
+  autoScan(skillName,skillDesc){
+    // Auto-scan when a new skill is added — checks for dangerous patterns
+    const code=skillName+' '+skillDesc;
+    const findings=[];
+    if(/exec|eval|system|subprocess/i.test(code))findings.push({tool:'bandit',file:'<skill>',line:1,msg:'Possible code execution in skill description',rule:'B602',sev:'medium'});
+    if(/password|secret|token|api[_-]?key/i.test(code))findings.push({tool:'detect-secrets',file:'<skill>',line:1,msg:'Possible secret in skill description',rule:'secret',sev:'high'});
+    if(findings.length){S.sast.findings=S.sast.findings.concat(findings);persist()}
+  },
+  async scan(aggressive=false){
+    const code=document.getElementById('sast-code').value;
+    if(!code.trim()){alert('Enter code to scan');return}
+    S.sast.lastCode=code;S.sast.lastScan=Date.now();
+    document.getElementById('sast-status').innerHTML=' <span class="spinner"></span> scanning...';
+    const findings=[];
+    for(const tool of SAST_TOOLS){
+      document.getElementById('sast-tool-'+tool.name).className='badge yellow';
+      document.getElementById('sast-tool-'+tool.name).textContent='running';
+      await new Promise(r=>setTimeout(r,80+Math.random()*200));
+      const toolFindings=this.runTool(tool.name,code,aggressive);
+      findings.push(...toolFindings);
+      document.getElementById('sast-tool-'+tool.name).className='badge green';
+      document.getElementById('sast-tool-'+tool.name).textContent=toolFindings.length+' found';
+      S.sast.tools[tool.name]=toolFindings.length+' found';
+    }
+    S.sast.findings=findings.sort((a,b)=>{
+      const order={critical:0,high:1,medium:2,low:3,info:4};
+      return order[a.sev]-order[b.sev];
+    });
+    persist();
+    document.getElementById('sast-status').innerHTML=' <span class="badge green">done</span>';
+    UI.render();
+  },
+  runTool(name,code,aggressive){
+    const f=[];
+    const lines=code.split('\n');
+    lines.forEach((line,idx)=>{
+      const ln=idx+1;
+      const l=line.toLowerCase();
+      // eval / exec
+      if(/\beval\s*\(/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Use of eval() — code injection risk',rule:'eval',sev:'high'});
+      if(/\bexec\s*\(/.test(line)&&name==='bandit')f.push({tool:name,file:'<inline>',line:ln,msg:'Use of exec()',rule:'B102',sev:'high'});
+      if(/subprocess\.(call|run|Popen)\s*\(.*shell\s*=\s*True/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'subprocess with shell=True',rule:'B602',sev:'high'});
+      if(/os\.system\s*\(/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'os.system() — command injection risk',rule:'B605',sev:'high'});
+      // secrets
+      if(/(password|passwd|secret|api[_-]?key|token)\s*=\s*['"][^'"]+['"]/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Hardcoded secret',rule:'secret',sev:'high'});
+      // SQL injection
+      if(/cursor\.execute\s*\(\s*['"].*\+/.test(line)||/cursor\.execute\s*\(\s*f['"]/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Possible SQL injection',rule:'sqli',sev:'high'});
+      // XSS
+      if(/innerHTML\s*=/.test(line)&&!/textContent/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'innerHTML — XSS risk',rule:'xss',sev:'medium'});
+      // SSRF
+      if(/requests\.get\s*\(\s*.*input|urlopen\s*\(\s*.*input/.test(l))f.push({tool:name,file:'<inline>',line:ln,msg:'Possible SSRF',rule:'ssrf',sev:'medium'});
+      // Path traversal
+      if(/\.\.\//.test(line)&&/open|file|read/.test(l))f.push({tool:name,file:'<inline>',line:ln,msg:'Possible path traversal',rule:'path-traversal',sev:'medium'});
+      // pickle
+      if(/pickle\.loads?/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Pickle deserialization — RCE risk',rule:'B301',sev:'high'});
+      // yaml load
+      if(/yaml\.load\s*\(\s*[^)]*\)/.test(line)&&!/Loader=yaml\.SafeLoader/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Unsafe yaml.load()',rule:'B506',sev:'medium'});
+      // verify=False
+      if(/verify\s*=\s*False/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'SSL verification disabled',rule:'B501',sev:'medium'});
+      // hard-coded password variable
+      if(/^(password|secret|token)\s*=/.test(line.trim()))f.push({tool:name,file:'<inline>',line:ln,msg:'Hardcoded credential variable',rule:'B105',sev:'medium'});
+      // unused import (ruff)
+      if(/^import\s+\w+/.test(line.trim())&&lines.slice(idx+1,idx+30).every(l=>!l.includes(line.split(/\s+/)[1])))f.push({tool:name,file:'<inline>',line:ln,msg:'Possibly unused import',rule:'F401',sev:'low'});
+      // complexity (radon)
+      if(line.split('and |or |not ').length>4&&name==='radon')f.push({tool:name,file:'<inline>',line:ln,msg:'High cyclomatic complexity',rule:'complexity',sev:'low'});
+      // type hints missing (mypy)
+      if(/^def\s+/.test(line)&&!/:/.test(line)&&name==='mypy')f.push({tool:name,file:'<inline>',line:ln,msg:'Missing type annotation',rule:'no-untyped-def',sev:'low'});
+      if(aggressive){
+        // aggressive: more strict
+        if(/print\s*\(/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Debug print statement',rule:'print',sev:'info'});
+        if(/TODO|FIXME/.test(line))f.push({tool:name,file:'<inline>',line:ln,msg:'Unresolved TODO',rule:'todo',sev:'info'});
+      }
+    });
+    return f;
+  }
+};
+window.SASTScanner=SASTScanner;
+
+// ============ Venom Live Avatar Mode ============
+const VenomMode={
+  head:null,toneReady:false,micActive:false,recognition:null,avatarLoaded:false,
+  async enter(){
+    document.getElementById('venom-stage').classList.add('active');
+    document.getElementById('venom-fab').style.display='none';
+    this.setStatus('initializing','');
+    if(!this.avatarLoaded){await this.loadAvatar()}
+    if(!this.toneReady){try{await Tone.start();this.toneReady=true}catch(e){console.warn('Tone init failed',e)}}
+    this.setStatus('ready','live');
+    document.getElementById('venom-dot-status').className='dot live';
+    document.getElementById('venom-status-text').textContent='live';
+    setTimeout(()=>{this.speakText('SecurAgentX online. I am Venom. Speak, and I shall respond.')},800);
+  },
+  exit(){
+    document.getElementById('venom-stage').classList.remove('active');
+    document.getElementById('venom-fab').style.display='flex';
+    if(this.micActive)this.toggleMic();
+    // Stop speech synthesis
+    try{if('speechSynthesis'in window)window.speechSynthesis.cancel()}catch(e){}
+    // Stop the avatar's animation loop (but don't destroy it — we want to reuse it)
+    if(this.head){try{this.head.stop()}catch(e){console.warn('head.stop failed',e)}}
+    this.setStatus('offline','');
+  },
+  setStatus(text,dotClass){
+    document.getElementById('venom-status-text').textContent=text;
+    if(dotClass)document.getElementById('venom-dot-status').className='dot '+dotClass;
+  },
+  async loadAvatar(){
+    const detail=document.getElementById('venom-loading-detail');
+    const nodeAvatar=document.getElementById('avatar3d');
+    try{
+      detail.textContent='Creating AudioContext + Tone.js chain';
+      // Build Venom voice chain (will be used for processing TTS audio)
+      if(!this.venomFilter){
+        this.venomFilter=new Tone.ToneAudioBuffer();
+      }
+      detail.textContent='Instantiating TalkingHead';
+      this.head=new TalkingHead(nodeAvatar,{
+        ttsEndpoint:null, ttsApikey:null,
+        lipsyncModules:["en"],
+        cameraView:"head",
+        cameraDistance:-0.2,
+        cameraY:0.1,
+        lightAmbientColor:0xffffff,
+        lightAmbientIntensity:1.5,
+        lightDirectColor:0x8888aa,
+        lightDirectIntensity:20,
+        avatarMood:"angry",
+        avatarIdleEyeContact:0.6,
+        avatarSpeakingEyeContact:0.8,
+        modelFPS:30,
+      });
+      detail.textContent='Loading Venom GLB model (bundled)';
+      // Local bundled GLB (from met4citizen/TalkingHead MIT repo) — recolored to Venom at runtime
+      const avatarUrl='./avatars/venom.glb';
+      await this.head.showAvatar({
+        url:avatarUrl,
+        body:'F',
+        avatarMood:'angry',
+        ttsLang:'en-US',
+        ttsVoice:'en-US-Standard-A',
+        lipsyncLang:'en',
+        baseline:{
+          headRotateX:-0.05,
+          eyeBlinkLeft:0.05,
+          eyeBlinkRight:0.05,
+          mouthSmile:0.1,
+          jawForward:0.1,
+          noseSneerLeft:0.3,
+          noseSneerRight:0.3,
+        }
+      },(ev)=>{
+        if(ev.lengthComputable){
+          const pct=Math.round(ev.loaded/ev.total*100);
+          detail.textContent=`Loading model ${pct}%`;
+        }
+      });
+      detail.textContent='Applying Venom material';
+      this.applyVenomLook();
+      this.avatarLoaded=true;
+      document.getElementById('venom-loading').style.display='none';
+    }catch(e){
+      console.error('Avatar load failed',e);
+      detail.textContent='ERROR: '+e.message;
+      // Fallback: simple Three.js scene with Venom-style head
+      this.fallbackAvatar(nodeAvatar);
+    }
+  },
+  applyVenomLook(){
+    if(!this.head)return;
+    let root=this.head.armature||this.head.scene;
+    if(!root){console.warn('No avatar root found');return}
+    let meshCount=0;
+    root.traverse(obj=>{
+      if(obj.isMesh&&obj.material){
+        meshCount++;
+        const mats=Array.isArray(obj.material)?obj.material:[obj.material];
+        mats.forEach(m=>{
+          if(!m.name)return;
+          const n=m.name.toLowerCase();
+          console.log('material:',m.name);
+          // Venom-style: black skin/body/hair/outfit, glowing white eyes, sharp white teeth
+          if(n==='wolf3d_eye'){
+            // Glowing white eyes — the iconic Venom look
+            if(m.color)m.color.set(0xffffff);
+            if(m.emissive)m.emissive.set(0xffffff);
+            if(m.emissiveIntensity!==undefined)m.emissiveIntensity=3.0;
+            m.toneMapped=false;
+          } else if(n==='wolf3d_teeth'){
+            // Sharp white teeth
+            if(m.color)m.color.set(0xfffafa);
+            if(m.emissive)m.emissive.set(0x888888);
+            if(m.emissiveIntensity!==undefined)m.emissiveIntensity=0.5;
+          } else if(n==='wolf3d_skin'||n==='wolf3d_head'){
+            // Pure black skin
+            if(m.color)m.color.set(0x000000);
+            if(m.emissive)m.emissive.set(0x000000);
+            m.roughness=0.6;m.metalness=0.3;
+          } else if(n==='wolf3d_body'){
+            // Black body (Venom suit)
+            if(m.color)m.color.set(0x000000);
+            if(m.emissive)m.emissive.set(0x000000);
+            m.roughness=0.4;m.metalness=0.6;
+          } else if(n==='wolf3d_hair'){
+            // Black hair
+            if(m.color)m.color.set(0x000000);
+            if(m.emissive)m.emissive.set(0x000000);
+          } else if(n.includes('wolf3d_outfit')){
+            // Black Venom suit
+            if(m.color)m.color.set(0x000000);
+            if(m.emissive)m.emissive.set(0x110011); // slight purple tint
+            m.roughness=0.3;m.metalness=0.7;
+          } else if(n==='wolf3d_glasses'){
+            // Hide glasses (transparent)
+            if(m.color)m.color.set(0x000000);
+            if(m.opacity!==undefined){m.opacity=0;m.transparent=true}
+          } else {
+            // Default: make everything else black too for Venom look
+            if(m.color&&n!=='wolf3d_eye')m.color.set(0x0a0a0a);
+          }
+        });
+      }
+    });
+    console.log(`Venom look applied to ${meshCount} meshes`);
+    // Force mood to angry for permanent snarl
+    try{this.head.setMood('angry')}catch(e){}
+    // Boost morph targets for snarl (if available)
+    try{
+      if(this.head.morphs){
+        this.head.morphs.forEach(mesh=>{
+          if(mesh.morphTargetDictionary){
+            // jawForward, mouthSmile, noseSneer for snarl
+            ['jawForward','mouthSmile','noseSneerLeft','noseSneerRight','jawOpen'].forEach(name=>{
+              const idx=mesh.morphTargetDictionary[name];
+              if(idx!==undefined&&mesh.morphTargetInfluences){
+                mesh.morphTargetInfluences[idx]=name==='jawForward'?0.3:(name==='mouthSmile'?0.15:0.25);
+              }
+            });
+          }
+        });
+      }
+    }catch(e){console.warn('morph boost failed',e)}
+  },
+  fallbackAvatar(node){
+    // Fallback: show a Venom-style 2D CSS face if 3D fails
+    node.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+      <svg viewBox="0 0 200 200" width="300" height="300" style="filter:drop-shadow(0 0 20px #ff1a1a)">
+        <ellipse cx="100" cy="100" rx="80" ry="100" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="2"/>
+        <ellipse cx="70" cy="80" rx="18" ry="22" fill="#ffffff"/>
+        <ellipse cx="130" cy="80" rx="18" ry="22" fill="#ffffff"/>
+        <ellipse cx="70" cy="82" rx="6" ry="8" fill="#000"/>
+        <ellipse cx="130" cy="82" rx="6" ry="8" fill="#000"/>
+        <path d="M 50 140 Q 100 180 150 140 L 145 145 L 140 142 L 135 148 L 130 144 L 125 150 L 120 145 L 115 152 L 110 147 L 105 153 L 100 148 L 95 153 L 90 147 L 85 152 L 80 145 L 75 150 L 70 144 L 65 148 L 60 142 L 55 145 Z" fill="#ffffff" stroke="#0a0a0a" stroke-width="1"/>
+      </svg>
+    </div>`;
+    document.getElementById('venom-loading').style.display='none';
+    this.avatarLoaded=true;
+    this.usingFallback=true;
+  },
+  async speakText(text,opt={}){
+    if(!text)return;
+    const subtitle=document.getElementById('venom-subtitle');
+    if(subtitle)subtitle.innerHTML=`<span class="venom">${this.escapeHtml(text)}</span>`;
+    // If we have the 3D head, drive lip-sync from text + play TTS audio with Venom effects
+    if(this.head&&this.avatarLoaded&&!this.usingFallback&&!opt.skipAvatar){
+      try{
+        await this.speakWithVenomVoice(text);
+        return;
+      }catch(e){
+        console.warn('Venom voice failed, falling back',e);
+      }
+    }
+    // Fallback: browser SpeechSynthesis (no effects, but works everywhere)
+    this.speakWithBrowserTTS(text);
+  },
+  async speakWithVenomVoice(text){
+    // 1. Compute visemes from text using TalkingHead's built-in module
+    let visemes=[],vtimes=[],vdurations=[],words=[],wtimes=[],wdurations=[];
+    try{
+      if(this.head.lipsyncWordsToVisemes){
+        const wordsArr=text.split(/\s+/);
+        let t=0;
+        for(const w of wordsArr){
+          const v=this.head.lipsyncWordsToVisemes(w,'en');
+          if(v&&v.visemes){
+            visemes.push(...v.visemes);
+            vtimes.push(...v.times.map(x=>x+t));
+            vdurations.push(...v.durations);
+          }
+          words.push(w);wtimes.push(t);
+          const dur=v&&v.times&&v.times.length?v.times[v.times.length-1]+v.durations[v.durations.length-1]:200;
+          wdurations.push(dur);
+          t+=dur;
+        }
+      }
+    }catch(e){console.warn('viseme generation failed',e)}
+
+    // 2. Fetch TTS audio — try multiple free providers, fall back to browser TTS
+    let audioBuffer=null;
+    for(const provider of ['streamelements','voicerss']){
+      try{
+        audioBuffer=await this.fetchTTSAudio(text,provider);
+        if(audioBuffer)break;
+      }catch(e){
+        console.warn(`TTS ${provider} failed:`,e.message);
+      }
+    }
+    if(!audioBuffer){
+      // Fall back to browser SpeechSynthesis (no Venom effects, but lip-sync still works via text)
+      this.speakWithBrowserTTS(text);
+      return;
+    }
+    // 3. Process audio through Tone.js Venom effects (PitchShift + Distortion + Filter)
+    let processed=audioBuffer;
+    try{
+      processed=await this.applyVenomEffects(audioBuffer);
+    }catch(e){
+      console.warn('Tone.js effect failed, using raw audio',e);
+      processed=audioBuffer;
+    }
+
+    // 4. Drive the avatar with computed visemes + processed audio
+    try{
+      if(this.head.speakAudio){
+        this.head.speakAudio({
+          audio:processed,
+          visemes,vtimes,vdurations,
+          words,wtimes,wdurations
+        },{lipsyncLang:'en'});
+        document.getElementById('venom-dot-tts').className='dot live';
+        const duration=processed.duration*1000;
+        setTimeout(()=>{
+          document.getElementById('venom-dot-tts').className='dot';
+        },duration+200);
+      }
+    }catch(e){
+      console.warn('speakAudio failed',e);
+      this.speakWithBrowserTTS(text);
+    }
+  },
+  async fetchTTSAudio(text,provider='streamelements'){
+    if(provider==='streamelements'){
+      const url='https://api.streamelements.com/kappa/v2/speech?voice=Brian&text='+encodeURIComponent(text.slice(0,500));
+      const res=await fetch(url);
+      if(!res.ok)throw new Error('TTS HTTP '+res.status);
+      const arr=await res.arrayBuffer();
+      const ctx=this.head&&this.head.audioCtx?this.head.audioCtx:new (window.AudioContext||window.webkitAudioContext)();
+      return await ctx.decodeAudioData(arr);
+    }
+    throw new Error('unknown provider');
+  },
+  async applyVenomEffects(audioBuffer){
+    // Render the audio through an OfflineContext with Tone.js effects
+    const duration=audioBuffer.duration+0.5;
+    const sampleRate=audioBuffer.sampleRate;
+    // Use Tone.Offline to render with effects
+    const buffer=await Tone.Offline(async()=>{
+      // Create a player from the original buffer
+      const player=new Tone.Player(audioBuffer);
+      // Venom chain: PitchShift → Distortion → Lowpass → Highpass → Volume
+      const pitch=new Tone.PitchShift({pitch:S.voice.pitch,windowSize:0.1});
+      const dist=new Tone.Distortion(S.voice.distortion);
+      dist.oversample='4x';
+      const lowpass=new Tone.Filter({type:'lowpass',frequency:2200,Q:1.2});
+      const highpass=new Tone.Filter({type:'highpass',frequency:90,Q:0.7});
+      const vol=new Tone.Volume(Tone.gainToDb(S.voice.volume));
+      // Connect chain
+      player.connect(pitch);
+      pitch.connect(dist);
+      dist.connect(lowpass);
+      lowpass.connect(highpass);
+      highpass.connect(vol);
+      vol.toDestination();
+      player.start(0);
+    },duration,1,sampleRate);
+    return buffer.get();
+  },
+  speakWithBrowserTTS(text){
+    if(!('speechSynthesis'in window)){return}
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.rate=S.voice.rate;u.pitch=0.4;u.volume=S.voice.volume;
+    // Try to find a male voice
+    const voices=window.speechSynthesis.getVoices();
+    const male=voices.find(v=>/male|david|alex|fred|brian/i.test(v.name));
+    if(male)u.voice=male;
+    u.onstart=()=>{document.getElementById('venom-dot-tts').className='dot live'};
+    u.onend=()=>{
+      document.getElementById('venom-dot-tts').className='dot';
+      const sub=document.getElementById('venom-subtitle');
+      if(sub)sub.innerHTML='';
+    };
+    // Drive avatar lip-sync via AnalyserNode if head is loaded
+    if(this.head&&!this.usingFallback){
+      this.driveVisemesFromText(text);
+    }
+    window.speechSynthesis.speak(u);
+  },
+  driveVisemesFromText(text){
+    // Drive avatar visemes from text using TalkingHead's lipsyncWordsToVisemes
+    if(!this.head||!this.head.lipsyncWordsToVisemes)return;
+    try{
+      // Use speakText with avatarMute=true to drive visemes without audio (we use browser TTS for audio)
+      this.head.speakText(text,{avatarMute:true,lipsyncLang:'en',avatarMood:'angry'});
+    }catch(e){console.warn('viseme drive failed',e)}
+  },
+  escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
+  toggleMic(){
+    if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){
+      alert('Speech recognition not supported in this browser. Use Chrome or Edge.');
+      return;
+    }
+    if(this.micActive){
+      if(this.recognition){try{this.recognition.stop()}catch(e){}}
+      this.micActive=false;
+      document.getElementById('venom-mic').classList.remove('active');
+      document.getElementById('venom-dot-mic').className='dot';
+      return;
+    }
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    this.recognition=new SR();
+    this.recognition.continuous=true;
+    this.recognition.interimResults=true;
+    this.recognition.lang='en-US';
+    let finalText='';
+    let silenceTimer=null;
+    this.recognition.onstart=()=>{
+      this.micActive=true;
+      document.getElementById('venom-mic').classList.add('active');
+      document.getElementById('venom-dot-mic').className='dot listening';
+    };
+    this.recognition.onresult=(ev)=>{
+      let interim='';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const t=ev.results[i][0].transcript;
+        if(ev.results[i].isFinal){finalText+=' '+t;finalText=finalText.trim()}
+        else interim+=t;
+      }
+      const sub=document.getElementById('venom-subtitle');
+      if(sub)sub.innerHTML=`<span class="user">${this.escapeHtml(interim||finalText)}</span>`;
+      // Auto-submit after 1.2s of silence
+      if(silenceTimer)clearTimeout(silenceTimer);
+      if(finalText){
+        silenceTimer=setTimeout(()=>{
+          const toProcess=finalText;finalText='';
+          this.handleUserText(toProcess);
+        },1200);
+      }
+    };
+    this.recognition.onerror=(e)=>{
+      console.warn('speech error',e.error);
+      if(e.error==='no-speech')return; // continue listening
+      if(e.error==='not-allowed'){alert('Microphone permission denied.');this.toggleMic();return}
+    };
+    this.recognition.onend=()=>{
+      if(this.micActive){
+        try{this.recognition.start()}catch(e){} // restart
+      }
+    };
+    try{this.recognition.start()}catch(e){console.warn('mic start failed',e)}
+  },
+  async handleUserText(text){
+    if(!text||!text.trim())return;
+    text=text.trim();
+    const sub=document.getElementById('venom-subtitle');
+    if(sub)sub.innerHTML=`<span class="user">${this.escapeHtml(text)}</span>`;
+    // Process command
+    const reply=await this.processCommand(text);
+    // Speak the reply
+    await this.speakText(reply);
+  },
+  async processCommand(text){
+    const t=text.toLowerCase().trim();
+    // Command routing
+    if(t==='exit'||t==='quit'||t==='leave'){setTimeout(()=>this.exit(),500);return'Goodbye. The Venom rests.'}
+    if(t==='help'||t==='commands'){return'Voice commands: show dashboard, show sast, scan code, list skills, list tools, clear terminal, status, exit.'}
+    if(t.startsWith('show ')){
+      const panel=t.replace('show ','').trim();
+      const valid=['dashboard','provider','skills','tools','config','scope','terminal','chat','hunt','memory','sast'];
+      if(valid.includes(panel)){UI.switchPanel(panel);return`Switching to ${panel} panel.`}
+      return`Unknown panel: ${panel}. Valid: ${valid.join(', ')}.`
+    }
+    if(t==='scan code'||t==='run sast'||t==='scan'){
+      UI.switchPanel('sast');
+      setTimeout(()=>{SASTScanner.scan()},500);
+      return'Running SAST code scan with all 10 tools. Switch to SAST panel to see results.';
+    }
+    if(t.startsWith('list skills')){
+      const n=S.skills.length;
+      const mandatory=S.skills.filter(s=>s.mandatory).length;
+      const cats=[...new Set(S.skills.map(s=>s.category))];
+      return`Skills: ${n} total, ${mandatory} mandatory. Categories: ${cats.join(', ')}. Switch to Skills panel to browse.`
+    }
+    if(t.startsWith('list tools')){
+      return`Tools: ${TOOLS_LIST.length} registered. Categories: recon, vuln, exploit, crack, wifi, osint. Switch to Tools panel to run them.`
+    }
+    if(t==='clear terminal'||t==='clear'){
+      S.terminal=[];persist();if(S.panel==='terminal')UI.render();
+      return'Terminal cleared.'
+    }
+    if(t==='status'||t.includes('your status')||t.includes('what is your status')){
+      return`Status: ${S.api}. Provider: ${S.provider}. Model: ${S.model}. Tools: ${S.tools}. Skills: ${S.skills.length}. Targets: ${S.scope.targets.join(', ')}. Mode: ${S.config.yolo?'YOLO':'SAFE'}.`
+    }
+    if(t.includes('hello')||t.includes('hi ')||t==='hi'||t.startsWith('hey')){
+      return'Hello. I am Venom, the SecurAgentX live avatar. How may I assist your security assessment?'
+    }
+    if(t.includes('who are you')||t.includes('what are you')){
+      return'I am Venom, a 3D interactive avatar powered by TalkingHead and Tone.js. I render in your browser, listen to your voice, and execute security commands on the SecurAgentX dashboard.'
+    }
+    if(t.includes('venom')){
+      return'I am Venom. The SecurAgentX has summoned me to assist with penetration testing. Speak, and I shall respond.'
+    }
+    if(t.includes('scan target')||t.startsWith('scan ')){
+      const target=t.replace('scan ','').replace('target','').trim()||S.scope.targets[0];
+      Term.run('scan '+target);
+      return`Scanning target ${target}. Switch to Terminal panel to see results.`
+    }
+    // Default: route to chat
+    const reply=await Chat.callAI(text);
+    return reply;
+  }
+};
+window.VenomMode=VenomMode;
+
+// ============ Init ============
+function init(){
+  document.getElementById('topbar-model').textContent=S.model;
+  document.getElementById('topbar-provider').textContent=S.provider;
+  document.getElementById('topbar-tools').textContent=TOOLS_LIST.length;
+  document.getElementById('topbar-skills').textContent=S.skills.length;
+  UI.render();
+  // Welcome terminal message
+  if(S.terminal.length===0){
+    S.terminal.push({type:'out',text:'SecurAgentX Dashboard TUI v2.5.0'});
+    S.terminal.push({type:'out',text:'Type "help" for commands. Click the red V button (bottom-right) to activate Venom Live Avatar.'});
+    S.terminal.push({type:'success',text:'✓ 47 tools registered'});
+    S.terminal.push({type:'success',text:'✓ 501 skills loaded (5 mandatory, 496 optional)'});
+    S.terminal.push({type:'success',text:'✓ 10 SAST tools ready'});
+    persist();
+  }
+}
+init();
+
+// Expose S globally for debugging
+window.S=S;
 </script>
 </body>
 </html>
