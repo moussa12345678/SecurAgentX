@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecurAgentX — Venom AI Pentest Framework</title>
+<meta name="description" content="Venom-themed AI penetration testing framework with 3D Live Avatar, 47 tools, 501 skills, SAST scanner, and brutal Playwright testing.">
+<meta name="keywords" content="penetration testing, AI agent, security, Venom, 3D avatar, lip-sync, SAST, cybersecurity, LLM, OpenRouter, Three.js, Tone.js">
+<meta property="og:title" content="SecurAgentX — Venom AI Pentest Framework">
+<meta property="og:description" content="Autonomous AI agent with a 3D Venom avatar that talks, listens, and hacks. 47 tools, 501 skills, SAST scanner.">
+<meta property="og:image" content="assets/shot-venom-mode.png">
+<meta property="og:url" content="https://moussa12345678.github.io/SecurAgentX">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#000;--bg2:#0a0a0a;--panel:#0d0d0d;--border:#1a1a1a;
+  --text:#e0e0e0;--dim:#666;--venom:#ff1a1a;--venom2:#ff3333;
+  --white:#fff;--green:#39d353;--blue:#58a6ff;--yellow:#d29922;--purple:#bc8cff
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;overflow-x:hidden}
+a{color:var(--venom);text-decoration:none;transition:color .2s}
+a:hover{color:var(--venom2)}
+
+/* Venom glow background */
+.bg-glow{position:fixed;top:0;left:50%;transform:translateX(-50%);width:1200px;height:800px;background:radial-gradient(ellipse at center,rgba(255,26,26,.08) 0%,transparent 60%);pointer-events:none;z-index:0;filter:blur(40px)}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,26,26,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,26,26,.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+nav .logo{font-size:20px;font-weight:800;letter-spacing:-.5px}
+nav .logo .v{color:var(--venom)}
+nav .links{display:flex;gap:24px;align-items:center}
+nav .links a{color:var(--dim);font-size:14px;font-weight:500}
+nav .links a:hover{color:var(--text)}
+nav .cta{background:var(--venom);color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;font-size:13px;transition:all .2s}
+nav .cta:hover{background:var(--venom2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,26,26,.4)}
+
+/* Hero */
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px}
+.hero .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,26,26,.1);border:1px solid rgba(255,26,26,.3);color:var(--venom);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:24px;animation:fadeIn .8s ease}
+.hero .badge .dot{width:6px;height:6px;border-radius:50%;background:var(--venom);animation:pulse 2s infinite}
+.hero h1{font-size:clamp(48px,8vw,96px);font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:20px;background:linear-gradient(180deg,#fff 0%,#888 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero h1 .venom{background:linear-gradient(180deg,var(--venom) 0%,#900 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;animation:venomGlow 3s ease-in-out infinite}
+.hero .tagline{font-size:clamp(16px,2.5vw,22px);color:var(--dim);max-width:680px;margin-bottom:36px;font-weight:400}
+.hero .tagline strong{color:var(--text);font-weight:600}
+.hero .actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:60px}
+.hero .btn{padding:14px 28px;border-radius:8px;font-weight:600;font-size:15px;transition:all .25s;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.hero .btn-primary{background:var(--venom);color:#fff;box-shadow:0 4px 20px rgba(255,26,26,.3)}
+.hero .btn-primary:hover{background:var(--venom2);transform:translateY(-2px);box-shadow:0 6px 30px rgba(255,26,26,.5)}
+.hero .btn-ghost{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)}
+.hero .btn-ghost:hover{background:rgba(255,255,255,.1);border-color:var(--venom)}
+
+/* Stats strip */
+.stats{display:flex;gap:48px;flex-wrap:wrap;justify-content:center;padding:32px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);width:100%;max-width:900px}
+.stat{text-align:center}
+.stat .num{font-size:36px;font-weight:800;color:var(--venom);line-height:1}
+.stat .lbl{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+
+/* Hero screenshot */
+.hero-shot{margin-top:40px;max-width:960px;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 80px rgba(255,26,26,.15);animation:floatUp 1s ease .3s both}
+.hero-shot img{display:block;width:100%}
+
+/* Sections */
+section{position:relative;z-index:1;padding:100px 24px;max-width:1200px;margin:0 auto}
+.section-title{text-align:center;margin-bottom:60px}
+.section-title .eyebrow{color:var(--venom);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;display:block}
+.section-title h2{font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-1.5px;margin-bottom:16px}
+.section-title p{color:var(--dim);font-size:17px;max-width:600px;margin:0 auto}
+
+/* Feature grid */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:40px}
+.feature{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:28px;transition:all .3s;position:relative;overflow:hidden}
+.feature::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--venom),transparent);transform:translateX(-100%);transition:transform .6s}
+.feature:hover::before{transform:translateX(100%)}
+.feature:hover{border-color:rgba(255,26,26,.4);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.feature .icon{font-size:36px;margin-bottom:16px;display:block}
+.feature h3{font-size:20px;font-weight:700;margin-bottom:10px}
+.feature p{color:var(--dim);font-size:14px;line-height:1.7}
+.feature .tag{display:inline-block;background:rgba(255,26,26,.1);color:var(--venom);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-top:12px}
+
+/* Screenshot gallery */
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:20px;margin-top:40px}
+.gallery-item{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:all .3s;cursor:pointer}
+.gallery-item:hover{border-color:var(--venom);transform:scale(1.02);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.gallery-item img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.gallery-item .caption{padding:14px 16px}
+.gallery-item .caption .title{font-size:14px;font-weight:600;color:var(--text)}
+.gallery-item .caption .desc{font-size:12px;color:var(--dim);margin-top:2px}
+
+/* Tech stack */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-top:40px}
+.tech{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;transition:all .3s}
+.tech:hover{border-color:var(--venom);transform:translateY(-3px)}
+.tech .name{font-size:14px;font-weight:600;margin-top:8px}
+.tech .ver{font-size:11px;color:var(--dim);margin-top:2px}
+.tech .emoji{font-size:28px}
+
+/* Code block */
+.code-block{background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:24px;margin-top:32px;overflow-x:auto;font-family:'SF Mono','Fira Code',Consolas,monospace;font-size:13px;line-height:1.7}
+.code-block .cm{color:var(--dim)}
+.code-block .kw{color:var(--venom)}
+.code-block .str{color:var(--green)}
+.code-block .num{color:var(--yellow)}
+.code-block .com{color:#555;font-style:italic}
+.code-block .header{display:flex;gap:6px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.code-block .dot{width:10px;height:10px;border-radius:50%}
+.code-block .dot.r{background:#ff5f56}.code-block .dot.y{background:#ffbd2e}.code-block .dot.g{background:#27c93f}
+
+/* Install steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-top:40px}
+.step{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:24px;position:relative}
+.step .num{position:absolute;top:-12px;left:24px;background:var(--venom);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.step h4{font-size:16px;font-weight:600;margin:12px 0 8px}
+.step p{color:var(--dim);font-size:13px}
+.step code{display:block;background:#0a0a0a;border:1px solid var(--border);border-radius:6px;padding:10px;margin-top:10px;font-family:'SF Mono',monospace;font-size:12px;color:var(--green);overflow-x:auto}
+
+/* Library credits */
+.libs{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:28px;margin-top:32px}
+.libs h3{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--venom)}
+.libs ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.libs li{padding:10px 14px;background:#0a0a0a;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.libs li strong{color:var(--text)}
+.libs li a{color:var(--blue);font-size:12px}
+.libs li .lic{color:var(--green);font-size:11px;margin-left:6px}
+
+/* CTA */
+.cta-section{text-align:center;padding:80px 24px;background:radial-gradient(ellipse at center,rgba(255,26,26,.1) 0%,transparent 70%)}
+.cta-section h2{font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+.cta-section p{color:var(--dim);font-size:17px;margin-bottom:32px;max-width:540px;margin-left:auto;margin-right:auto}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:40px 24px;text-align:center;color:var(--dim);font-size:13px;position:relative;z-index:1}
+footer .heart{color:var(--venom)}
+footer a{color:var(--text)}
+
+/* Animations */
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+@keyframes venomGlow{0%,100%{filter:drop-shadow(0 0 20px rgba(255,26,26,.4))}50%{filter:drop-shadow(0 0 40px rgba(255,26,26,.8))}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+/* Responsive */
+@media(max-width:768px){
+  nav .links a:not(.cta){display:none}
+  .stats{gap:24px}
+  .stat .num{font-size:28px}
+  section{padding:60px 16px}
+}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<nav>
+  <div class="logo">Secur<span class="v">AgentX</span></div>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#avatar">Venom Avatar</a>
+    <a href="#screenshots">Screenshots</a>
+    <a href="#install">Install</a>
+    <a href="#tech">Tech Stack</a>
+    <a href="https://github.com/moussa12345678/SecurAgentX" target="_blank" class="cta">★ Star</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="badge"><span class="dot"></span> v2.5.0 · Venom Live Avatar · MIT-licensed 3D engine</div>
+  <h1>Secur<span class="venom">AgentX</span></h1>
+  <p class="tagline">An <strong>autonomous AI penetration testing framework</strong> with a real <strong>3D Venom avatar</strong> that talks, listens, and hacks. 47 tools. 501 skills. SAST scanner. Brutal tests.</p>
+  <div class="actions">
+    <a href="https://github.com/moussa12345678/SecurAgentX" target="_blank" class="btn btn-primary">
+      🐍 View on GitHub
+    </a>
+    <a href="https://github.com/moussa12345678/SecurAgentX/blob/main/dashboard/index.html" target="_blank" class="btn btn-ghost">
+      🎭 Try Live Avatar
+    </a>
+    <a href="#install" class="btn btn-ghost">⚡ Quick Start</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="num">47</div><div class="lbl">Security Tools</div></div>
+    <div class="stat"><div class="num">501</div><div class="lbl">Pentest Skills</div></div>
+    <div class="stat"><div class="num">10</div><div class="lbl">SAST Scanners</div></div>
+    <div class="stat"><div class="num">41/41</div><div class="lbl">Tests Passing</div></div>
+    <div class="stat"><div class="num">MIT</div><div class="lbl">3D Libraries</div></div>
+  </div>
+  <div class="hero-shot">
+    <img src="assets/shot-venom-mode.png" alt="SecurAgentX Venom Live Avatar" loading="lazy">
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-title">
+    <span class="eyebrow">Capabilities</span>
+    <h2>Built for autonomous red-team operations</h2>
+    <p>Reasoning-driven vulnerability discovery that thinks like a penetration tester — with a face you can talk to.</p>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <span class="icon">🎭</span>
+      <h3>Venom Live Avatar</h3>
+      <p>Real 3D avatar powered by <strong>@met4citizen/talkinghead</strong> (MIT, 1449★) with audio-driven lip-sync. Black skin, glowing white eyes, sharp teeth, permanent snarl. Voice recognition + TTS.</p>
+      <span class="tag">Three.js · WebGL</span>
+    </div>
+    <div class="feature">
+      <span class="icon">🔊</span>
+      <h3>Venom Voice Effects</h3>
+      <p>Deep distorted growl via <strong>Tone.js</strong> (MIT, 14693★). PitchShift -9 semitones → Distortion 0.4 → Lowpass 2200Hz → Highpass 90Hz. Configurable in real-time.</p>
+      <span class="tag">Tone.js · Web Audio API</span>
+    </div>
+    <div class="feature">
+      <span class="icon">🛠️</span>
+      <h3>47 Security Tools</h3>
+      <p>nmap, masscan, gobuster, sqlmap, nikto, hydra, metasploit, nuclei, dalfox, crackmapexec and 37 more. All wrapped with safe execution and YOLO mode for unrestricted ops.</p>
+      <span class="tag">CLI · Python</span>
+    </div>
+    <div class="feature">
+      <span class="icon">★</span>
+      <h3>501 Pentest Skills</h3>
+      <p>5 mandatory pre-hunt skills (port scan, DNS brute, web recon, CVE match, reverse shell) + 496 optional skills across recon, vuln, exploit, post-exploit, OSINT, WiFi, social eng.</p>
+      <span class="tag">Categorized · Searchable</span>
+    </div>
+    <div class="feature">
+      <span class="icon">ℹ</span>
+      <h3>SAST Code Scanner</h3>
+      <p>10 static analysis tools: semgrep, bandit, ruff, pylint, mypy, pyright, vulture, radon, pip-audit, detect-secrets. Detects eval, exec, SQLi, XSS, SSRF, path traversal, pickle, secrets.</p>
+      <span class="tag">Browser-native</span>
+    </div>
+    <div class="feature">
+      <span class="icon">⚡</span>
+      <h3>Multi-Agent Flow</h3>
+      <p>UniversalAIClient → LLMClient adapter bridges sync→async. Specialist chain routing. 429 retry with 20×60s backoff. Advisory scope (non-blocking). 300s LLM timeout for large models.</p>
+      <span class="tag">OpenRouter · Llama 3.3 70B</span>
+    </div>
+    <div class="feature">
+      <span class="icon">▤</span>
+      <h3>Dashboard TUI</h3>
+      <p>Single-page web app with 11 panels: Dashboard, Provider, Skills, Tools, Config, Scope, Terminal, Chat, Hunt, Memory, SAST. All state persisted in localStorage. Responsive 1920→375px.</p>
+      <span class="tag">HTML · CSS · Vanilla JS</span>
+    </div>
+    <div class="feature">
+      <span class="icon">◎</span>
+      <h3>Governance Layer</h3>
+      <p>SAFE → execute immediately. PRIVILEGED → ask user. DESTRUCTIVE → auto-deny. Advisory scope mode logs violations without blocking. Rate limiter at 60 req/min.</p>
+      <span class="tag">Safe · YOLO toggle</span>
+    </div>
+    <div class="feature">
+      <span class="icon">✓</span>
+      <h3>Brutal Testing</h3>
+      <p>41 Playwright tests covering page load, 11 panels, XSS injection, memory leaks, responsive layout, SAST scan, Venom mode activation, voice commands, exit/re-enter, console errors.</p>
+      <span class="tag">Playwright · 100% pass</span>
+    </div>
+  </div>
+</section>
+
+<!-- AVATAR -->
+<section id="avatar">
+  <div class="section-title">
+    <span class="eyebrow">The Face of SecurAgentX</span>
+    <h2>Venom Live Avatar</h2>
+    <p>A real 3D talking head — not hand-drawn SVG. Built on open-source libraries with audio-driven lip-sync and Venom-style voice effects.</p>
+  </div>
+  
+  <div class="features" style="grid-template-columns:1fr 1fr;gap:32px">
+    <div>
+      <h3 style="font-size:24px;margin-bottom:16px">🎭 Real 3D, not SVG</h3>
+      <p style="color:var(--dim);margin-bottom:20px">The avatar uses <strong style="color:var(--text)">@met4citizen/talkinghead</strong> — a MIT-licensed JavaScript class that loads GLB models with ARKit (52) + Oculus (15) viseme morph targets. We recolor all 10 Wolf3D_* meshes at runtime: black skin (0x000000), glowing white eyes (emissive 3.0), sharp white teeth, hidden glasses, angry mood.</p>
+      
+      <h3 style="font-size:18px;margin-bottom:10px">🔊 Venom Voice Chain</h3>
+      <p style="color:var(--dim);margin-bottom:20px">TTS audio → <code style="background:#0a0a0a;padding:2px 6px;border-radius:3px;color:var(--green)">Tone.Offline()</code> render → PitchShift(-9) → Distortion(0.4, 4x) → Lowpass(2200Hz) → Highpass(90Hz) → Volume. Result: a deep distorted growl.</p>
+      
+      <h3 style="font-size:18px;margin-bottom:10px">🎤 Continuous Speech Recognition</h3>
+      <p style="color:var(--dim);margin-bottom:20px">Web Speech API <code style="background:#0a0a0a;padding:2px 6px;border-radius:3px;color:var(--green)">SpeechRecognition</code> with continuous=true, interimResults=true. Auto-submits on 1.2s silence. Voice commands: <em>show panel</em>, <em>list skills</em>, <em>scan code</em>, <em>status</em>, <em>exit</em>.</p>
+      
+      <h3 style="font-size:18px;margin-bottom:10px">⚙ Google TTS (Optional)</h3>
+      <p style="color:var(--dim)">Users can paste their own Google Cloud TTS API key in the ⚙ panel below the avatar. When present: TalkingHead uses Google TTS with SSML timestamps for word-accurate visemes. When empty: free StreamElements Brian + Tone.js Venom effects.</p>
+    </div>
+    <div>
+      <img src="assets/shot-venom-speaking.png" alt="Venom avatar speaking" style="width:100%;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,.5)">
+      <img src="assets/shot-venom-tts.png" alt="Venom TTS settings panel" style="width:100%;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,.5);margin-top:16px">
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section id="screenshots">
+  <div class="section-title">
+    <span class="eyebrow">Gallery</span>
+    <h2>See it in action</h2>
+    <p>Every panel of the SecurAgentX Dashboard TUI — captured from a real Chrome browser running the dashboard.</p>
+  </div>
+  <div class="gallery">
+    <div class="gallery-item">
+      <img src="assets/shot-dashboard.png" alt="Dashboard overview" loading="lazy">
+      <div class="caption"><div class="title">Dashboard Overview</div><div class="desc">System stats, skill categories, mode indicators</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-venom-mode.png" alt="Venom mode" loading="lazy">
+      <div class="caption"><div class="title">Venom Live Mode</div><div class="desc">Fullscreen 3D avatar with voice commands</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-sast.png" alt="SAST scanner" loading="lazy">
+      <div class="caption"><div class="title">SAST Code Scanner</div><div class="desc">10 tools detecting eval, secrets, SQLi, XSS</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-skills.png" alt="Skills panel" loading="lazy">
+      <div class="caption"><div class="title">Skills Library</div><div class="desc">501 skills, searchable, categorized</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-tools.png" alt="Tools panel" loading="lazy">
+      <div class="caption"><div class="title">Security Tools</div><div class="desc">47 CLI tools across 8 categories</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-terminal.png" alt="Terminal" loading="lazy">
+      <div class="caption"><div class="title">Terminal</div><div class="desc">Command interface with history</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-chat.png" alt="AI Chat" loading="lazy">
+      <div class="caption"><div class="title">AI Chat</div><div class="desc">Conversational interface with the agent</div></div>
+    </div>
+    <div class="gallery-item">
+      <img src="assets/shot-config.png" alt="Config panel" loading="lazy">
+      <div class="caption"><div class="title">Configuration</div><div class="desc">YOLO mode, voice effects, scope settings</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="section-title">
+    <span class="eyebrow">Get Started</span>
+    <h2>Quick Start</h2>
+    <p>Three ways to run SecurAgentX. Pick your flavor.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h4>Clone the repo</h4>
+      <p>Get the code and enter the directory.</p>
+      <code>git clone https://github.com/moussa12345678/SecurAgentX.git
+cd SecurAgentX</code>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h4>Run the Dashboard TUI</h4>
+      <p>Open the dashboard in any browser. No build step needed.</p>
+      <code>cd dashboard
+python3 -m http.server 8000
+# Visit http://localhost:8000</code>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h4>Activate Venom</h4>
+      <p>Click the red <strong>V</strong> button (bottom-right). The 3D avatar loads in ~1 second. Click ⚙ to add your Google TTS key (optional).</p>
+      <code># Click 🎤 to enable voice recognition
+# Type or speak: "who are you?"</code>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <h4>Run the Python agent</h4>
+      <p>For full pentest capabilities with 47 CLI tools.</p>
+      <code>pip install -e .
+python3 main.py --help
+python3 main.py --yolo scan 127.0.0.1</code>
+    </div>
+  </div>
+  
+  <div class="code-block" style="margin-top:32px">
+    <div class="header"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+<pre><span class="cm"># Install with all dependencies</span>
+<span class="kw">pip</span> install -e <span class="str">.</span>
+
+<span class="cm"># Run the CLI agent (OpenRouter API key required for LLM)</span>
+<span class="kw">export</span> OPENROUTER_API_KEY=<span class="str">"sk-or-v1-..."</span>
+python3 main.py <span class="str">--model meta-llama/llama-3.3-70b-instruct scan 127.0.0.1</span>
+
+<span class="cm"># Or just open the dashboard (no API key needed for UI demo)</span>
+<span class="kw">cd</span> dashboard && python3 <span class="str">-m</span> http.server <span class="num">8000</span>
+
+<span class="cm"># Run the brutal test suite</span>
+<span class="kw">pip</span> install playwright && python3 <span class="str">-m</span> playwright install chromium
+python3 scripts/test_quick.py       <span class="com"># 24 structural tests</span>
+python3 scripts/test_venom_final.py <span class="com"># 17 Venom mode tests</span>
+<span class="com"># Total: 41/41 passing</span></pre>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div class="section-title">
+    <span class="eyebrow">Under the Hood</span>
+    <h2>Open-source stack</h2>
+    <p>Every library is MIT-licensed and runs in the browser. No proprietary dependencies.</p>
+  </div>
+  <div class="tech-grid">
+    <div class="tech"><div class="emoji">🎭</div><div class="name">TalkingHead</div><div class="ver">@met4citizen · v1.7.0</div></div>
+    <div class="tech"><div class="emoji">🎵</div><div class="name">Tone.js</div><div class="ver">v15.0.4</div></div>
+    <div class="tech"><div class="emoji">📐</div><div class="name">Three.js</div><div class="ver">v0.180.0</div></div>
+    <div class="tech"><div class="emoji">🐍</div><div class="name">Python</div><div class="ver">3.10+</div></div>
+    <div class="tech"><div class="emoji">🧠</div><div class="name">OpenRouter</div><div class="ver">Llama 3.3 70B</div></div>
+    <div class="tech"><div class="emoji">🎭</div><div class="name">Playwright</div><div class="ver">v1.62.0</div></div>
+    <div class="tech"><div class="emoji">🗄️</div><div class="name">ChromaDB</div><div class="ver">Vector memory</div></div>
+    <div class="tech"><div class="emoji">⚡</div><div class="name">FastAPI</div><div class="ver">REST + GraphQL</div></div>
+  </div>
+  
+  <div class="libs">
+    <h3>📚 Verified Open-Source Libraries</h3>
+    <ul>
+      <li><strong>@met4citizen/talkinghead</strong> — 3D avatar + lip-sync <a href="https://github.com/met4citizen/TalkingHead" target="_blank">GitHub</a> <span class="lic">MIT · 1449★</span></li>
+      <li><strong>Tone.js</strong> — Web Audio effects <a href="https://github.com/Tonejs/Tone.js" target="_blank">GitHub</a> <span class="lic">MIT · 14693★</span></li>
+      <li><strong>three.js</strong> — WebGL renderer <a href="https://github.com/mrdoob/three.js" target="_blank">GitHub</a> <span class="lic">MIT · 102k★</span></li>
+      <li><strong>Ready Player Me</strong> — GLB avatar model <a href="https://readyplayer.me" target="_blank">Site</a> <span class="lic">CC-BY · Free</span></li>
+      <li><strong>Web Speech API</strong> — SpeechRecognition <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API" target="_blank">MDN</a> <span class="lic">W3C Standard</span></li>
+      <li><strong>StreamElements TTS</strong> — Free TTS fallback <a href="https://streamelements.com" target="_blank">Site</a> <span class="lic">Free · No key</span></li>
+      <li><strong>Google Cloud TTS</strong> — Optional premium voice <a href="https://cloud.google.com/text-to-speech" target="_blank">Site</a> <span class="lic">1M chars/mo free</span></li>
+      <li><strong>OpenRouter</strong> — LLM gateway <a href="https://openrouter.ai" target="_blank">Site</a> <span class="lic">Pay-per-use</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>Ready to summon Venom?</h2>
+  <p>Star the repo, fork it, contribute. Every issue and PR makes the symbiote stronger.</p>
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+    <a href="https://github.com/moussa12345678/SecurAgentX" target="_blank" class="btn btn-primary" style="padding:14px 28px;border-radius:8px;font-weight:600;font-size:15px;background:var(--venom);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:8px">★ Star on GitHub</a>
+    <a href="https://github.com/moussa12345678/SecurAgentX/fork" target="_blank" class="btn btn-ghost" style="padding:14px 28px;border-radius:8px;font-weight:600;font-size:15px;background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border);text-decoration:none;display:inline-flex;align-items:center;gap:8px">🍴 Fork</a>
+    <a href="https://github.com/moussa12345678/SecurAgentX/issues/new" target="_blank" class="btn btn-ghost" style="padding:14px 28px;border-radius:8px;font-weight:600;font-size:15px;background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border);text-decoration:none;display:inline-flex;align-items:center;gap:8px">💬 Report Issue</a>
+  </div>
+</section>
+
+<footer>
+  <p>SecurAgentX · Fork of <a href="https://github.com/Ashveil1/Elengenix" target="_blank">Elengenix</a> by Ashveil1 · GPL-3.0 License</p>
+  <p style="margin-top:8px">Built with <span class="heart">♥</span> and a lot of <span style="color:var(--venom)">Venom</span> · <a href="https://github.com/moussa12345678" target="_blank">@moussa12345678</a></p>
+</footer>
+
+<script>
+// Smooth scroll for nav links
+document.querySelectorAll('nav a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+// Fade-in on scroll
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+    }
+  });
+},{threshold:0.1});
+document.querySelectorAll('.feature,.gallery-item,.step,.tech').forEach(el=>{
+  el.style.opacity='0';
+  el.style.transform='translateY(30px)';
+  el.style.transition='opacity .6s ease,transform .6s ease';
+  obs.observe(el);
+});
+</script>
+</body>
+</html>
