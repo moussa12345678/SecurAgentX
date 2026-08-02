@@ -1,0 +1,14 @@
+---
+name: config.yml
+description: GitHub Issue Templates configuration
+contact_links:
+  - name: 📖 Documentation
+    url: https://moussa12345678.github.io/SecurAgentX
+    about: Read the live documentation and feature overview
+  - name: 💬 GitHub Discussions
+    url: https://github.com/moussa12345678/SecurAgentX/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/moussa12345678/SecurAgentX/security/advisories/new
+    about: Report a security vulnerability privately
+---

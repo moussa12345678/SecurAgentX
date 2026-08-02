@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use SecurAgentX in your research, please cite it as below."
+title: "SecurAgentX: Venom-Themed AI Penetration Testing Framework"
+abstract: "An autonomous AI agent framework for security research featuring a 3D Venom avatar with audio-driven lip-sync, 47 security tools, 501 pentest skills, a SAST code scanner, and brutal Playwright testing. Built on @met4citizen/talkinghead (MIT), Tone.js (MIT), and Three.js (MIT)."
+authors:
+  - given-names: "Moussa"
+    family-names: "SecurAgentX"
+    orcid: "https://github.com/moussa12345678"
+keywords:
+  - penetration-testing
+  - ai-agent
+  - cybersecurity
+  - 3d-avatar
+  - lip-sync
+  - sast
+  - venom
+  - talking-head
+  - tonejs
+  - threejs
+license: GPL-3.0
+repository-code: "https://github.com/moussa12345678/SecurAgentX"
+url: "https://moussa12345678.github.io/SecurAgentX"
+version: "2.5.0"
+date-released: "2026-08-02"
+preferred-citation:
+  type: software
+  title: "SecurAgentX: Venom-Themed AI Penetration Testing Framework"
+  authors:
+    - given-names: "Moussa"
+      family-names: "SecurAgentX"
+  version: "2.5.0"
+  date-released: "2026-08-02"
+  url: "https://github.com/moussa12345678/SecurAgentX"

@@ -1,0 +1,53 @@
+---
+name: 🛡️ Security Tool Request
+about: Suggest a new security tool to add to the 47-tool registry
+title: '[TOOL] '
+labels: ['tool-request', 'enhancement']
+assignees: []
+body:
+  - type: input
+    id: tool-name
+    attributes:
+      label: Tool name
+      placeholder: e.g. nuclei, ffuf, dalfox
+    validations:
+      required: true
+  - type: input
+    id: tool-url
+    attributes:
+      label: Official URL / GitHub repo
+      placeholder: https://github.com/...
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - recon
+        - vuln
+        - exploit
+        - crack
+        - wifi
+        - osint
+        - proxy
+        - sniff
+        - social
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Why should we add this tool?
+      placeholder: What does it do that the existing 47 tools don't?
+    validations:
+      required: true
+  - type: textarea
+    id: install
+    attributes:
+      label: Installation command
+      render: shell
+      placeholder: pip install ... / apt install ... / go install ...
+    validations:
+      required: false
+---

@@ -1,0 +1,54 @@
+---
+name: 🐍 Venom Avatar Issue
+about: Report a problem with the 3D Venom avatar, lip-sync, or voice effects
+title: '[VENOM] '
+labels: ['venom-avatar', 'bug']
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a Venom avatar issue! 🐍
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect?
+      placeholder: The avatar's mouth didn't move when...
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome (desktop)
+        - Edge (desktop)
+        - Firefox (desktop)
+        - Safari (desktop)
+        - Chrome (mobile)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: voice-mode
+    attributes:
+      label: Voice mode (free / Google TTS key)
+      placeholder: free or google-tts
+    validations:
+      required: true
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console errors (F12 → Console)
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag and drop a screenshot here
+    validations:
+      required: false
+---
