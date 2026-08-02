@@ -6,23 +6,35 @@
 
 <img src="assets/typing-animation.svg" alt="Terminal" width="700">
 
-### Autonomous AI Security Research Framework
+### 🐍 Venom-Themed AI Penetration Testing Framework
 
 > **Attribution:** This project is a modified derivative of [Elengenix](https://github.com/Ashveil1/Elengenix) by [Ashveil1](https://github.com/Ashveil1), licensed under GPL-3.0.
 
-*Reasoning-driven vulnerability discovery that thinks like a penetration tester.*
+*An autonomous AI agent with a real **3D Venom avatar** that talks, listens, and hacks. 47 tools. 501 skills. SAST scanner. Brutal tests.*
 
+### 🌐 Live Demo: **[moussa12345678.github.io/SecurAgentX](https://moussa12345678.github.io/SecurAgentX)**
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-red?style=for-the-badge&logo=github&logoColor=white)](https://moussa12345678.github.io/SecurAgentX)
 [![Python](https://img.shields.io/badge/Python-3.10+-white?style=for-the-badge&logo=python&logoColor=red)](https://python.org)
 [![License](https://img.shields.io/badge/License-GPL_3.0-red?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-2600%2B%20passing-white?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX/actions)
+[![Tests](https://img.shields.io/badge/Tests-41%2F41_passing-brightgreen?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX/actions)
+[![Stars](https://img.shields.io/github/stars/moussa12345678/SecurAgentX?style=for-the-badge&color=red)](https://github.com/moussa12345678/SecurAgentX/stargazers)
+[![Forks](https://img.shields.io/github/forks/moussa12345678/SecurAgentX?style=for-the-badge&color=white)](https://github.com/moussa12345678/SecurAgentX/forks)
+[![Issues](https://img.shields.io/github/issues/moussa12345678/SecurAgentX?style=for-the-badge&color=yellow)](https://github.com/moussa12345678/SecurAgentX/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-red?style=for-the-badge)](CONTRIBUTING.md)
 [![MCP](https://img.shields.io/badge/MCP-Supported-red?style=for-the-badge)](https://modelcontextprotocol.io)
-[![Security](https://img.shields.io/badge/Security-Governance-red?style=for-the-badge)](https://github.com/moussa12345678/SecurAgentX)
+[![3D Avatar](https://img.shields.io/badge/3D_Avatar-TalkingHead-red?style=for-the-badge)](https://github.com/met4citizen/TalkingHead)
+[![Voice FX](https://img.shields.io/badge/Voice_FX-Tone.js-red?style=for-the-badge)](https://github.com/Tonejs/Tone.js)
+
+<img src="assets/shot-venom-mode.png" alt="Venom Live Avatar" width="700">
+
+*Venom Live Avatar mode — real 3D, audio-driven lip-sync, voice recognition*
 
 </div>
 
 <img src="assets/red-divider.svg" width="100%">
 
-## What is SecurAgentX?
+## 🐍 What is SecurAgentX?
 
 SecurAgentX is an **autonomous AI agent** for security research. It doesn't follow checklists or script chains — it **reasons** about targets, **chooses** its own tools, **pivots** when stuck, and **writes new tools** when existing ones aren't enough.
 
