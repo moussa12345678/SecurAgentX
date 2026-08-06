@@ -568,3 +568,5 @@ GPL-3.0 — see [LICENSE](LICENSE)
 [![GitHub PRs](https://img.shields.io/github/issues-pr/moussa12345678/SecurAgentX?style=for-the-badge&color=red)](https://github.com/moussa12345678/SecurAgentX/pulls)
 
 </div>
+
+<!-- CI trigger: 2026-08-06T18:02:48Z -->
