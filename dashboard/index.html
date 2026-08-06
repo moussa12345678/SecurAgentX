@@ -411,12 +411,13 @@ const UI = {
   },
   provider(){
     return `<div class="panel"><div class="panel-header"><span class="panel-title">AI Provider</span></div><div class="panel-body">
-      <div class="row"><div class="col"><label>Provider</label><select id="prov-name"><option ${S.provider==='openrouter'?'selected':''}>openrouter</option><option ${S.provider==='openai'?'selected':''}>openai</option><option ${S.provider==='anthropic'?'selected':''}>anthropic</option><option ${S.provider==='ollama'?'selected':''}>ollama</option></select></div></div>
-      <div class="row"><div class="col"><label>Model</label><input type="text" id="prov-model" value="${S.model}" style="width:100%"></div></div>
-      <div class="row"><div class="col"><label>API Key</label><input type="password" id="prov-key" placeholder="sk-or-v1-..." value="${S.apiKey||''}" style="width:100%"></div></div>
-      <div class="row"><div class="col"><label>Base URL (optional)</label><input type="text" id="prov-url" placeholder="https://openrouter.ai/api/v1" value="${S.baseUrl||''}" style="width:100%"></div></div>
+      <div class="row"><div class="col"><label>Provider</label><select id="prov-name" onchange="UI.onProviderChange(this.value)"><option value="openrouter" ${S.provider==='openrouter'?'selected':''}>OpenRouter (multi-provider gateway)</option><option value="openai" ${S.provider==='openai'?'selected':''}>OpenAI (direct)</option><option value="anthropic" ${S.provider==='anthropic'?'selected':''}>Anthropic Claude (direct)</option><option value="google" ${S.provider==='google'?'selected':''}>Google Gemini (direct)</option><option value="kimi" ${S.provider==='kimi'?'selected':''}>Moonshot Kimi (direct)</option><option value="deepseek" ${S.provider==='deepseek'?'selected':''}>DeepSeek (direct)</option><option value="mistral" ${S.provider==='mistral'?'selected':''}>Mistral AI (direct)</option><option value="groq" ${S.provider==='groq'?'selected':''}>Groq (direct)</option><option value="cohere" ${S.provider==='cohere'?'selected':''}>Cohere (direct)</option><option value="xai" ${S.provider==='xai'?'selected':''}>xAI Grok (direct)</option><option value="ollama" ${S.provider==='ollama'?'selected':''}>Ollama (local)</option></select></div></div>
+      <div class="row"><div class="col"><label>Model</label><input type="text" id="prov-model" value="${S.model}" style="width:100%" list="model-suggestions"><datalist id="model-suggestions">${UI.getModelSuggestions().map(m=>`<option value="${m}">`).join('')}</datalist></div></div>
+      <div class="row"><div class="col"><label>API Key</label><input type="password" id="prov-key" placeholder="${UI.getPlaceholder()}" value="${S.apiKey||''}" style="width:100%"></div></div>
+      <div class="row"><div class="col"><label>Base URL (auto-filled per provider — editable)</label><input type="text" id="prov-url" placeholder="https://openrouter.ai/api/v1" value="${S.baseUrl||''}" style="width:100%"></div></div>
+      <div class="row"><div class="col"><label>Quick Model Pick</label><select id="prov-quick-model" onchange="UI.onQuickModel(this.value)"><option value="">— pick a model —</option>${UI.getQuickModels().map(m=>`<option value="${m.id}">${m.label}</option>`).join('')}</select></div></div>
       <div class="row"><button class="btn success" onclick="UI.saveProvider()">Save</button><button class="btn ghost" onclick="UI.testProvider()">Test Connection</button><span id="prov-test-result"></span></div>
-      <p style="color:var(--dim);font-size:11px;margin-top:12px">Default: OpenRouter with llama-3.3-70b-instruct. Free models available. With a valid API key, Test Connection does a live /chat/completions ping.</p>
+      <p style="color:var(--dim);font-size:11px;margin-top:12px"><b>Supported providers:</b> OpenRouter (free models available), OpenAI, Anthropic, Google Gemini, Moonshot Kimi, DeepSeek, Mistral, Groq, Cohere, xAI Grok, Ollama (local). Base URL auto-fills per provider — edit if using a proxy.</p>
     </div></div>`;
   },
   saveProvider(){
@@ -431,28 +432,126 @@ const UI = {
     document.getElementById('topbar-model').textContent=S.model;
     this.render()
   },
+  // Provider config table — defines defaults per provider
+  _providerConfig:{
+    openrouter:{label:'OpenRouter',baseUrl:'https://openrouter.ai/api/v1',placeholder:'sk-or-v1-...',defaultModel:'nvidia/nemotron-3-ultra-550b-a55b:free',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{'HTTP-Referer':'origin','X-Title':'SecurAgentX'},endpoint:'/chat/completions',style:'openai'},
+    openai:{label:'OpenAI',baseUrl:'https://api.openai.com/v1',placeholder:'sk-...',defaultModel:'gpt-4o-mini',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+    anthropic:{label:'Anthropic',baseUrl:'https://api.anthropic.com/v1',placeholder:'sk-ant-...',defaultModel:'claude-sonnet-5',headerName:'x-api-key',headerPrefix:'',extraHeaders:{'anthropic-version':'2023-06-01'},endpoint:'/messages',style:'anthropic'},
+    google:{label:'Google Gemini',baseUrl:'https://generativelanguage.googleapis.com/v1beta',placeholder:'AIzaSy...',defaultModel:'gemini-3.6-flash',headerName:null,headerPrefix:'',extraHeaders:{},endpoint:'/models/{model}:generateContent?key={key}',style:'gemini'},
+    kimi:{label:'Moonshot Kimi',baseUrl:'https://api.moonshot.ai/v1',placeholder:'sk-...',defaultModel:'moonshotai/kimi-k3',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+    deepseek:{label:'DeepSeek',baseUrl:'https://api.deepseek.com/v1',placeholder:'sk-...',defaultModel:'deepseek-chat',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+    mistral:{label:'Mistral AI',baseUrl:'https://api.mistral.ai/v1',placeholder:'sk-...',defaultModel:'mistral-large-latest',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+    groq:{label:'Groq',baseUrl:'https://api.groq.com/openai/v1',placeholder:'gsk_...',defaultModel:'llama-3.3-70b-versatile',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+    cohere:{label:'Cohere',baseUrl:'https://api.cohere.com/v2',placeholder:'sk-...',defaultModel:'command-r-plus',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat',style:'cohere'},
+    xai:{label:'xAI Grok',baseUrl:'https://api.x.ai/v1',placeholder:'xai-...',defaultModel:'grok-4.5',headerName:'Authorization',headerPrefix:'Bearer ',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+    ollama:{label:'Ollama (local)',baseUrl:'http://localhost:11434/v1',placeholder:'(no key needed)',defaultModel:'llama3.2',headerName:null,headerPrefix:'',extraHeaders:{},endpoint:'/chat/completions',style:'openai'},
+  },
+  // Quick model picker — popular models per provider
+  getQuickModels(){
+    const p=S.provider||'openrouter';
+    const lists={
+      openrouter:[
+        {id:'nvidia/nemotron-3-ultra-550b-a55b:free',label:'NVIDIA Nemotron 3 Ultra (FREE, 1M ctx)'},
+        {id:'nvidia/nemotron-3-super-120b-a12b:free',label:'NVIDIA Nemotron 3 Super (FREE)'},
+        {id:'nvidia/nemotron-3-nano-30b-a3b:free',label:'NVIDIA Nemotron 3 Nano (FREE)'},
+        {id:'openai/gpt-oss-20b:free',label:'OpenAI GPT-OSS 20B (FREE)'},
+        {id:'google/gemma-4-31b-it:free',label:'Google Gemma 4 31B (FREE)'},
+        {id:'cohere/north-mini-code:free',label:'Cohere North Mini Code (FREE)'},
+        {id:'anthropic/claude-opus-5',label:'Anthropic Claude Opus 5'},
+        {id:'anthropic/claude-sonnet-5',label:'Anthropic Claude Sonnet 5'},
+        {id:'google/gemini-3.6-flash',label:'Google Gemini 3.6 Flash'},
+        {id:'moonshotai/kimi-k3',label:'Moonshot Kimi K3'},
+        {id:'deepseek/deepseek-v4-flash-latest',label:'DeepSeek V4 Flash'},
+        {id:'x-ai/grok-4.5',label:'xAI Grok 4.5'},
+        {id:'meta-llama/llama-3.3-70b-instruct',label:'Meta Llama 3.3 70B'},
+      ],
+      openai:[
+        {id:'gpt-4o',label:'GPT-4o'},
+        {id:'gpt-4o-mini',label:'GPT-4o mini'},
+        {id:'gpt-4-turbo',label:'GPT-4 Turbo'},
+        {id:'o1-preview',label:'o1 preview'},
+        {id:'o1-mini',label:'o1 mini'},
+      ],
+      anthropic:[
+        {id:'claude-opus-5',label:'Claude Opus 5'},
+        {id:'claude-sonnet-5',label:'Claude Sonnet 5'},
+        {id:'claude-opus-4.8',label:'Claude Opus 4.8'},
+        {id:'claude-3-5-sonnet-latest',label:'Claude 3.5 Sonnet'},
+      ],
+      google:[
+        {id:'gemini-3.6-flash',label:'Gemini 3.6 Flash'},
+        {id:'gemini-3.5-flash-lite',label:'Gemini 3.5 Flash Lite'},
+        {id:'gemini-3-pro',label:'Gemini 3 Pro'},
+      ],
+      kimi:[
+        {id:'moonshotai/kimi-k3',label:'Kimi K3'},
+        {id:'moonshotai/kimi-k2.7-code',label:'Kimi K2.7 Code'},
+      ],
+      deepseek:[
+        {id:'deepseek-chat',label:'DeepSeek Chat'},
+        {id:'deepseek-reasoner',label:'DeepSeek Reasoner'},
+        {id:'deepseek-coder',label:'DeepSeek Coder'},
+      ],
+      mistral:[
+        {id:'mistral-large-latest',label:'Mistral Large'},
+        {id:'mistral-small-latest',label:'Mistral Small'},
+        {id:'codestral-latest',label:'Codestral'},
+      ],
+      groq:[
+        {id:'llama-3.3-70b-versatile',label:'Llama 3.3 70B Versatile'},
+        {id:'llama-3.1-8b-instant',label:'Llama 3.1 8B Instant'},
+        {id:'mixtral-8x7b-32768',label:'Mixtral 8x7B'},
+      ],
+      cohere:[
+        {id:'command-r-plus',label:'Command R+'},
+        {id:'command-r',label:'Command R'},
+        {id:'command-r7b-12-2024',label:'Command R7B'},
+      ],
+      xai:[
+        {id:'grok-4.5',label:'Grok 4.5'},
+        {id:'grok-3',label:'Grok 3'},
+        {id:'grok-2-1212',label:'Grok 2 1212'},
+      ],
+      ollama:[
+        {id:'llama3.2',label:'Llama 3.2'},
+        {id:'llama3.1:70b',label:'Llama 3.1 70B'},
+        {id:'qwen2.5:72b',label:'Qwen 2.5 72B'},
+        {id:'mistral-nemo',label:'Mistral Nemo'},
+      ],
+    };
+    return lists[p]||lists.openrouter;
+  },
+  getModelSuggestions(){
+    return this.getQuickModels().map(m=>m.id);
+  },
+  getPlaceholder(){
+    const cfg=this._providerConfig[S.provider||'openrouter'];
+    return cfg?cfg.placeholder:'sk-...';
+  },
+  onProviderChange(newProvider){
+    const cfg=this._providerConfig[newProvider];
+    if(!cfg)return;
+    S.provider=newProvider;
+    S.baseUrl=cfg.baseUrl;
+    S.model=cfg.defaultModel;
+    persist();
+    this.render();
+  },
+  onQuickModel(modelId){
+    if(!modelId)return;
+    const modelEl=document.getElementById('prov-model');
+    if(modelEl){modelEl.value=modelId;S.model=modelId;persist();}
+  },
   testProvider(){
     document.getElementById('prov-test-result').innerHTML=' <span class="spinner"></span> testing...';
-    // If we have an API key, do a real OpenRouter /chat/completions ping
     const key=S.apiKey||(document.getElementById('prov-key')&&document.getElementById('prov-key').value)||'';
-    const url=(S.baseUrl||(document.getElementById('prov-url')&&document.getElementById('prov-url').value)||'https://openrouter.ai/api/v1').replace(/\/+$/,'');
-    if(key&&key.length>20){
-      fetch(url+'/chat/completions',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+key,
-          'HTTP-Referer':location.origin,
-          'X-Title':'SecurAgentX Dashboard'
-        },
-        body:JSON.stringify({model:S.model,messages:[{role:'user',content:'ping'}],max_tokens:4})
-      }).then(r=>{
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        return r.json();
-      }).then(j=>{
+    const cfg=this._providerConfig[S.provider]||this._providerConfig.openrouter;
+    const url=(S.baseUrl||(document.getElementById('prov-url')&&document.getElementById('prov-url').value)||cfg.baseUrl).replace(/\/+$/,'');
+    if(key&&key.length>10||S.provider==='ollama'){
+      this._callLLM(url,key,'ping',1).then(txt=>{
         S.api='connected';persist();
         document.getElementById('topbar-api').textContent='●';
-        document.getElementById('prov-test-result').innerHTML=' <span class="badge green">connected (live)</span>';
+        document.getElementById('prov-test-result').innerHTML=' <span class="badge green">connected (live: '+txt.slice(0,40)+')</span>';
       }).catch(e=>{
         S.api='error';persist();
         document.getElementById('topbar-api').textContent='!';
@@ -466,6 +565,97 @@ const UI = {
         document.getElementById('prov-test-result').innerHTML=' <span class="badge green">connected (simulated)</span>';
       },800);
     }
+  },
+  // Unified LLM caller — supports openai/anthropic/gemini/cohere styles
+  async _callLLM(baseUrl,apiKey,prompt,maxTokens,history){
+    const cfg=this._providerConfig[S.provider]||this._providerConfig.openrouter;
+    const sysContent='You are SecurAgentX AI, the operator console assistant for the SecurAgentX security platform. You are concise, technical, and answer in 1-3 sentences unless asked for detail. When the user gives you a multi-step task, break it down and execute each step mentally, then give a complete final answer.';
+    const msgs=history||[];
+    if(cfg.style==='anthropic'){
+      // Anthropic Messages API: POST /v1/messages with x-api-key header
+      const res=await fetch(baseUrl+cfg.endpoint,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':apiKey,
+          'anthropic-version':cfg.extraHeaders['anthropic-version']||'2023-06-01'
+        },
+        body:JSON.stringify({
+          model:S.model,
+          max_tokens:maxTokens||300,
+          system:sysContent,
+          messages:[...msgs.map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content})),{role:'user',content:prompt}]
+        })
+      });
+      if(!res.ok){const t=await res.text().catch(()=> '');throw new Error('HTTP '+res.status+(t?(' '+t.slice(0,180)):''));}
+      const d=await res.json();
+      const txt=d.content&&d.content[0]&&d.content[0].text;
+      if(!txt)throw new Error('empty response');
+      return txt.trim();
+    }
+    if(cfg.style==='gemini'){
+      // Google Gemini: POST /v1beta/models/{model}:generateContent?key={key}
+      const ep=cfg.endpoint.replace('{model}',encodeURIComponent(S.model)).replace('{key}',encodeURIComponent(apiKey));
+      const res=await fetch(baseUrl+ep,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          systemInstruction:{parts:[{text:sysContent}]},
+          contents:[...msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:prompt}]}],
+          generationConfig:{maxOutputTokens:maxTokens||300,temperature:0.6}
+        })
+      });
+      if(!res.ok){const t=await res.text().catch(()=> '');throw new Error('HTTP '+res.status+(t?(' '+t.slice(0,180)):''));}
+      const d=await res.json();
+      const txt=d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text;
+      if(!txt)throw new Error('empty response');
+      return txt.trim();
+    }
+    if(cfg.style==='cohere'){
+      // Cohere v2: POST /v2/chat
+      const res=await fetch(baseUrl+cfg.endpoint,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+apiKey
+        },
+        body:JSON.stringify({
+          model:S.model,
+          messages:[{role:'system',content:sysContent},...msgs.map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content})),{role:'user',content:prompt}],
+          max_tokens:maxTokens||300
+        })
+      });
+      if(!res.ok){const t=await res.text().catch(()=> '');throw new Error('HTTP '+res.status+(t?(' '+t.slice(0,180)):''));}
+      const d=await res.json();
+      const txt=d.message&&d.message.content&&d.message.content[0]&&d.message.content[0].text||d.text;
+      if(!txt)throw new Error('empty response');
+      return txt.trim();
+    }
+    // Default: OpenAI-compatible (openrouter, openai, kimi, deepseek, mistral, groq, xai, ollama)
+    const headers={'Content-Type':'application/json'};
+    if(cfg.headerName){
+      headers[cfg.headerName]=cfg.headerPrefix+apiKey;
+    }
+    if(cfg.extraHeaders){
+      for(const [k,v] of Object.entries(cfg.extraHeaders)){
+        headers[k]=v==='origin'?location.origin:v;
+      }
+    }
+    const res=await fetch(baseUrl+cfg.endpoint,{
+      method:'POST',
+      headers,
+      body:JSON.stringify({
+        model:S.model,
+        messages:[{role:'system',content:sysContent},...msgs.map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content})),{role:'user',content:prompt}],
+        max_tokens:maxTokens||300,
+        temperature:0.6
+      })
+    });
+    if(!res.ok){const t=await res.text().catch(()=> '');throw new Error('HTTP '+res.status+(t?(' '+t.slice(0,180)):''));}
+    const d=await res.json();
+    const out=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+    if(!out)throw new Error('empty response');
+    return out.trim();
   },
   skills(){
     const filter=S._skillFilter||'';
@@ -627,37 +817,15 @@ const Chat={
   },
   async callAI(prompt){
     // -------------------------------------------------------------------
-    // REAL OpenRouter / OpenAI-compat chat completions when an API key
-    // has been configured in the Provider panel.
+    // REAL multi-provider chat (OpenRouter, OpenAI, Anthropic, Gemini,
+    // Kimi, DeepSeek, Mistral, Groq, Cohere, xAI, Ollama) via UI._callLLM.
     // -------------------------------------------------------------------
-    if(S.apiKey&&S.apiKey.length>20){
+    if(S.apiKey&&S.apiKey.length>10||S.provider==='ollama'){
       try{
-        const base=(S.baseUrl||'https://openrouter.ai/api/v1').replace(/\/+$/,'');
-        const sysMsg={role:'system',content:'You are SecurAgentX AI, the operator console assistant for the SecurAgentX security platform. You are concise, technical, and answer in 1-3 sentences unless asked for detail.'};
+        const base=(S.baseUrl||UI._providerConfig[S.provider].baseUrl).replace(/\/+$/,'');
         const history=S.chat.filter(m=>m.role==='user'||m.role==='ai').slice(-8).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
-        const res=await fetch(base+'/chat/completions',{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'Authorization':'Bearer '+S.apiKey,
-            'HTTP-Referer':location.origin,
-            'X-Title':'SecurAgentX Dashboard'
-          },
-          body:JSON.stringify({
-            model:S.model,
-            messages:[sysMsg,...history,{role:'user',content:prompt}],
-            max_tokens:300,
-            temperature:0.6
-          })
-        });
-        if(!res.ok){
-          const t=await res.text().catch(()=> '');
-          throw new Error('HTTP '+res.status+(t?(' '+t.slice(0,180)):''));
-        }
-        const data=await res.json();
-        const out=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-        if(!out)throw new Error('empty response');
-        return out.trim();
+        const out=await UI._callLLM(base,S.apiKey,prompt,500,history);
+        return out;
       }catch(e){
         console.warn('Live AI call failed; using simulated reply',e);
         return '[live AI error: '+e.message+'] '+this.simulated(prompt);
