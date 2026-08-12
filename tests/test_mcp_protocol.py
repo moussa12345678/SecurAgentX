@@ -142,3 +142,22 @@ class TestMCPProtocol:
         # top-level handle_request which catches exceptions
         resp = proto.handle_request(req)
         assert resp.error is None or resp.result is not None
+
+
+    def test_response_from_json_preserves_result_and_error_contracts(self):
+        proto = MCPProtocol()
+
+        success = proto.response_from_json(
+            '{"jsonrpc": "2.0", "id": 7, "result": {"tools": []}}'
+        )
+        failure = proto.response_from_json(
+            '{"jsonrpc": "2.0", "id": 8, "error": {"code": -32601, "message": "missing"}}'
+        )
+
+        assert isinstance(success, MCPResponse)
+        assert success.id == 7
+        assert success.result == {"tools": []}
+        assert success.error is None
+        assert failure.id == 8
+        assert failure.result is None
+        assert failure.error == {"code": -32601, "message": "missing"}

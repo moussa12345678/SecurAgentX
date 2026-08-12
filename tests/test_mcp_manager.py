@@ -65,13 +65,17 @@ class TestMCPManager:
     def test_stop_while_running(self):
         mgr = MCPManager()
         mgr._running = True
-        mgr._loop = MagicMock()
-        mgr._loop.is_running.return_value = True
-        mgr._thread = MagicMock()
-        mgr._thread.is_alive.return_value = True
+        mock_loop = MagicMock()
+        mock_loop.is_running.return_value = True
+        mock_thread = MagicMock()
+        mock_thread.is_alive.return_value = True
+        mgr._loop = mock_loop
+        mgr._thread = mock_thread
         mgr.stop()
         assert mgr.is_running is False
         assert mgr.server is None
+        mock_loop.call_soon_threadsafe.assert_not_called()
+        mock_thread.join.assert_called_once_with(timeout=2.0)
 
     def test_start_config_exception(self):
         """If config loading fails, start should return False."""

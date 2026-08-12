@@ -72,7 +72,8 @@ class ExploitWorker(BaseWorker):
             )
 
         try:
-            cmd = ["curl", "-si", "--max-time", "10", "-X", method, target]
+            # "--" prevents a target beginning with '-' from being parsed as a curl option.
+            cmd = ["curl", "-si", "--max-time", "10", "-X", method, "--", target]
             if payload:
                 cmd += ["-d", payload]
 
@@ -193,7 +194,9 @@ class FuzzerWorker(BaseWorker):
                             "description": f"Status: {response.status_code}",
                         }
                     )
-            except Exception:
+            except Exception as exc:
+                # Continue scanning remaining paths while retaining diagnostic context.
+                logger.debug("Path probe failed for %s: %s", url, exc)
                 continue
 
         return WorkerResult(
@@ -401,6 +404,7 @@ Respond ONLY with valid JSON. No extra text."""
             # Fallback to shell
             return self._run_shell(
                 {"command": f"{tool_name} {cmd_target}", "purpose": decision.get("purpose", "")},
+                target=cmd_target,
                 description=f"Fallback shell for {tool_name}",
             )
 
@@ -556,7 +560,7 @@ def _heuristic_findings(output: str, command: str) -> List[Dict[str, Any]]:
     Returns:
         List of finding dicts.
     """
-    findings = []
+    findings: List[Dict[str, Any]] = []
     if not output:
         return findings
 

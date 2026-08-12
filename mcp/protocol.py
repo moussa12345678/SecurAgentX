@@ -150,11 +150,21 @@ class MCPProtocol:
         return json.dumps(data)
 
     def from_json(self, json_str: str) -> MCPRequest:
-        """Deserialize MCP request from JSON."""
+        """Deserialize an inbound MCP request from JSON."""
         data = json.loads(json_str)
         return MCPRequest(
             jsonrpc=data.get("jsonrpc", "2.0"),
             id=data.get("id"),
             method=data.get("method", ""),
             params=data.get("params", {}),
+        )
+
+    def response_from_json(self, json_str: str) -> MCPResponse:
+        """Deserialize an MCP response received by a client transport."""
+        data = json.loads(json_str)
+        return MCPResponse(
+            jsonrpc=data.get("jsonrpc", "2.0"),
+            id=data.get("id"),
+            result=data.get("result"),
+            error=data.get("error"),
         )

@@ -52,7 +52,13 @@ class TestExploitWorker:
 
         assert result.success is True
         assert "WorkerResult" in str(type(result))
-        mock_run.assert_called_once()
+        mock_run.assert_called_once_with(
+            ["curl", "-si", "--max-time", "10", "-X", "GET", "--", "http://example.com", "-d", "test"],
+            shell=False,
+            capture_output=True,
+            text=True,
+            timeout=worker.timeout_seconds,
+        )
 
     @patch("subprocess.run")
     def test_run_finds_exploit_indicators(self, mock_run):
@@ -304,7 +310,11 @@ class TestSpecialistAgentRunTool:
         decision = {"tool": "nonexistent", "target": "example.com"}
         result = agent._run_tool(decision, "example.com")
 
-        agent._run_shell.assert_called_once()
+        agent._run_shell.assert_called_once_with(
+            {"command": "nonexistent example.com", "purpose": ""},
+            target="example.com",
+            description="Fallback shell for nonexistent",
+        )
 
 
 class TestSpecialistAgentRunShell:

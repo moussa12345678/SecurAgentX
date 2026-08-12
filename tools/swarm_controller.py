@@ -283,7 +283,7 @@ class SwarmController:
             "Generating report...",
         ]
 
-        findings = []
+        findings: List[Dict[str, Any]] = []
         for i, step in enumerate(steps):
             if self.abort_event.is_set():
                 break
@@ -354,9 +354,10 @@ class SwarmController:
                             1 for f in result.findings if f.get("severity") == "critical"
                         )
                         if critical_count > 0:
-                            display_callback(
-                                f" Critical finding on {target.target_url}! Aborting swarm..."
-                            )
+                            if display_callback:
+                                display_callback(
+                                    f" Critical finding on {target.target_url}! Aborting swarm..."
+                                )
                             self.abort()
                             break
 

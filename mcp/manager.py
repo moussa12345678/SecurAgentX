@@ -82,9 +82,8 @@ class MCPManager:
 
         self._running = False
 
-        if self._loop and self._loop.is_running():
-            self._loop.call_soon_threadsafe(self._loop.stop)
-
+        # The background loop observes _running between short sleeps. Stopping it
+        # mid-run_until_complete raises "Event loop stopped before Future completed".
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=2.0)
 

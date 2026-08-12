@@ -17,7 +17,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import subprocess
 from typing import Any, Dict, List, Optional
 
 from mcp.protocol import MCPProtocol, MCPRequest, MCPResponse, MCPTool
@@ -109,8 +108,9 @@ class MCPClient:
         if response.error:
             raise RuntimeError(f"List tools failed: {response.error}")
 
+        result = response.result or {}
         tools = []
-        for tool_data in response.result.get("tools", []):
+        for tool_data in result.get("tools", []):
             tools.append(
                 MCPTool(
                     name=tool_data["name"],
@@ -132,12 +132,14 @@ class MCPClient:
         if response.error:
             raise RuntimeError(f"Tool call failed: {response.error}")
 
-        # Parse content from result
-        content = response.result.get("content", [])
+        # Parse content from result. JSON-RPC permits an omitted result,
+        # so normalize it before accessing or returning it to callers.
+        result = response.result or {}
+        content = result.get("content", [])
         if content and content[0].get("type") == "text":
             return json.loads(content[0]["text"])
 
-        return response.result
+        return result
 
     async def _send_request(self, request: MCPRequest) -> MCPResponse:
         """Send request and wait for response."""
@@ -172,7 +174,7 @@ class MCPClient:
         if not response_line:
             raise ConnectionError("No response from server")
 
-        return self.protocol.from_json(response_line.decode())
+        return self.protocol.response_from_json(response_line.decode())
 
     async def _send_http(self, request: MCPRequest) -> MCPResponse:
         """Send request via HTTP."""
@@ -185,4 +187,4 @@ class MCPClient:
                 headers={"Content-Type": "application/json"},
             ) as resp:
                 response_text = await resp.text()
-                return self.protocol.from_json(response_text)
+                return self.protocol.response_from_json(response_text)

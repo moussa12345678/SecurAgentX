@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from mcp.client import MCPClient
-from mcp.protocol import MCPResponse, MCPTool
+from mcp.protocol import MCPRequest, MCPResponse, MCPTool
 
 
 class TestMCPClient:
@@ -41,6 +41,14 @@ class TestMCPClient:
         assert len(tools) == 2
         assert tools[0].name == "test"
         assert tools[1].name == "scan"
+
+    def test_list_tools_with_empty_success_result(self):
+        """An allowed JSON-RPC response without result represents no tools."""
+        client = MCPClient(transport="http", url="http://localhost:8080")
+        client.connected = True
+        client._send_request_sync = MagicMock(return_value=MCPResponse(id=1))
+
+        assert client.list_tools() == []
 
     def test_list_tools_with_error_response(self):
         """list_tools raises RuntimeError when server returns error."""
@@ -99,6 +107,14 @@ class TestMCPClient:
         result = client.call_tool("test", {})
         assert result == {"status": "ok"}
 
+    def test_call_tool_with_empty_success_result(self):
+        """A successful response without result is normalized for callers."""
+        client = MCPClient(transport="http", url="http://localhost:8080")
+        client.connected = True
+        client._send_request_sync = MagicMock(return_value=MCPResponse(id=1))
+
+        assert client.call_tool("test", {}) == {}
+
     def test_call_tool_error_response(self):
         client = MCPClient(transport="http", url="http://localhost:8080")
         client.connected = True
@@ -129,3 +145,18 @@ class TestMCPClient:
         asyncio.run(client.disconnect())
         assert client.connected is False
         assert client.process is None
+
+    def test_stdio_transport_parses_json_response_as_mcp_response(self):
+        client = MCPClient(transport="stdio", command=["echo", "test"])
+        process = MagicMock()
+        process.stdin.drain = AsyncMock()
+        process.stdout.readline = AsyncMock(
+            return_value=b'{"jsonrpc":"2.0","id":3,"result":{"tools":[]}}'
+        )
+        client.process = process
+
+        response = asyncio.run(client._send_stdio(MCPRequest(id=3, method="tools/list")))
+
+        assert isinstance(response, MCPResponse)
+        assert response.id == 3
+        assert response.result == {"tools": []}
