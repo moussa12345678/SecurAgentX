@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from cli.ui_components import console, print_error, print_info, print_success, print_warning
+from securagentx.paths import SECURAGENTX_HOME
 
 logger = logging.getLogger(__name__)
 
@@ -269,9 +270,13 @@ class ConfigWizard:
         {"name": "GitHub", "keys": ["GITHUB_TOKEN"], "desc": "Code leak hunting & OSINT"},
     ]
 
-    def __init__(self, config_dir: Path = Path(".")):
-        self.config_dir = config_dir
-        self.env_file = config_dir / ".env"
+    def __init__(self, config_dir: Optional[Path] = None):
+        # Runtime resolution prioritizes ~/.securagentx.  The interactive
+        # wizard must write there by default or a configured provider can be
+        # shadowed by an older user-level config during `securagentx hunt`.
+        self.config_dir = config_dir or SECURAGENTX_HOME
+        self.config_dir.mkdir(parents=True, exist_ok=True)
+        self.env_file = self.config_dir / ".env"
         # Restrict permissions on existing .env if it exists
         if self.env_file.exists():
             self.env_file.chmod(0o600)
@@ -612,6 +617,7 @@ class ConfigWizard:
                 else "OLLAMA_MODEL"
             )
             self._select_model(provider)
+            self._activate_provider(provider)
 
             # Test connection
             console.print("[dim]Testing connection...[/dim]")
@@ -627,8 +633,45 @@ class ConfigWizard:
             # Even if key is skipped, allow updating model if key exists
             if os.getenv(provider.env_key):
                 self._select_model(provider)
+                self._activate_provider(provider)
             else:
                 print_info("Skipped configuration")
+
+    def _activate_provider(self, provider: AIProviderConfig) -> None:
+        """Persist the provider just configured as the active runtime provider.
+
+        The runtime resolver intentionally gives ``config.yaml`` precedence over
+        ``.env``.  Updating only a provider key therefore left a stale default
+        (usually Gemini) active for ``securagentx hunt``.  Keep both sources in
+        sync and invalidate the in-process configuration cache for callers that
+        continue without restarting.
+        """
+        provider_key = self._PROVIDER_KEY_MAP.get(provider.name, provider.name.lower())
+        model_env_key = (
+            provider.env_key.replace("_API_KEY", "_MODEL")
+            if provider.env_key
+            else "OLLAMA_MODEL"
+        )
+
+        os.environ["ACTIVE_AI_PROVIDER"] = provider_key
+        self._save_env_var("ACTIVE_AI_PROVIDER", provider_key)
+
+        config = self._load_yaml_config()
+        ai_config = config.setdefault("ai", {})
+        providers = ai_config.setdefault("providers", {})
+        provider_config = providers.setdefault(provider_key, {})
+        selected_model = os.getenv(model_env_key, "").strip()
+        if selected_model:
+            provider_config["model"] = selected_model
+        ai_config["active_provider"] = provider_key
+        self._save_yaml_config(config)
+
+        try:
+            from tools.ai_config import reset_config_cache
+
+            reset_config_cache()
+        except Exception as exc:
+            logger.debug("Unable to reset AI configuration cache: %s", exc)
 
     def _fetch_remote_models(self, provider: AIProviderConfig, api_key: str) -> List[str]:
         """Fetch models from the provider's /v1/models endpoint."""
