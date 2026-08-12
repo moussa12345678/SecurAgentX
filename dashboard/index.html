@@ -958,6 +958,29 @@ const SASTScanner={
 window.SASTScanner=SASTScanner;
 
 // ============ Venom Live Avatar Mode ============
+const VenomControl={
+  enabled(){return Boolean(window.VENOM_CONTROL_TOKEN)},
+  async execute(action,target){
+    if(!this.enabled())throw new Error('Venom control server is not connected. Start tools/venom_control_server.py for audited execution.');
+    const response=await fetch('/api/venom/execute',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+window.VENOM_CONTROL_TOKEN},
+      body:JSON.stringify({action,target:target||undefined})
+    });
+    const payload=await response.json();
+    if(!response.ok||!payload.ok)throw new Error((payload.result&&payload.result.error)||payload.error||'control action failed');
+    const audit=payload.audit||{};
+    const text=JSON.stringify(payload.result,null,2);
+    Term.run('venom '+action+(target?' '+target:''),text);
+    return {payload,audit};
+  },
+  summarize(result){
+    const data=result&&result.payload&&result.payload.result||{};
+    return data.summary||'registered action completed';
+  }
+};
+window.VenomControl=VenomControl;
+
 const VenomMode={
   head:null,toneReady:false,micActive:false,recognition:null,avatarLoaded:false,
   async enter(){
@@ -1533,7 +1556,13 @@ const VenomMode={
     const t=text.toLowerCase().trim();
     // Command routing
     if(t==='exit'||t==='quit'||t==='leave'){setTimeout(()=>this.exit(),500);return'Goodbye. The Venom rests.'}
-    if(t==='help'||t==='commands'){return'Voice commands: show dashboard, show sast, scan code, list skills, list tools, clear terminal, status, exit.'}
+    if(t==='help'||t==='commands'){return'Commands: show <panel>, scan code, list skills, list tools, remember key: note, find skill <term>, use target <url>, metadata <url>, headers <url>, venom status, venom tools, venom audit, run venom tests, clear memory, clear terminal, exit.'}
+    if(t.startsWith('remember '))return this.remember(text.slice(9).trim());
+    if(t==='clear memory'){
+      S.memory=[];persist();if(S.panel==='memory')UI.render();
+      return'Venom memory cleared.';
+    }
+    if(t.startsWith('find skill '))return this.findSkills(text.slice(11).trim());
     if(t.startsWith('show ')){
       const panel=t.replace('show ','').trim();
       const valid=['dashboard','provider','skills','tools','config','scope','terminal','chat','hunt','memory','sast'];
@@ -1567,17 +1596,65 @@ const VenomMode={
     if(t.includes('who are you')||t.includes('what are you')){
       return'I am Venom, a 3D interactive avatar powered by TalkingHead and Tone.js. I render in your browser, listen to your voice, and execute security commands on the SecurAgentX dashboard.'
     }
-    if(t.includes('venom')){
+    if(t.includes('venom')&&!['venom status','venom tools','venom audit','run venom tests','test venom'].includes(t)){
       return'I am Venom. The SecurAgentX has summoned me to assist with penetration testing. Speak, and I shall respond.'
     }
+    if(t.startsWith('use target '))return this.activateApprovedTarget(text.slice(11).trim());
+    if(t==='venom status'||t==='control status')return this.runControlAction('status');
+    if(t==='venom audit'||t==='control audit'||t==='recent actions')return this.runControlAction('audit_log');
+    if(t==='list control tools'||t==='venom tools'||t==='control tools')return this.runControlAction('tool_catalog');
+    if(t.startsWith('validate '))return this.runControlAction('scope_validate',text.slice(9).trim());
+    if(t.startsWith('headers '))return this.runControlAction('http_headers',text.slice(8).trim());
+    if(t.startsWith('metadata '))return this.runControlAction('page_metadata',text.slice(9).trim());
+    if(t==='run venom tests'||t==='test venom')return this.runControlAction('project_venom_tests');
     if(t.includes('scan target')||t.startsWith('scan ')){
-      const target=t.replace('scan ','').replace('target','').trim()||S.scope.targets[0];
-      Term.run('scan '+target);
-      return`Scanning target ${target}. Switch to Terminal panel to see results.`
+      const target=text.replace(/^scan\s+/i,'').replace(/^target\s+/i,'').trim()||S.scope.targets[0];
+      return this.runControlAction('page_metadata',target);
     }
     // Default: route to chat
     const reply=await Chat.callAI(text);
     return reply;
+  },
+  remember(note){
+    if(!note||note.length>500)return 'Memory was not changed: provide a note up to 500 characters.';
+    const splitAt=note.indexOf(':');
+    const key=(splitAt>0?note.slice(0,splitAt):'venom_note').trim().slice(0,80);
+    const value=(splitAt>0?note.slice(splitAt+1):note).trim();
+    if(!value)return 'Memory was not changed: note content is required.';
+    S.memory.push({key,value,time:new Date().toISOString()});
+    S.memory=S.memory.slice(-50);persist();
+    if(S.panel==='memory')UI.render();
+    Term.run('venom remember '+key,JSON.stringify({key,value,time:S.memory[S.memory.length-1].time},null,2));
+    return 'Memory entry stored under '+key+'.';
+  },
+  findSkills(query){
+    const needle=query.trim().toLowerCase();
+    if(!needle)return 'Provide a skill search term.';
+    const matches=S.skills.filter(skill=>skill.name.toLowerCase().includes(needle)||skill.desc.toLowerCase().includes(needle)).slice(0,20);
+    Term.run('venom find skill '+needle,JSON.stringify(matches,null,2));
+    return matches.length+' matching skills recorded in Terminal.';
+  },
+  async activateApprovedTarget(target){
+    try{
+      const completed=await VenomControl.execute('scope_validate',target);
+      const approved=completed.audit&&completed.audit.target;
+      if(!approved)throw new Error('approved target missing from audit result');
+      S.scope.targets=[approved];
+      persist();
+      if(S.panel==='scope')UI.render();
+      return 'Active scope target updated to '+approved+'.';
+    }catch(error){
+      return 'Scope was not changed: '+error.message;
+    }
+  },
+  async runControlAction(action,target){
+    try{
+      const completed=await VenomControl.execute(action,target);
+      const scope=completed.audit&&completed.audit.target?' for '+completed.audit.target:'';
+      return 'Executed registered action '+action+scope+'. '+VenomControl.summarize(completed);
+    }catch(error){
+      return 'Venom control action was not executed: '+error.message;
+    }
   }
 };
 window.VenomMode=VenomMode;
