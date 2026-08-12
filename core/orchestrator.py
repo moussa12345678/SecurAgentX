@@ -38,6 +38,22 @@ def run_standard_scan(
     Note: This is a deprecated compat shim. New code should use
     VulnAgent directly.
     """
+    if use_smart_scan:
+        from core.brain import SecurAgentXAgent
+
+        return SecurAgentXAgent().run_smart_scan(target)
+    if not use_registry:
+        warnings.warn(
+            "use_registry=False is retained for compatibility; VulnAgent uses its built-in tool set.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if tool_filter:
+        warnings.warn(
+            "tool_filter is not supported by VulnAgent and is ignored by this compatibility shim.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     try:
         from securagentx.agent import VulnAgent
         from securagentx.agent.memory import AgentMemory
@@ -140,10 +156,15 @@ def are_targets_in_scope(targets: list[str]) -> bool:
 
 
 def get_recommended_tool_chain(target_type: str = "web"):
-    """Deprecated stub."""
+    """Return safe, high-level tool hints for legacy callers."""
     warnings.warn(
-        "get_recommended_tool_chain is deprecated.",
+        "get_recommended_tool_chain is deprecated; use the active scanner planner instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return []
+    chains = {
+        "web": ["python_recon", "smart_recon", "waf_detector"],
+        "api": ["python_recon", "bola_tester", "cors_checker"],
+        "network": ["port_scanner", "service_fingerprint"],
+    }
+    return chains.get(target_type.lower(), chains["web"])

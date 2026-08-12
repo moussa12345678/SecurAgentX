@@ -756,7 +756,16 @@ class SecurAgentXAgent:
             inferred = _extract_target_from_text(user_input)
             if inferred:
                 loop_target = inferred
-
+        if use_smart_scan:
+            if not loop_target:
+                return "No target specified for smart scan mode."
+            if callback:
+                callback("Using smart scan pipeline.")
+            return self.run_smart_scan(loop_target)
+        if use_new_pipeline:
+            if callback:
+                callback("Using hybrid processing pipeline.")
+            return self.process_hybrid(user_input, target=loop_target, callback=callback)
         # Casual / chat path
         if intent in ("casual", "research", "security_chat") and not loop_target:
             past_memories = get_context_for_ai(
@@ -971,16 +980,18 @@ class SecurAgentXAgent:
         if target in self._fingerprint_cache:
             return self._fingerprint_cache[target]
 
-        # Normalise bare domain
-        http_target = target
-        if not target.startswith("http://") and not target.startswith("https://"):
-            http_target = f"http://{target}"
+        # Normalise all targets to HTTPS before fingerprinting.
+        https_target = target
+        if target.startswith("http://"):
+            https_target = "https://" + target[len("http://"):]
+        elif not target.startswith("https://"):
+            https_target = f"https://{target}"
 
         import requests
 
         try:
             requests.packages.urllib3.disable_warnings()  # type: ignore[attr-defined]
-            resp = requests.get(http_target, timeout=10, verify=not INSECURE)
+            resp = requests.get(https_target, timeout=10, verify=not INSECURE)
             from agents.agent_planner import TargetFingerprinter
             fp = TargetFingerprinter()
             result = fp.fingerprint(resp.text, resp.headers)  # type: ignore[arg-type]

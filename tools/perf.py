@@ -250,7 +250,6 @@ class FastHTTP:
             try:
                 retries = Retry(total=2, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
                 adapter = HTTPAdapter(max_retries=retries, pool_maxsize=self.max_connections)
-                s.mount("http://", adapter)
                 s.mount("https://", adapter)
                 s.verify = not INSECURE
                 self._session = s
@@ -261,7 +260,9 @@ class FastHTTP:
         return self._session
 
     def get(self, url: str, **kwargs) -> Optional[Dict]:
-        """GET with cache. Returns dict with status, headers, body, elapsed_ms."""
+        """Perform a cached GET over HTTPS and return request timing data."""
+        if url.startswith("http://"):
+            url = "https://" + url[len("http://"):]
         if self.use_cache:
             cached = _HTTP_CACHE.get(url)
             if cached:

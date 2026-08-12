@@ -453,7 +453,6 @@ class PythonRecon:
             # when a target is slow/unreachable. Retries only on 5xx (server hiccups).
             retry = Retry(total=0, connect=0, read=0, status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retry, pool_connections=50, pool_maxsize=50)
-            s.mount("http://", adapter)
             s.mount("https://", adapter)
             s.headers.update(
                 {
@@ -476,10 +475,12 @@ class PythonRecon:
             logger.debug("Suppressed Exception: %s", e)
 
     def _normalize_url(self, target: str) -> str:
-        """Accept bare domain or full URL. Return http://domain."""
+        """Accept a bare domain or URL and return an HTTPS URL."""
         t = target.strip()
-        if not t.startswith(("http://", "https://")):
-            t = "http://" + t
+        if t.startswith("http://"):
+            t = "https://" + t[len("http://"):]
+        elif not t.startswith("https://"):
+            t = "https://" + t
         return t.rstrip("/")
 
     def _extract_title(self, html: str) -> str:

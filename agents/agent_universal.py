@@ -111,6 +111,11 @@ def process_universal(
       check_context_overflow() → None       (call self._check_context_overflow)
     """
     logger.info(f"Universal mode started: {user_input}")
+    if check_context_overflow is not None:
+        try:
+            check_context_overflow()
+        except Exception as exc:
+            logger.debug("Context overflow check failed: %s", exc)
 
     # ── Intent classification ───────────────────────────────────────────
     intent = "security_chat"

@@ -251,14 +251,12 @@ class SmartReconEngine:
         return ip_nodes
 
     def probe_http(self, target: str, is_ip: bool = False) -> Optional[Dict[str, Any]]:
-        """Probe HTTP/HTTPS and gather fingerprints."""
+        """Probe the target over HTTPS and gather fingerprints."""
         self._sleep_rate_limit()
 
-        urls_to_try = []
-        if is_ip:
-            urls_to_try = [f"http://{target}/", f"https://{target}/"]
-        else:
-            urls_to_try = [f"https://{target}/", f"http://{target}/"]
+        target_kind = "IP" if is_ip else "host"
+        logger.debug("Probing HTTPS endpoint for %s target: %s", target_kind, target)
+        urls_to_try = [f"https://{target}/"]
 
         for url in urls_to_try:
             try:
