@@ -37,7 +37,7 @@ class ReconResult:
     """Results from reconnaissance"""
     subdomains: List[str] = field(default_factory=list)
     technologies: Dict[str, Any] = field(default_factory=dict)
-    open_ports: Dict[int, str] = field(default_factory=dict)
+    open_ports: Dict[int, List[str]] = field(default_factory=dict)
     ssl_info: Dict[str, Any] = field(default_factory=dict)
     dns_records: Dict[str, List[str]] = field(default_factory=dict)
     threat_intel: Dict[str, Any] = field(default_factory=dict)
@@ -87,11 +87,11 @@ class ReconAgent:
         elif task_type == "port_scan":
             return await self._port_scan(task.get("hosts", []))
         elif task_type == "dns_enum":
-            return await self._dns_enum()
+            return await self._dns_recon()
         elif task_type == "threat_intel":
-            return await self._threat_intel()
+            return await self._threat_intel_lookup()
         elif task_type == "ssl_analysis":
-            return await self._ssl_analysis()
+            return await self._ssl_cert_analysis()
         elif task_type == "full_recon":
             return await self._full_recon()
         else:
@@ -134,7 +134,7 @@ class ReconAgent:
             ctx = ssl.create_default_context()
             with socket.create_connection((hostname, 443), timeout=10) as sock:
                 with ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
-                    cert = ssock.getpeercert()
+                    cert: Dict[str, Any] = dict(ssock.getpeercert() or {})
                     self.results.ssl_info = {
                         "subject": dict(x[0] for x in cert.get("subject", [])),
                         "issuer": dict(x[0] for x in cert.get("issuer", [])),
@@ -246,7 +246,7 @@ class ReconAgent:
 
         common_ports = [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 445, 993, 995, 1433, 1521, 3306, 3389, 5432, 5900, 6379, 8080, 8443, 27017]
 
-        open_ports = {}
+        open_ports: Dict[int, List[str]] = {}
         for host in hosts[:20]:  # Limit for speed
             for port in common_ports:
                 if await self._check_port(host, port):
@@ -278,8 +278,8 @@ class ReconAgent:
             ("subdomain_enum", self._subdomain_enum),
             ("port_scan", lambda: self._port_scan(self.results.subdomains[:20])),
             ("tech_fingerprint", lambda: self._tech_fingerprint([f"https://{h}" for h in self.results.subdomains[:20]])),
-            ("dns_enum", self._dns_enum),
-            ("ssl_analysis", self._ssl_analysis),
+            ("dns_enum", self._dns_recon),
+            ("ssl_analysis", self._ssl_cert_analysis),
             ("threat_intel", self._threat_intel_lookup),
         ]
 
@@ -335,9 +335,32 @@ class ReconAgent:
             elif hasattr(self.results, key) and isinstance(value, list):
                 getattr(self.results, key).extend(value)
 
-    async def _handle_message(self, msg):
-        """Handle incoming messages"""
-        pass
+    async def _handle_message(self, msg: AgentMessage):
+        """Route bus tasks and intelligence to the recon handlers."""
+        if msg.from_agent == self.name:
+            return
+
+        if msg.message_type == MessageType.TASK:
+            try:
+                result = await self.execute_task(msg.payload)
+            except Exception as exc:  # noqa: BLE001 -- return task failure to requester
+                logger.error("[%s] Task execution error: %s", self.name, exc)
+                result = {"error": str(exc)}
+            await self.bus.publish(
+                AgentMessage(
+                    from_agent=self.name,
+                    to_agent=msg.from_agent,
+                    message_type=MessageType.RESULT,
+                    payload=result,
+                    correlation_id=msg.correlation_id,
+                    priority=2,
+                )
+            )
+        elif msg.message_type == MessageType.INTEL:
+            try:
+                await self.process_intel(msg.payload)
+            except Exception as exc:  # noqa: BLE001 -- intelligence must not stop the agent
+                logger.error("[%s] Intel processing error: %s", self.name, exc)
 
     async def process_intel(self, intel: Dict[str, Any]):
         """Process intelligence from other agents"""

@@ -71,7 +71,7 @@ class ScannerAgent:
         self.scope: List[str] = []
         self.attack_tree = None
         self.scan_queue: List[ScanTask] = []
-        self.completed_scans: List[ScanTask] = []
+        self.completed_scans: List[ScanResult] = []
         self.findings: List[Dict] = []
         self.rate_limiter = asyncio.Semaphore(5)  # Max 5 concurrent scans
 
@@ -133,6 +133,25 @@ class ScannerAgent:
             "findings_count": len(all_findings),
             "findings": all_findings
         }
+
+    async def _scan_vuln_type(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Scan one requested vulnerability type through the standard queue."""
+        vuln_type = task.get("vuln_type") or task.get("vulnerability_type")
+        if not isinstance(vuln_type, str) or not vuln_type.strip():
+            return {"error": "scan_vuln_type requires a non-empty vuln_type"}
+
+        target = task.get("target", self.target)
+        if not isinstance(target, str) or not target.strip():
+            return {"error": "scan_vuln_type requires a target"}
+
+        delegated_task = dict(task)
+        delegated_task["target"] = target
+        delegated_task["vuln_types"] = [vuln_type.strip().lower()]
+        delegated_task.setdefault(
+            "technique_map",
+            {vuln_type.strip().lower(): task.get("technique_id", "T1190")},
+        )
+        return await self._scan_target(delegated_task)
 
     def _build_scan_queue(self, target: str, vuln_types: List[str], technique_map: Dict):
         """Build prioritized scan queue from attack tree"""
@@ -305,11 +324,12 @@ class ScannerAgent:
                 payload.replace("=", "%3D"),
             ]
 
-        for bypass in bypasses:
-            if bypass not in self.blocked_payloads:
-                bypasses.append(bypass)
+        # Keep only usable variants. Appending while iterating caused unbounded growth.
+        usable_bypasses = [
+            bypass for bypass in bypasses if bypass and bypass not in self.blocked_payloads
+        ]
 
-        return {"bypasses": bypasses, "waf_type": waf_type}
+        return {"bypasses": usable_bypasses, "waf_type": waf_type}
 
     async def _validate_finding(self, task: Dict) -> Dict:
         """Validate a potential finding"""
@@ -322,9 +342,32 @@ class ScannerAgent:
         findings = task.get("findings", [])
         return {"chained": False, "reason": "no_chainable_findings"}
 
-    async def _handle_message(self, msg):
-        """Handle incoming messages"""
-        pass
+    async def _handle_message(self, msg: AgentMessage):
+        """Route bus tasks and intelligence to the scanner's active handlers."""
+        if msg.from_agent == self.name:
+            return
+
+        if msg.message_type == MessageType.TASK:
+            try:
+                result = await self.execute_task(msg.payload)
+            except Exception as exc:  # noqa: BLE001 -- return task failure to requester
+                logger.error("[%s] Task execution error: %s", self.name, exc)
+                result = {"error": str(exc)}
+            await self.bus.publish(
+                AgentMessage(
+                    from_agent=self.name,
+                    to_agent=msg.from_agent,
+                    message_type=MessageType.RESULT,
+                    payload=result,
+                    correlation_id=msg.correlation_id,
+                    priority=2,
+                )
+            )
+        elif msg.message_type == MessageType.INTEL:
+            try:
+                await self.process_intel(msg.payload)
+            except Exception as exc:  # noqa: BLE001 -- intelligence must not stop the agent
+                logger.error("[%s] Intel processing error: %s", self.name, exc)
 
     async def process_intel(self, intel: Dict):
         """Process intelligence from other agents"""

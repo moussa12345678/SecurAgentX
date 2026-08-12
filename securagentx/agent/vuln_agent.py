@@ -215,8 +215,24 @@ def _tool_web_recon(target: str, path: str = "/") -> Dict[str, Any]:
     try:
         import requests
 
-        url = f"http://{target.rstrip('/')}/{path.lstrip('/')}".rstrip("/")
-        resp = requests.get(url, timeout=10, allow_redirects=True)  # nosec B501 — pentest tool, intentional
+        from urllib.parse import urlsplit, urlunsplit
+
+        normalized_target = target.strip()
+        if "://" not in normalized_target:
+            normalized_target = f"https://{normalized_target}"
+        else:
+            parsed_target = urlsplit(normalized_target)
+            normalized_target = urlunsplit(
+                (
+                    "https",
+                    parsed_target.netloc,
+                    parsed_target.path,
+                    parsed_target.query,
+                    parsed_target.fragment,
+                )
+            )
+        url = f"{normalized_target.rstrip('/')}/{path.lstrip('/')}".rstrip("/")
+        resp = requests.get(url, timeout=10, allow_redirects=True)
         headers = dict(resp.headers)
         return {
             "success": True,
@@ -663,7 +679,8 @@ Focus on:
 
 Be specific. Reference line numbers, exact patterns, or CVE IDs when possible."""
 
-        client = UniversalAIClient()
+        # Interactive analysis must fail promptly when an external provider is unavailable.
+        client = UniversalAIClient(timeout=10, max_retries=1)
         messages = [AIMessage(role="user", content=prompt)]
         response = client.chat(messages)
         analysis = response.content.strip() if response else "No analysis returned."
@@ -672,7 +689,7 @@ Be specific. Reference line numbers, exact patterns, or CVE IDs when possible.""
     except ImportError:
         return {"success": False, "error": "UniversalAIClient not available"}
     except Exception as exc:  # noqa: BLE001 — graceful fallback
-        return {"success": False, "error": str(exc)}
+        return {"success": False, "error": f"Security analysis API error: {exc}"}
 
 
 

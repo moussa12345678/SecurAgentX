@@ -261,8 +261,8 @@ class PlannerAgent:
         tech_list = []
 
         # Extract from fingerprint results
-        if "technologies" in task:
-            for host, tech in task["technologies"].items():
+        if isinstance(technologies, dict):
+            for host, tech in technologies.items():
                 if isinstance(tech, dict):
                     for key in ["server", "framework", "cms", "language", "db", "cms"]:
                         if tech.get(key):
@@ -292,8 +292,8 @@ class PlannerAgent:
 
                             step = AttackStep(
                                 technique_id=technique_id,
-                                technique_name=mapping["name"],
-                                tactic=mapping["tactic"],
+                                technique_name=str(mapping["name"]),
+                                tactic=str(mapping["tactic"]),
                                 cwe_ids=[cwe],
                                 tools=tools,
                                 expected_outcome=f"Exploit {cwe} via {mapping['name']}",
@@ -316,8 +316,8 @@ class PlannerAgent:
 
         # Create attack tree
         tree = AttackTree(
-            target=self.mission_context.target if self.mission_context else "unknown",
-            tech_stack=task.get("tech_stack", {}),
+            target=target,
+            tech_stack=tech_stack,
             steps=steps[:30],  # Limit to top 30
             entry_points=self._identify_entry_points(task),
             high_value_targets=self._identify_high_value_targets(task)
@@ -459,6 +459,7 @@ class PlannerAgent:
             },
             priority=1
         ))
+        await self._announce_attack_tree_update(tree)
 
     async def _adapt_strategy(self, task: Dict) -> Dict:
         """Adapt strategy based on new findings"""
@@ -478,12 +479,12 @@ class PlannerAgent:
         current_tree.updated_at = time.time()
 
         # Re-prioritize
-        await self._share_attack_tree(self.current_tree)
+        await self._share_attack_tree(current_tree)
 
         return {
             "status": "adapted",
             "new_steps_added": len(new_steps),
-            "total_steps": len(self.current_tree.steps)
+            "total_steps": len(current_tree.steps)
         }
 
     def _derive_new_steps(self, findings: List[Dict]) -> List[AttackStep]:
@@ -612,8 +613,32 @@ class PlannerAgent:
         return {"recommendation": "all_steps_exhausted", "action": "verify_or_report"}
 
     # Message handling
-    async def _handle_message(self, msg):
-        pass
+    async def _handle_message(self, msg: AgentMessage):
+        """Route bus tasks and intelligence to the planner's active handlers."""
+        if msg.from_agent == self.name:
+            return
+
+        if msg.message_type == MessageType.TASK:
+            try:
+                result = await self.execute_task(msg.payload)
+            except Exception as exc:  # noqa: BLE001 -- return task failure to requester
+                logger.error("[%s] Task execution error: %s", self.name, exc)
+                result = {"error": str(exc)}
+            await self.bus.publish(
+                AgentMessage(
+                    from_agent=self.name,
+                    to_agent=msg.from_agent,
+                    message_type=MessageType.RESULT,
+                    payload=result,
+                    correlation_id=msg.correlation_id,
+                    priority=2,
+                )
+            )
+        elif msg.message_type == MessageType.INTEL:
+            try:
+                await self.process_intel(msg.payload)
+            except Exception as exc:  # noqa: BLE001 -- intelligence must not stop the agent
+                logger.error("[%s] Intel processing error: %s", self.name, exc)
 
     async def process_intel(self, intel: Dict):
         intel_type = intel.get("type")
@@ -623,7 +648,8 @@ class PlannerAgent:
         elif intel_type == "attack_tree":
             logger.info(f"[{self.name}] Received attack tree update")
 
-    async def _share_attack_tree(self, tree: AttackTree):
+    async def _announce_attack_tree_update(self, tree: AttackTree):
+        """Publish a compact update alongside the full attack-tree payload."""
         await self.bus.publish(AgentMessage(
             from_agent=self.name,
             to_agent="all",
