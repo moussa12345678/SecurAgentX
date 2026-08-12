@@ -481,9 +481,12 @@ Respond with JSON:
         # Score findings
         if is_security_task and result_obj.success:
             calc = CVSSCalculator(use_ai=False)
-            finding_type = params.get("tool", action_type)
+            finding_type = str(params.get("tool") or action_type)
+            finding_context = json.dumps(params, sort_keys=True, default=str)
             try:
-                score = calc.from_finding(finding_type, result[:200], result[:500], {})
+                score = calc.from_finding(
+                    finding_type, result[:200], result[:500], finding_context
+                )
                 all_findings.append(
                     {
                         "type": finding_type,

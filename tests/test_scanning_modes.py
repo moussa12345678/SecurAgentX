@@ -6,6 +6,7 @@ import pytest
 from unittest.mock import MagicMock, patch, Mock
 from pathlib import Path
 from securagentx.scanning.modes import ModeProcessor
+from tools.governance import Governance
 
 
 class TestModeProcessorInit:
@@ -94,7 +95,7 @@ class TestProcessUniversal:
             call_kwargs = mock_universal.call_args[1]
             assert call_kwargs["callback"] == mock_callback
             assert call_kwargs["client"] == mock_client
-            assert call_kwargs["governance"] is None
+            assert isinstance(call_kwargs["governance"], Governance)
 
 
 class TestProcessHybrid:

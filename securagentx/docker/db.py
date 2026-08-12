@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -261,7 +261,7 @@ class ContainerDB:
         """
         await self.connect()
         assert self._conn is not None
-        now = datetime.utcnow().isoformat(timespec="seconds")
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         cursor = await self._conn.execute(
             """
             INSERT INTO containers
@@ -284,7 +284,7 @@ class ContainerDB:
         await self._conn.commit()
         new_id = int(cursor.lastrowid) if cursor.lastrowid else 0
         info.id = new_id
-        info.created_at = info.updated_at = datetime.utcnow()
+        info.created_at = info.updated_at = datetime.now(timezone.utc)
         logger.debug("created container row id=%d name=%s flow=%d", new_id, info.name, info.flow_id)
         return new_id
 
@@ -317,7 +317,7 @@ class ContainerDB:
     async def update_container_status(self, id: int, status: ContainerStatus) -> None:
         await self.connect()
         assert self._conn is not None
-        now = datetime.utcnow().isoformat(timespec="seconds")
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         await self._conn.execute(
             "UPDATE containers SET status = ?, updated_at = ? WHERE id = ?",
             (status.value, now, int(id)),
@@ -336,7 +336,7 @@ class ContainerDB:
         """
         await self.connect()
         assert self._conn is not None
-        now = datetime.utcnow().isoformat(timespec="seconds")
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         await self._conn.execute(
             "UPDATE containers SET status = ?, local_id = ?, updated_at = ? WHERE id = ?",
             (status.value, local_id, now, int(id)),
@@ -349,7 +349,7 @@ class ContainerDB:
         pull/create and we fall back to ``debian:latest``)."""
         await self.connect()
         assert self._conn is not None
-        now = datetime.utcnow().isoformat(timespec="seconds")
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         await self._conn.execute(
             "UPDATE containers SET image = ?, updated_at = ? WHERE id = ?",
             (image, now, int(id)),

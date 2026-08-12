@@ -26,6 +26,12 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+
+try:
+    import requests
+except ImportError:  # pragma: no cover - optional dependency guard
+    requests = None
+
 from securagentx.paths import get_reports_path
 from securagentx.agent.agent_memory import MemoryStore
 from securagentx.agent.agent_skills import SkillStore
@@ -213,7 +219,8 @@ def _tool_port_scan(target: str, ports: str = "common") -> Dict[str, Any]:
 def _tool_web_recon(target: str, path: str = "/") -> Dict[str, Any]:
     """Perform web recon on target (HTTP headers, technologies, endpoints)."""
     try:
-        import requests
+        if requests is None:
+            return {"success": False, "error": "requests dependency is unavailable"}
 
         from urllib.parse import urlsplit, urlunsplit
 
@@ -2729,8 +2736,8 @@ class VulnAgent:
                     skill = _json.loads(skill_file.read_text())
                     self._hunt_plan.append(skill)
                     loaded += 1
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as exc:  # noqa: BLE001 - optional skill loading
+                    logger.debug("Skipping invalid hunt-plan skill %s: %s", skill_file, exc)
 
         if verbose and loaded > 0:
             import sys as _sys

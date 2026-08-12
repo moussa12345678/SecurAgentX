@@ -30,6 +30,7 @@ All public methods are ``async`` and fully type-hinted.
 
 from __future__ import annotations
 
+import asyncio
 import difflib
 import json
 import logging
@@ -464,6 +465,9 @@ class KnowledgeGraph:
         )
         self._db: aiosqlite.Connection | None = None
         self._initialized: bool = False
+        # Serializes the first-use path so concurrent operations share one
+        # connection instead of leaking competing initialization attempts.
+        self._init_lock = asyncio.Lock()
         logger.debug("KnowledgeGraph constructed (db_path=%s)", self._db_path)
 
     # ─── lifecycle ───────────────────────────────────────────────────────────
@@ -471,20 +475,27 @@ class KnowledgeGraph:
     async def _ensure_initialized(self) -> None:
         if self._initialized:
             return
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._db = await aiosqlite.connect(str(self._db_path))
-        self._db.row_factory = aiosqlite.Row
-        await self._create_tables()
-        await self._load_all()
-        self._initialized = True
-        logger.info(
-            "KnowledgeGraph initialized: %d nodes, %d edges, %d episodes, %d "
-            "communities",
-            self._graph.number_of_nodes(),
-            self._graph.number_of_edges(),
-            sum(len(d) for d in self._episodes.values()),
-            sum(len(d) for d in self._communities.values()),
-        )
+
+        async with self._init_lock:
+            # Other concurrent callers may have completed initialization
+            # while this coroutine awaited the lock.
+            if self._initialized:
+                return
+
+            self._db_path.parent.mkdir(parents=True, exist_ok=True)
+            self._db = await aiosqlite.connect(str(self._db_path))
+            self._db.row_factory = aiosqlite.Row
+            await self._create_tables()
+            await self._load_all()
+            self._initialized = True
+            logger.info(
+                "KnowledgeGraph initialized: %d nodes, %d edges, %d episodes, %d "
+                "communities",
+                self._graph.number_of_nodes(),
+                self._graph.number_of_edges(),
+                sum(len(d) for d in self._episodes.values()),
+                sum(len(d) for d in self._communities.values()),
+            )
 
     async def _create_tables(self) -> None:
         assert self._db is not None

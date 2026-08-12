@@ -285,7 +285,7 @@ class MQTTAnalyzer:
 
     def analyze_security(self, packet_data: bytes) -> List[ProtocolFinding]:
         """Analyze MQTT packet for security issues."""
-        findings = []
+        findings: List[ProtocolFinding] = []
 
         parsed = self.parse_packet(packet_data)
         if not parsed:
@@ -481,7 +481,7 @@ class ModbusAnalyzer:
 
     def analyze_security(self, packet_data: bytes) -> List[ProtocolFinding]:
         """Analyze Modbus packet for security issues."""
-        findings = []
+        findings: List[ProtocolFinding] = []
 
         parsed = self.parse_packet(packet_data)
         if not parsed:
@@ -892,11 +892,12 @@ class ProtocolAnalyzer:
 
     def _analyze_binary(self, data: bytes, protocol: ProtocolType) -> Dict[str, Any]:
         """Deep analysis of binary data."""
-        analysis = {
+        common_patterns: List[str] = []
+        analysis: Dict[str, Any] = {
             "entropy": self._calculate_entropy(data),
             "printable_ratio": sum(1 for b in data if 32 <= b <= 126) / len(data) if data else 0,
             "null_bytes": data.count(0),
-            "common_patterns": [],
+            "common_patterns": common_patterns,
         }
 
         # Look for common patterns
@@ -910,7 +911,7 @@ class ProtocolAnalyzer:
 
         for pattern, name in patterns.items():
             if pattern in data:
-                analysis["common_patterns"].append(name)
+                common_patterns.append(name)
 
         return analysis
 
@@ -921,7 +922,7 @@ class ProtocolAnalyzer:
 
         from math import log2
 
-        counts = {}
+        counts: Dict[int, int] = {}
         for byte in data:
             counts[byte] = counts.get(byte, 0) + 1
 
@@ -981,8 +982,8 @@ class ProtocolAnalyzer:
 
     def generate_report(self) -> Dict[str, Any]:
         """Generate comprehensive protocol analysis report."""
-        protocol_counts = {}
-        severity_counts = {}
+        protocol_counts: Dict[str, int] = {}
+        severity_counts: Dict[str, int] = {}
 
         for packet in self.packets:
             p = packet.protocol.value

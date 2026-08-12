@@ -892,14 +892,17 @@ class HybridAgent:
         elapsed = time.time() - self.start_time
 
         # CVSS scoring
-        scored = []
+        scored: List[Dict[str, Any]] = []
         for f in self.all_findings:
             try:
+                finding_type = str(f.get("type") or "unknown")
+                finding_url = str(f.get("url") or "")
+                finding_context = json.dumps(f, sort_keys=True, default=str)
                 score = self.cvss_calc.from_finding(
-                    f.get("type", "unknown"),
-                    f.get("url", ""),
+                    finding_type,
+                    finding_url,
                     json.dumps(f)[:200],
-                    {},
+                    finding_context,
                 )
                 scored.append(
                     {

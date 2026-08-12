@@ -49,6 +49,7 @@ warnings.warn(
 
 import asyncio
 import json
+from contextlib import asynccontextmanager
 import logging
 import os
 import time
@@ -229,11 +230,19 @@ if _HAS_FASTAPI:
                 if conns:
                     conns -= stale
 
+    @asynccontextmanager
+    async def _api_lifespan(_: FastAPI):
+        logger.info("SecurAgentX Enterprise API server started")
+        Path("data/webhooks").mkdir(parents=True, exist_ok=True)
+        get_reports_path()
+        yield
+
     # Create the FastAPI app
     _app = FastAPI(
         title="SecurAgentX Security API",
         description="World-class AI-powered security scanning API for enterprise CI/CD integration.",
         version="2.0.0",
+        lifespan=_api_lifespan,
         docs_url="/docs",
         redoc_url="/redoc",
     )
@@ -251,13 +260,6 @@ if _HAS_FASTAPI:
     # other coroutine can interleave. Runtime mutations of this bucket
     # (in ``global_websocket`` and ``_notify_ws``) DO acquire ``_ws_lock``.
     _ws_connections.setdefault("global", set())
-
-    @_app.on_event("startup")
-    async def startup():
-        logger.info("SecurAgentX Enterprise API server started")
-        # Ensure data directories exist
-        Path("data/webhooks").mkdir(parents=True, exist_ok=True)
-        get_reports_path()
 
     pass  # app assigned below
 

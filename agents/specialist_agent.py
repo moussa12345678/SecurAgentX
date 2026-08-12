@@ -484,14 +484,18 @@ Respond ONLY with valid JSON. No extra text."""
 
         try:
             result = execute_safely(command, timeout=300)
-            output = result.get("stdout", "") + result.get("stderr", "")
+            stdout = str(result.get("stdout") or "")
+            stderr = str(result.get("stderr") or "")
+            output = stdout + stderr
+            success = result.get("success") is True
+            error = str(result.get("error") or "")
             findings = _heuristic_findings(output, command)
             return WorkerResult(
-                success=result.get("success", False),
+                success=success,
                 worker_name="SpecialistAgent",
                 output=output[:4000],
                 findings=findings,
-                error=result.get("error", "") if not result.get("success") else "",
+                error="" if success else error,
             )
         except Exception as exc:
             return WorkerResult(

@@ -65,13 +65,20 @@ class VectorMemoryBackend(MemoryBackend):
     """ChromaDB Vector Memory Backend"""
 
     def __init__(self, persist_dir: str = "./data/memory"):
+        # The embedded memory backend is deliberately filesystem-only.  Do
+        # not accept URI-like locations that could accidentally evolve into
+        # a remote Chroma server connection with a different threat model.
+        normalized_persist_dir = str(persist_dir).strip()
+        if "://" in normalized_persist_dir or normalized_persist_dir.startswith("//"):
+            raise ValueError("VectorMemoryBackend requires a local filesystem path")
+
         if not _HAS_CHROMADB:
             raise ImportError(
                 "chromadb is required for VectorMemoryBackend. "
                 "Install with: pip install chromadb"
             )
 
-        self.persist_dir = Path(persist_dir)
+        self.persist_dir = Path(normalized_persist_dir)
         self.persist_dir.mkdir(parents=True, exist_ok=True)
 
         self.client = chromadb.PersistentClient(

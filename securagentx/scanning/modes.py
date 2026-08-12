@@ -53,6 +53,10 @@ class ModeProcessor:
         self.cve_db = cve_db
         self.enable_memory = enable_memory
 
+    def _effective_governance(self) -> Governance:
+        """Return the supplied policy engine or a conservative local default."""
+        return self.governance if self.governance is not None else Governance()
+
     def process_universal(
         self,
         user_input: str,
@@ -84,7 +88,7 @@ class ModeProcessor:
             client=self.client,
             conversation_history=conversation_history,
             base_prompt=base_prompt,
-            governance=self.governance,  # type: ignore[arg-type]
+            governance=self._effective_governance(),
             reflection_tracker=None,
             skill_registry=None,
             target=target,
@@ -135,7 +139,7 @@ class ModeProcessor:
         ta = team_aegis_clients or {}
         hybrid = HybridAgent(
             client=self.client,
-            governance=self.governance,  # type: ignore[arg-type]
+            governance=self._effective_governance(),
             target=target,
             max_steps=50,
             strategist_interval=5,
@@ -157,8 +161,14 @@ class ModeProcessor:
             objective=user_input,
         )
         hybrid.mission_key = hybrid.mission_state.mission_id
-        hybrid.cvss_calc = self.cvss_calc  # type: ignore[assignment]
-        hybrid.cve_db = self.cve_db  # type: ignore[attr-defined]
+        # HybridAgent owns safe defaults; replace them only with explicitly
+        # supplied shared infrastructure.
+        if self.cvss_calc is not None:
+            hybrid.cvss_calc = self.cvss_calc
+        if self.cve_db is not None:
+            # Optional extension point retained for HybridAgent integrations
+            # that consume a shared CVE database at runtime.
+            setattr(hybrid, "cve_db", self.cve_db)
 
         # Remember mission start
         if target and self.enable_memory:
