@@ -76,7 +76,7 @@ class DataFacility:
         Returns:
             Dict with all relevant data for LLM decision-making
         """
-        context = {
+        context: Dict[str, Any] = {
             "target": target,
             "data_sections": {},
         }
@@ -113,7 +113,7 @@ class DataFacility:
 
     def _get_past_knowledge(self, target: str, tech_stack: Optional[List[str]] = None) -> Dict[str, Any]:
         """Get knowledge from past scans."""
-        result = {
+        result: Dict[str, Any] = {
             "similar_targets": [],
             "successful_tools": [],
             "successful_payloads": [],
@@ -162,7 +162,7 @@ class DataFacility:
 
     def _get_tool_recommendations(self, tech_stack: Optional[List[str]] = None) -> Dict[str, Any]:
         """Get tool recommendations based on context."""
-        result = {
+        result: Dict[str, Any] = {
             "recommended_tools": [],
             "tool_details": {},
         }
@@ -183,7 +183,7 @@ class DataFacility:
 
     def _get_vuln_knowledge(self, tech_stack: Optional[List[str]] = None) -> Dict[str, Any]:
         """Get vulnerability knowledge for the tech stack."""
-        result = {
+        result: Dict[str, Any] = {
             "owasp_top_10": [],
             "common_cwes": [],
             "tech_specific_vulns": [],
@@ -208,7 +208,7 @@ class DataFacility:
 
     def _get_payload_suggestions(self) -> Dict[str, Any]:
         """Get payload suggestions for common vulnerability types."""
-        result = {}
+        result: Dict[str, Any] = {}
 
         if not self.learning_engine:
             return result

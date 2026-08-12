@@ -56,9 +56,9 @@ def _extract_json(text: str):
     except json.JSONDecodeError as e:
         logger.debug("JSON decode failed for candidate: %s", e)
     # Find outermost { ... } or [ ... ]
-    for s, e in [("{", "}"), ("[", "]")]:
-        si = candidate.find(s)
-        ei = candidate.rfind(e)
+    for opening, closing in [("{", "}"), ("[", "]")]:
+        si = candidate.find(opening)
+        ei = candidate.rfind(closing)
         if si != -1 and ei > si:
             try:
                 return json.loads(candidate[si : ei + 1])
@@ -734,7 +734,7 @@ class HybridAgent:
         Attempts to parse structured JSON / JSON-Lines outputs from security tools
         (Nuclei, Httpx, Subfinder, etc.) and falls back to regex patterns for raw text.
         """
-        findings = []
+        findings: List[Dict[str, Any]] = []
         if not output or not output.strip():
             return findings
 
@@ -950,7 +950,7 @@ class HybridAgent:
 
         # Count per severity
         if scored:
-            counts = {}
+            counts: Dict[str, int] = {}
             for s in scored:
                 counts[s["severity"]] = counts.get(s["severity"], 0) + 1
             lines.append("\n## Summary")

@@ -92,7 +92,7 @@ class CaptainAgent:
 
     # Agent registration
     def register_agent(self, agent_name: str, role: AgentRole):
-        self.registry.register(agent_name, role.value)
+        self.registry.register(agent_name, role)
 
     # Main mission loop
     async def run_mission(self, context: MissionContext) -> Dict[str, Any]:
@@ -105,7 +105,7 @@ class CaptainAgent:
         # Register all agents
         for role in AgentRole:
             if role != AgentRole.CAPTAIN:
-                self.registry.register(role.value, role.value)
+                self.registry.register(role.value, role)
 
         try:
             # Dynamic phase order — the Captain can reorder/skip phases
@@ -404,7 +404,12 @@ class CaptainAgent:
 
     async def _decide_exploit_chain(self, payload: Dict) -> Dict:
         """Decide on exploit chaining strategy"""
-        findings = payload.get("findings", [])
+        raw_findings = payload.get("findings", [])
+        findings = (
+            [finding for finding in raw_findings if isinstance(finding, dict)]
+            if isinstance(raw_findings, list)
+            else []
+        )
         target = payload.get("target", "")
 
         # Analyze findings for chain potential
@@ -424,7 +429,7 @@ class CaptainAgent:
         # Simple heuristic - can be enhanced
         vuln_types = [f.get("type", "") for f in findings]
 
-        chains = {
+        chains: Dict[str, Dict[str, Any]] = {
             "sqli_to_rce": {"requires": ["sqli", "file_upload"], "score": 0.9},
             "xss_to_session_hijack": {"requires": ["xss", "auth_bypass"], "score": 0.8},
             "ssrf_to_rce": {"requires": ["ssrf", "deserialization"], "score": 0.85},

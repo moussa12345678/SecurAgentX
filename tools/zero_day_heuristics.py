@@ -855,7 +855,7 @@ class MassAssignmentDetector:
 # Module-level constant dict — never mutated at runtime; only iterated via
 # ``.items()`` and ``.get()`` in ``InsecureDeserializationDetector``. Kept
 # as a plain dict (nested lists inside are part of the static spec).
-DESER_SIGNATURES = {
+DESER_SIGNATURES: Dict[str, Dict[str, Any]] = {
     "java": {
         "magic_hex": "ACED0005",  # Java ObjectInputStream
         "regex": [
@@ -1380,10 +1380,10 @@ class RaceConditionDetector:
                 data=body if not isinstance(body, dict) else None,
             )
 
-        results = await asyncio.gather(
+        raw_results = await asyncio.gather(
             *[_one() for _ in range(concurrency)], return_exceptions=False
         )
-        results = [r for r in results if r is not None]
+        results: List[Dict[str, Any]] = [result for result in raw_results if isinstance(result, dict)]
         return self._analyze(target, method, concurrency, results)
 
     def _analyze(
@@ -2510,18 +2510,18 @@ class SmartAnomalyDetector:
         length_stats = stats.get("length")
         if length_stats is not None:
             mean, std = length_stats
-            value = snapshot.length
-            z = (value - mean) / std if std > 0 else 0
+            length_value = snapshot.length
+            z = (length_value - mean) / std if std > 0 else 0
             if abs(z) >= 3.0:
-                msgs.append(f"length z={z:.1f} (mean={mean:.0f}, value={value})")
+                msgs.append(f"length z={z:.1f} (mean={mean:.0f}, value={length_value})")
         timing_stats = stats.get("timing")
         if timing_stats is not None:
             mean, std = timing_stats
-            value = snapshot.elapsed_ms
-            z = (value - mean) / std if std > 0 else 0
+            timing_value = snapshot.elapsed_ms
+            z = (timing_value - mean) / std if std > 0 else 0
             # Stricter threshold (>= 5) — small samples produce noisy z-scores.
             if abs(z) >= 5.0:
-                msgs.append(f"timing z={z:.1f} (mean={mean:.0f}, value={value})")
+                msgs.append(f"timing z={z:.1f} (mean={mean:.0f}, value={timing_value})")
         # Explicit 5xx flag (no z-score — server errors are always anomalies).
         if snapshot.status >= 500:
             msgs.append(f"status={snapshot.status} (server error)")
@@ -2900,7 +2900,10 @@ class ZeroDayEngine:
 
         results = await asyncio.gather(*net_tasks, return_exceptions=True)
         for res in results:
-            if isinstance(res, Exception):
+            if isinstance(res, BaseException):
+                # Cancellation is control flow, not a detector failure; preserve it.
+                if isinstance(res, asyncio.CancelledError):
+                    raise res
                 logger.warning("detector raised: %s", res)
                 continue
             findings.extend(res)

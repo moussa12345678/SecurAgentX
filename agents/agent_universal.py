@@ -411,6 +411,7 @@ Respond with JSON:
         # Parse JSON
         thought = ""
         decision = extract_json(response_text)
+        action_data: Any
         if not decision:
             action_data = {"type": "finish"}
         else:
@@ -423,7 +424,12 @@ Respond with JSON:
             callback(f"thought:{thought}")
 
         action_type = action_data.get("type", "shell") if isinstance(action_data, dict) else "shell"
-        params = action_data.get("params", {}) if isinstance(action_data, dict) else {}
+        raw_params: Any = action_data.get("params", {}) if isinstance(action_data, dict) else {}
+        # LLM output is untrusted and may supply a scalar for params. Normalize it
+        # before downstream routing and finding scoring call mapping methods on it.
+        params: Dict[str, Any] = raw_params if isinstance(raw_params, dict) else {}
+        if raw_params and not isinstance(raw_params, dict):
+            logger.warning("Ignoring non-mapping action parameters for %s", action_type)
 
         # Convert action types
         if action_type == "run_shell":
@@ -486,8 +492,8 @@ Respond with JSON:
                         "source": "ai_reasoning",  # produced by the agent's own scoring loop
                     }
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("CVSS scoring skipped for %s: %s", finding_type, exc)
 
         # Finish condition
         if action_type == "finish":
@@ -616,8 +622,8 @@ def _build_bug_bounty_prompt(
         try:
             available_skills = skill_registry.list_available_skills()
             missing_skills = skill_registry.get_missing_skills()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Skill registry lookup failed: %s", exc)
 
     tools_list_str = "\n".join(tool_descriptions)
     available_list = (

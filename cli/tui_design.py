@@ -383,9 +383,9 @@ def color_lerp(c1: str, c2: str, t: float) -> str:
         h = h.lstrip("#")
         if len(h) == 3:
             h = "".join(c * 2 for c in h)
-        return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
+        return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
-    def rgb_to_hex(r: int, g: int, b: int) -> str:
+    def rgb_to_hex(r: float, g: float, b: float) -> str:
         return f"#{max(0, min(255, int(r))):02x}{max(0, min(255, int(g))):02x}{max(0, min(255, int(b))):02x}"
 
     r1, g1, b1 = hex_to_rgb(c1)
@@ -486,11 +486,12 @@ class Progress:
 
 def format_bytes(n: int) -> str:
     """Format bytes to human-readable string."""
+    value = float(n)
     for unit in ("B", "KB", "MB", "GB", "TB"):
-        if abs(n) < 1024.0:
-            return f"{n:3.1f}{unit}"
-        n /= 1024.0
-    return f"{n:.1f}PB"
+        if abs(value) < 1024.0:
+            return f"{value:3.1f}{unit}"
+        value /= 1024.0
+    return f"{value:.1f}PB"
 
 
 def format_duration(seconds: float) -> str:

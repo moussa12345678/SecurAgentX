@@ -366,12 +366,15 @@ class NativeScanner:
         tasks = [asyncio.create_task(_bounded_scan(t)) for t in targets]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        final_results = []
-        for r in results:
-            if isinstance(r, Exception):
-                final_results.append(ScanResult(url="unknown", error=str(r)))
+        final_results: List[ScanResult] = []
+        for result in results:
+            if isinstance(result, BaseException):
+                # Do not convert task cancellation into an ordinary scan failure.
+                if isinstance(result, asyncio.CancelledError):
+                    raise result
+                final_results.append(ScanResult(url="unknown", error=str(result)))
             else:
-                final_results.append(r)
+                final_results.append(result)
         return final_results
 
     # ── URL Discovery ─────────────────────────────────────────────────────
