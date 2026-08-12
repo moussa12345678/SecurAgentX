@@ -228,6 +228,7 @@ tr:hover{background:rgba(31,111,235,.05)}
         <button class="btn sm success" onclick="VenomMode.saveTtsKey()">Save</button>
         <button class="btn sm ghost" onclick="VenomMode.clearTtsKey()">Clear</button>
       </div>
+      <p style="color:var(--dim);font-size:10px;margin-top:6px">Free voice mode sends spoken text to StreamElements. Use Google TTS only with a session-only key; keys are never saved in this browser.</p>
       <div class="tts-row">
         <label>TTS Voice</label>
         <select id="venom-tts-voice">
@@ -350,8 +351,8 @@ const SAST_TOOLS = [
 ];
 
 // ============ Persistence ============
-function persist(){try{localStorage.setItem('securagentx',JSON.stringify({panel:S.panel,model:S.model,provider:S.provider,apiKey:S.apiKey,baseUrl:S.baseUrl,config:S.config,scope:S.scope,voice:S.voice,tts:S.tts,terminal:S.terminal.slice(-50),chat:S.chat.slice(-50),memory:S.memory.slice(-50),skills:S.skills.slice(0,30),sast:S.sast}))}catch(e){console.warn('persist failed',e)}}
-function load(){try{const d=JSON.parse(localStorage.getItem('securagentx')||'{}');Object.assign(S,d);if(!S.baseUrl)S.baseUrl='https://openrouter.ai/api/v1';S.skills=SKILLS_SEED.concat(S.skills.filter(s=>!SKILLS_SEED.find(ss=>ss.name===s.name)).slice(0,471));if(S.skills.length<501){for(let i=S.skills.length+1;i<=501;i++){S.skills.push({name:'skill.'+String(i).padStart(3,'0'),desc:'Optional pentest skill #'+i,category:'optional'})}}}catch(e){console.warn('load failed',e)}}
+function persist(){try{const safeTts={voice:S.tts.voice,rate:S.tts.rate};localStorage.setItem('securagentx',JSON.stringify({panel:S.panel,model:S.model,provider:S.provider,baseUrl:S.baseUrl,config:S.config,scope:S.scope,voice:S.voice,tts:safeTts,terminal:S.terminal.slice(-50),chat:S.chat.slice(-50),memory:S.memory.slice(-50),skills:S.skills.slice(0,30),sast:S.sast}))}catch(e){console.warn('persist failed',e)}}
+function load(){try{const d=JSON.parse(localStorage.getItem('securagentx')||'{}');Object.assign(S,d);S.apiKey='';S.tts={...(S.tts||{}),googleKey:''};if(!S.baseUrl)S.baseUrl='https://openrouter.ai/api/v1';S.skills=SKILLS_SEED.concat(S.skills.filter(s=>!SKILLS_SEED.find(ss=>ss.name===s.name)).slice(0,471));if(S.skills.length<501){for(let i=S.skills.length+1;i<=501;i++){S.skills.push({name:'skill.'+String(i).padStart(3,'0'),desc:'Optional pentest skill #'+i,category:'optional'})}}}catch(e){console.warn('load failed',e)}}
 load();
 // Expose persist + load to global scope so inline onclick handlers (which run
 // in the global scope, not the module scope) can call persist().
@@ -548,14 +549,21 @@ const UI = {
     const cfg=this._providerConfig[S.provider]||this._providerConfig.openrouter;
     const url=(S.baseUrl||(document.getElementById('prov-url')&&document.getElementById('prov-url').value)||cfg.baseUrl).replace(/\/+$/,'');
     if(key&&key.length>10||S.provider==='ollama'){
-      this._callLLM(url,key,'ping',1).then(txt=>{
-        S.api='connected';persist();
-        document.getElementById('topbar-api').textContent='●';
-        document.getElementById('prov-test-result').innerHTML=' <span class="badge green">connected (live: '+txt.slice(0,40)+')</span>';
-      }).catch(e=>{
+      const timeoutId=setTimeout(()=>{
         S.api='error';persist();
         document.getElementById('topbar-api').textContent='!';
-        document.getElementById('prov-test-result').innerHTML=' <span class="badge red">error: '+e.message+'</span>';
+        document.getElementById('prov-test-result').innerHTML=' <span class="badge red">connection timed out</span>';
+      },15000);
+      this._callLLM(url,key,'ping',1).then(txt=>{
+        clearTimeout(timeoutId);
+        S.api='connected';persist();
+        document.getElementById('topbar-api').textContent='●';
+        document.getElementById('prov-test-result').innerHTML=' <span class="badge green">connected (live: '+this.esc(txt.slice(0,40))+')</span>';
+      }).catch(e=>{
+        clearTimeout(timeoutId);
+        S.api='error';persist();
+        document.getElementById('topbar-api').textContent='!';
+        document.getElementById('prov-test-result').innerHTML=' <span class="badge red">error: '+this.esc(e.message)+'</span>';
       });
     } else {
       // Simulated success (no key)
@@ -1373,12 +1381,12 @@ const VenomMode={
     }
     if(provider==='google'){
       // Direct Google TTS API call (returns base64 audio + timepoints)
-      const url='https://texttospeech.googleapis.com/v1beta1/text:synthesize?key='+S.tts.googleKey;
+      const url='https://texttospeech.googleapis.com/v1beta1/text:synthesize';
       const voice=S.tts.voice||'en-US-Standard-B';
       const lang=voice.startsWith('en-GB')?'en-GB':'en-US';
       const res=await fetch(url,{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json','X-Goog-Api-Key':S.tts.googleKey},
         body:JSON.stringify({
           input:{text:text.slice(0,1000)},
           voice:{languageCode:lang,name:voice},
